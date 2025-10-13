@@ -5,6 +5,7 @@ This library provides:
 - Event Flow Visualization: Interactive diagrams of your event-driven architecture
 - Event Recorder: Record and replay event streams
 - Mock Exchange: Simulate market scenarios for testing
+- Scenario Testing: YAML-based scenario testing with chaos injection
 - Metrics Collection: Collect and analyze event metrics
 
 Example:
@@ -25,6 +26,7 @@ from .config import (
     EventFlowConfig,
     EventRecorderConfig,
     MockExchangeConfig,
+    ScenarioTestingConfig,
 )
 # Event Flow
 from .event_flow import EventFlowAnalyzer
@@ -40,6 +42,14 @@ from .metrics import (
 )
 # Mock Exchange
 from .mock_exchange import ScenarioBasedMockExchange, MarketScenario
+# Scenario Testing
+from .scenario_testing import (
+    ScenarioRunner,
+    ChaosInjector,
+    AssertionChecker,
+    TestScenario,
+    ChaosAction,
+)
 
 __all__ = [
     # Version and metadata
@@ -49,6 +59,7 @@ __all__ = [
     "EventFlowConfig",
     "EventRecorderConfig",
     "MockExchangeConfig",
+    "ScenarioTestingConfig",
     # Event Flow
     "EventFlowAnalyzer",
     # Event Recorder
@@ -57,6 +68,12 @@ __all__ = [
     # Mock Exchange
     "ScenarioBasedMockExchange",
     "MarketScenario",
+    # Scenario Testing
+    "ScenarioRunner",
+    "ChaosInjector",
+    "AssertionChecker",
+    "TestScenario",
+    "ChaosAction",
     # Metrics
     "EventMetricsCollector",
     "Counter",

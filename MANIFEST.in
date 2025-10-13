@@ -2,19 +2,22 @@
 include README.md
 include LICENSE
 
-# Include web assets (templates, CSS, JS) - only for event_flow, event_recorder, mock_exchange
+# Include web assets (templates, CSS, JS)
 include src/python_pubsub_devtools/web/templates/event_flow.html
 include src/python_pubsub_devtools/web/templates/event_recorder.html
 include src/python_pubsub_devtools/web/templates/recording_detail.html
 include src/python_pubsub_devtools/web/templates/mock_exchange.html
+include src/python_pubsub_devtools/web/templates/scenario_testing.html
 include src/python_pubsub_devtools/web/static/css/event_flow.css
 include src/python_pubsub_devtools/web/static/css/event_recorder.css
 include src/python_pubsub_devtools/web/static/css/recording_detail.css
 include src/python_pubsub_devtools/web/static/css/mock_exchange.css
+include src/python_pubsub_devtools/web/static/css/scenario_testing.css
 include src/python_pubsub_devtools/web/static/js/event_flow.js
 include src/python_pubsub_devtools/web/static/js/event_recorder.js
 include src/python_pubsub_devtools/web/static/js/recording_detail.js
 include src/python_pubsub_devtools/web/static/js/mock_exchange.js
+include src/python_pubsub_devtools/web/static/js/scenario_testing.js
 
 # Exclude everything else
 global-exclude *.py[cod]
