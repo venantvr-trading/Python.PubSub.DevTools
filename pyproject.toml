@@ -57,28 +57,15 @@ package-dir = { "" = "src" }
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["python_pubsub_devtools*"]
-exclude = [
-    "python_pubsub_devtools.trading*",
-]
+exclude = []
 namespaces = false
 
 [tool.setuptools.package-data]
 python_pubsub_devtools = [
-    "web/templates/event_flow.html",
-    "web/templates/event_recorder.html",
-    "web/templates/recording_detail.html",
-    "web/templates/mock_exchange.html",
-    "web/templates/scenario_testing.html",
-    "web/static/css/event_flow.css",
-    "web/static/css/event_recorder.css",
-    "web/static/css/recording_detail.css",
-    "web/static/css/mock_exchange.css",
-    "web/static/css/scenario_testing.css",
-    "web/static/js/event_flow.js",
-    "web/static/js/event_recorder.js",
-    "web/static/js/recording_detail.js",
-    "web/static/js/mock_exchange.js",
-    "web/static/js/scenario_testing.js",
+    "web/templates/*.html",
+    "web/static/css/*.css",
+    "web/static/js/*.js",
+    "web/static/*.svg",
 ]
 
 [tool.pytest.ini_options]

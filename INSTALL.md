@@ -108,27 +108,35 @@ rsi = calculate_rsi(prices, period=14)
 ## Lancement des serveurs
 
 ### Serveur Event Flow
+
 ```bash
 pubsub-tools event-flow --port 5001
 ```
+
 Accédez à http://localhost:5001
 
 ### Serveur Event Recorder
+
 ```bash
 pubsub-tools event-recorder --port 5002
 ```
+
 Accédez à http://localhost:5002
 
 ### Serveur Mock Exchange
+
 ```bash
 pubsub-tools mock-exchange --port 5003
 ```
+
 Accédez à http://localhost:5003
 
 ### Serveur Scenario Testing
+
 ```bash
 pubsub-tools test-scenarios --port 5004
 ```
+
 Accédez à http://localhost:5004
 
 ## Dépendances

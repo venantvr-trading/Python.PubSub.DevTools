@@ -5,20 +5,26 @@
 ## Fichiers créés/modifiés pour l'exportation et l'installation
 
 ### 1. MANIFEST.in ✓ (NOUVEAU)
+
 Fichier de manifeste pour inclure tous les fichiers non-Python dans la distribution :
+
 - Documentation (README, LICENSE, INSTALL, docs/)
 - Exemples (examples/)
 - Assets web (templates HTML, CSS, JS)
 - Configuration (pyproject.toml, setup.py, Makefile)
 
 ### 2. pyproject.toml ✓ (MODIFIÉ)
+
 Mis à jour pour :
+
 - Auto-découverte de tous les packages avec `[tool.setuptools.packages.find]`
 - Inclusion des données du package (templates, CSS, JS)
 - Configuration du point d'entrée CLI : `pubsub-tools`
 
 ### 3. src/python_pubsub_devtools/__init__.py ✓ (MODIFIÉ)
+
 Étendu pour exporter tous les modules principaux :
+
 - Configurations (DevToolsConfig, EventFlowConfig, etc.)
 - Event Flow (EventFlowAnalyzer)
 - Event Recorder (EventRecorder, EventReplayer)
@@ -28,10 +34,13 @@ Mis à jour pour :
 - Trading (indicateurs techniques et patterns de bougies)
 
 ### 4. LICENSE ✓ (NOUVEAU)
+
 Licence MIT ajoutée comme spécifié dans pyproject.toml
 
 ### 5. INSTALL.md ✓ (NOUVEAU)
+
 Guide complet d'installation et d'utilisation :
+
 - Installation depuis PyPI, source, wheel
 - Utilisation du CLI avec toutes les commandes
 - Exemples de code pour utilisation comme bibliothèque
@@ -40,6 +49,7 @@ Guide complet d'installation et d'utilisation :
 ## Structure du package distribué
 
 ### Fichiers Python (tous les modules)
+
 ```
 python_pubsub_devtools/
 ├── __init__.py (exports complets)
@@ -59,6 +69,7 @@ python_pubsub_devtools/
 ```
 
 ### Assets Web (inclus dans le package)
+
 ```
 python_pubsub_devtools/web/
 ├── templates/
@@ -73,6 +84,7 @@ python_pubsub_devtools/web/
 ```
 
 ### Documentation (incluse)
+
 ```
 docs/
 ├── 01_ARCHITECTURE.md
@@ -85,6 +97,7 @@ docs/
 ```
 
 ### Exemples (inclus)
+
 ```
 examples/
 ├── basic_usage.py
@@ -97,12 +110,14 @@ examples/
 Le CLI est accessible via la commande `pubsub-tools` après installation.
 
 ### Configuration dans pyproject.toml
+
 ```toml
 [project.scripts]
 pubsub-tools = "python_pubsub_devtools.cli.main:main"
 ```
 
 ### Commandes disponibles
+
 ```bash
 pubsub-tools --help              # Aide générale
 pubsub-tools version             # Version du package
@@ -118,6 +133,7 @@ pubsub-tools metrics export      # Exporter les métriques
 ## Build et Distribution
 
 ### Packages générés
+
 ```
 dist/
 ├── python_pubsub_devtools-0.1.0.tar.gz (117 KB)
@@ -125,6 +141,7 @@ dist/
 ```
 
 ### Commandes de build
+
 ```bash
 # Nettoyer
 make clean
@@ -145,11 +162,13 @@ pip install -e .
 ## Test d'installation
 
 ### Installation depuis le wheel
+
 ```bash
 pip install dist/python_pubsub_devtools-0.1.0-py3-none-any.whl
 ```
 
 ### Vérification
+
 ```bash
 # Vérifier le CLI
 pubsub-tools --help
@@ -165,6 +184,7 @@ pubsub-tools event-flow --help
 ## Exports disponibles
 
 ### Import au niveau du package principal
+
 ```python
 from python_pubsub_devtools import (
     # Configuration
@@ -216,6 +236,7 @@ from python_pubsub_devtools import (
 ```
 
 ### Import des serveurs
+
 ```python
 from python_pubsub_devtools.event_flow.server import EventFlowServer
 from python_pubsub_devtools.event_recorder.server import EventRecorderServer
@@ -226,6 +247,7 @@ from python_pubsub_devtools.scenario_testing.server import ScenarioTestingServer
 ## Dépendances
 
 ### Runtime
+
 - flask>=2.0.0
 - pyyaml>=6.0
 - pydantic>=2.0
@@ -233,6 +255,7 @@ from python_pubsub_devtools.scenario_testing.server import ScenarioTestingServer
 - pydot>=1.4.0
 
 ### Développement (optionnel)
+
 - setuptools>=65.0
 - wheel
 - pytest>=7.0
