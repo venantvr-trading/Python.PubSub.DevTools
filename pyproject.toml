@@ -52,7 +52,7 @@ Repository = "https://github.com/venantvr-trading/Python.PubSub.DevTools"
 Issues = "https://github.com/venantvr-trading/Python.PubSub.DevTools/issues"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 packages = ["python_pubsub_devtools"]
 
 [tool.setuptools.package-data]

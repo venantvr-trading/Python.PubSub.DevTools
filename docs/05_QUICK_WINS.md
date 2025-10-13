@@ -7,6 +7,7 @@ Améliorations à **haute valeur** et **faible effort** pour rendre l'outil imm�
 ## 🎯 Priorité 1 : Améliorations Immédiates (1-2 semaines)
 
 ### 1. Event Metrics Collector ⭐⭐⭐
+
 **Effort** : 🟢 Faible (2-3 jours)
 **Impact** : 🔴 Élevé
 
@@ -38,6 +39,7 @@ class EventMetricsCollector:
 ```
 
 **Usage** :
+
 ```python
 # Auto-collecte avec décorateur
 @collect_metrics
@@ -46,12 +48,17 @@ def handle_order(event):
     process_order(event)
 
 # CLI pour voir les métriques
-$ pubsub-tools metrics show --last 1h
+$ pubsub - tools
+metrics
+show - -last
+1
+h
 ```
 
 ---
 
 ### 2. Event Logging Enhancement ⭐⭐⭐
+
 **Effort** : 🟢 Faible (1 jour)
 **Impact** : 🟡 Moyen
 
@@ -85,6 +92,7 @@ class EventLogger:
 ```
 
 **Features** :
+
 - JSON structured logging
 - Correlation IDs automatiques
 - Integration Elasticsearch/Logstash
@@ -93,6 +101,7 @@ class EventLogger:
 ---
 
 ### 3. Health Check Endpoint ⭐⭐
+
 **Effort** : 🟢 Très faible (4h)
 **Impact** : 🟡 Moyen
 
@@ -130,6 +139,7 @@ class HealthChecker:
 ```
 
 **Endpoints** :
+
 ```bash
 # HTTP health endpoint
 GET /health
@@ -143,6 +153,7 @@ $ pubsub-tools health check
 ---
 
 ### 4. Event Replay from Recordings ⭐⭐⭐
+
 **Effort** : 🟡 Moyen (3-4 jours)
 **Impact** : 🔴 Élevé
 
@@ -152,11 +163,11 @@ class EventRecorder:
     """Enhanced avec replay capabilities"""
 
     def replay(
-        self,
-        from_timestamp: Optional[datetime] = None,
-        to_timestamp: Optional[datetime] = None,
-        event_types: Optional[List[str]] = None,
-        speed: float = 1.0,  # 1.0 = real-time, 10.0 = 10x faster
+            self,
+            from_timestamp: Optional[datetime] = None,
+            to_timestamp: Optional[datetime] = None,
+            event_types: Optional[List[str]] = None,
+            speed: float = 1.0,  # 1.0 = real-time, 10.0 = 10x faster
     ):
         """Replay events depuis recording"""
         events = self.load_recording()
@@ -171,6 +182,7 @@ class EventRecorder:
 ```
 
 **Usage** :
+
 ```bash
 # Replay via CLI
 $ pubsub-tools replay \
@@ -188,6 +200,7 @@ $ pubsub-tools replay \
 ---
 
 ### 5. Event Browser CLI ⭐⭐
+
 **Effort** : 🟢 Faible (2 jours)
 **Impact** : 🟡 Moyen
 
@@ -209,6 +222,7 @@ $ pubsub-tools events list --format yaml
 ```
 
 **Features** :
+
 - Rich table output (avec colors)
 - JSON pretty print
 - Filtering avancé
@@ -219,12 +233,14 @@ $ pubsub-tools events list --format yaml
 ## 🎯 Priorité 2 : Améliorations Rapides (2-4 semaines)
 
 ### 6. Event Validation Framework ⭐⭐⭐
+
 **Effort** : 🟡 Moyen (5 jours)
 **Impact** : 🔴 Élevé
 
 ```python
 # Validation automatique avec Pydantic
 from pydantic import BaseModel, Field, validator
+
 
 class OrderCreated(BaseModel):
     """Event avec validation automatique"""
@@ -239,6 +255,7 @@ class OrderCreated(BaseModel):
             raise ValueError('order_id must start with ORD-')
         return v
 
+
 # Auto-validation à la publication
 event_bus.publish(OrderCreated(...))  # Validation automatique
 ```
@@ -246,6 +263,7 @@ event_bus.publish(OrderCreated(...))  # Validation automatique
 ---
 
 ### 7. Event Router / Filter ⭐⭐
+
 **Effort** : 🟡 Moyen (3 jours)
 **Impact** : 🟡 Moyen
 
@@ -273,6 +291,7 @@ router.set_dlq_handler(unrouted_event_handler)
 ---
 
 ### 8. Event Batch Processing ⭐⭐
+
 **Effort** : 🟡 Moyen (4 jours)
 **Impact** : 🟡 Moyen
 
@@ -291,6 +310,7 @@ def process_orders_batch(events: List[OrderCreated]):
 ---
 
 ### 9. Event Correlation ⭐⭐⭐
+
 **Effort** : 🟡 Moyen (5 jours)
 **Impact** : 🔴 Élevé
 
@@ -310,6 +330,7 @@ flow.render_diagram(output="flow.png")
 ---
 
 ### 10. Performance Benchmarks ⭐
+
 **Effort** : 🟡 Moyen (3 jours)
 **Impact** : 🟢 Faible
 
@@ -331,11 +352,12 @@ Results:
 ## 🎯 Priorité 3 : Polish & UX (1-2 mois)
 
 ### 11. Configuration Management
+
 ```yaml
 # config.yaml
 event_bus:
   backend: kafka
-  bootstrap_servers: ["localhost:9092"]
+  bootstrap_servers: [ "localhost:9092" ]
   group_id: my-service
 
 logging:
@@ -355,6 +377,7 @@ tracing:
 ```
 
 ### 12. Docker Support
+
 ```dockerfile
 # Official Docker image
 FROM python:3.12-slim
@@ -372,6 +395,7 @@ $ docker-compose up
 ```
 
 ### 13. Examples & Templates
+
 ```bash
 # Generate from template
 $ pubsub-tools init --template microservices
@@ -408,19 +432,23 @@ Impact
 ## 🚀 Quick Start Implementation Order
 
 **Week 1-2** :
+
 1. Event Metrics Collector
 2. Event Logging Enhancement
 3. Health Check Endpoint
 
 **Week 3-4** :
+
 4. Event Replay
 5. Event Browser CLI
 
 **Week 5-6** :
+
 6. Event Validation Framework
 7. Event Router
 
 **Week 7-8** :
+
 8. Event Batch Processing
 9. Event Correlation
 
@@ -429,18 +457,23 @@ Impact
 ## 💡 Tips pour Maximiser l'Impact
 
 ### 1. Commencer par les Metrics
+
 Les métriques donnent **immédiatement** de la visibilité → impact visible instantané.
 
 ### 2. Documenter en même temps
+
 Chaque feature = 1 exemple + 1 test + 1 doc → qualité professionnelle.
 
 ### 3. Publier sur PyPI rapidement
+
 Feedback users réels >> spéculations → itérer vite.
 
 ### 4. Créer des exemples concrets
+
 1 exemple vaut 1000 mots de doc → montrer plutôt qu'expliquer.
 
 ### 5. Intégrer avec outils existants
+
 Prometheus, Grafana, ELK → adoption plus facile que solutions custom.
 
 ---
@@ -448,16 +481,19 @@ Prometheus, Grafana, ELK → adoption plus facile que solutions custom.
 ## 📈 Métriques de Succès
 
 ### Adoption
+
 - [ ] 100+ downloads/week sur PyPI
 - [ ] 50+ stars GitHub
 - [ ] 5+ contributors
 
 ### Qualité
+
 - [ ] 90%+ test coverage
 - [ ] < 10 open bugs
 - [ ] Documentation complète
 
 ### Performance
+
 - [ ] < 2ms overhead
 - [ ] 10K+ events/sec
 - [ ] < 50MB memory

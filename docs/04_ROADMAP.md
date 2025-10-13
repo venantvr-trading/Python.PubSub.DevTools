@@ -4,13 +4,15 @@ Transformation vers un framework professionnel pour architectures événementiel
 
 ## 🎯 Vision
 
-Devenir **l'outil de référence** pour développer, tester et déboguer des systèmes event-driven en Python, comparable à Kafka Tools, AWS X-Ray, ou Jaeger pour les architectures événementielles.
+Devenir **l'outil de référence** pour développer, tester et déboguer des systèmes event-driven en Python, comparable à Kafka Tools, AWS X-Ray, ou Jaeger pour les
+architectures événementielles.
 
 ---
 
 ## 📊 Phase 1 : Observabilité & Monitoring (Q1 2025)
 
 ### 1.1 Event Tracing Distribué
+
 **Objectif** : Tracer les événements à travers tout le système
 
 ```python
@@ -23,6 +25,7 @@ def handle_order(event):
 ```
 
 **Fonctionnalités** :
+
 - ✅ Génération automatique de correlation IDs
 - ✅ Propagation de contexte (W3C Trace Context)
 - ✅ Intégration OpenTelemetry
@@ -30,6 +33,7 @@ def handle_order(event):
 - ✅ Mesure des latences inter-services
 
 ### 1.2 Performance Profiling
+
 **Objectif** : Identifier les goulots d'étranglement
 
 ```python
@@ -46,6 +50,7 @@ report = profiler.get_report()
 ```
 
 **Métriques** :
+
 - Throughput (events/sec)
 - Latence (p50, p95, p99)
 - Error rate
@@ -53,6 +58,7 @@ report = profiler.get_report()
 - Handler execution time
 
 ### 1.3 Real-time Dashboard
+
 **Objectif** : Monitoring temps réel via Web UI
 
 ```bash
@@ -60,6 +66,7 @@ pubsub-tools dashboard --port 8080
 ```
 
 **Features** :
+
 - 📊 Live event flow visualization
 - 📈 Metrics & charts (Grafana-like)
 - 🔍 Search & filter events
@@ -67,6 +74,7 @@ pubsub-tools dashboard --port 8080
 - 📱 Responsive design (desktop/mobile)
 
 **Stack technique** :
+
 - Backend: FastAPI + WebSockets
 - Frontend: React + D3.js / Recharts
 - Streaming: Server-Sent Events (SSE)
@@ -76,6 +84,7 @@ pubsub-tools dashboard --port 8080
 ## 🛡️ Phase 2 : Reliability & Resilience (Q2 2025)
 
 ### 2.1 Dead Letter Queue (DLQ)
+
 **Objectif** : Gérer les événements en échec
 
 ```python
@@ -87,6 +96,7 @@ def process_payment(event):
 ```
 
 **Fonctionnalités** :
+
 - ✅ Retry automatique avec backoff exponentiel
 - ✅ DLQ pour événements en échec définitif
 - ✅ Replay depuis DLQ après correction
@@ -94,6 +104,7 @@ def process_payment(event):
 - ✅ Alertes sur taux d'erreur élevé
 
 ### 2.2 Circuit Breaker Pattern
+
 **Objectif** : Prévenir les cascades d'échecs
 
 ```python
@@ -109,6 +120,7 @@ def call_external_api(event):
 ```
 
 ### 2.3 Event Deduplication
+
 **Objectif** : Garantir "exactly-once" processing
 
 ```python
@@ -121,6 +133,7 @@ def create_order(event):
 ```
 
 ### 2.4 Rate Limiting & Throttling
+
 **Objectif** : Contrôler le débit d'événements
 
 ```python
@@ -136,6 +149,7 @@ def send_notification(event):
 ## 📝 Phase 3 : Schema Management (Q2 2025)
 
 ### 3.1 Schema Registry
+
 **Objectif** : Versioning et validation des schémas
 
 ```python
@@ -155,6 +169,7 @@ class OrderCreatedV2(BaseEvent):
 ```
 
 **Fonctionnalités** :
+
 - ✅ Schema registry centralisé
 - ✅ Validation automatique
 - ✅ Backward/forward compatibility checks
@@ -162,6 +177,7 @@ class OrderCreatedV2(BaseEvent):
 - ✅ Auto-documentation des événements
 
 ### 3.2 Event Versioning Strategy
+
 **Objectif** : Gérer l'évolution des événements
 
 ```python
@@ -175,6 +191,7 @@ migrator.register_migration(
 ```
 
 ### 3.3 Contract Testing
+
 **Objectif** : Tester la compatibilité producteur/consommateur
 
 ```python
@@ -193,6 +210,7 @@ def test_producer_complies_with_contract(order_created_contract):
 ## 🔄 Phase 4 : Event Sourcing & CQRS (Q3 2025)
 
 ### 4.1 Event Store
+
 **Objectif** : Persistence des événements pour event sourcing
 
 ```python
@@ -208,6 +226,7 @@ order = event_store.replay("order-123", aggregate_type=Order)
 ```
 
 **Features** :
+
 - Append-only log
 - Snapshots pour performance
 - Time travel queries
@@ -215,6 +234,7 @@ order = event_store.replay("order-123", aggregate_type=Order)
 - Multiple backends (PostgreSQL, MongoDB, S3)
 
 ### 4.2 CQRS Helpers
+
 **Objectif** : Faciliter la séparation Command/Query
 
 ```python
@@ -231,6 +251,7 @@ def get_order_summary(query: GetOrderSummary):
 ```
 
 ### 4.3 Saga Pattern Orchestration
+
 **Objectif** : Gérer les transactions distribuées
 
 ```python
@@ -255,6 +276,7 @@ class BookFlightSaga:
 ## 🔌 Phase 5 : Intégrations & Ecosystem (Q3 2025)
 
 ### 5.1 Cloud Providers Integration
+
 **Objectif** : Support des services cloud événementiels
 
 ```python
@@ -279,6 +301,7 @@ adapter = GCPPubSubAdapter(
 ```
 
 **Providers** :
+
 - AWS EventBridge
 - Azure Event Grid / Event Hubs
 - Google Cloud Pub/Sub
@@ -288,6 +311,7 @@ adapter = GCPPubSubAdapter(
 - NATS
 
 ### 5.2 Message Brokers Support
+
 **Objectif** : Intégration transparente avec brokers
 
 ```python
@@ -307,6 +331,7 @@ event_bus = EventBus(
 ```
 
 ### 5.3 Observability Tools Integration
+
 **Objectif** : Export vers outils standard
 
 - **Prometheus** : Export métriques
@@ -320,6 +345,7 @@ event_bus = EventBus(
 ## 🧪 Phase 6 : Advanced Testing (Q4 2025)
 
 ### 6.1 Time Travel Testing
+
 **Objectif** : Tester avec contrôle du temps
 
 ```python
@@ -337,6 +363,7 @@ def test_scheduled_events(time_machine):
 ```
 
 ### 6.2 Property-Based Testing
+
 **Objectif** : Tester les invariants
 
 ```python
@@ -353,6 +380,7 @@ def test_event_order_preserved(events):
 ```
 
 ### 6.3 Mutation Testing
+
 **Objectif** : Tester la qualité des tests
 
 ```bash
@@ -363,6 +391,7 @@ pubsub-tools test mutate \
 ```
 
 ### 6.4 Load Testing Framework
+
 **Objectif** : Tests de charge intégrés
 
 ```python
@@ -381,6 +410,7 @@ def test_high_load():
 ## 🎨 Phase 7 : Developer Experience (Q4 2025)
 
 ### 7.1 CLI Enhanced
+
 **Objectif** : CLI de niveau production
 
 ```bash
@@ -404,20 +434,22 @@ pubsub-tools migrate --version 2.0.0
 ```
 
 ### 7.2 IDE Extensions
+
 **Objectif** : Support IDE natif
 
 - **VSCode Extension** :
-  - Event autocomplete
-  - Schema validation
-  - Flow visualization
-  - Jump to handler
+    - Event autocomplete
+    - Schema validation
+    - Flow visualization
+    - Jump to handler
 
 - **PyCharm Plugin** :
-  - Event navigation
-  - Test generation
-  - Refactoring support
+    - Event navigation
+    - Test generation
+    - Refactoring support
 
 ### 7.3 Documentation Generator
+
 **Objectif** : Documentation automatique
 
 ```bash
@@ -436,6 +468,7 @@ pubsub-tools docs generate \
 ```
 
 ### 7.4 Interactive Tutorial
+
 **Objectif** : Onboarding interactif
 
 ```bash
@@ -453,6 +486,7 @@ pubsub-tools tutorial start
 ## 🌍 Phase 8 : Community & Ecosystem (2026)
 
 ### 8.1 Plugin System
+
 **Objectif** : Extensibilité via plugins
 
 ```python
@@ -471,6 +505,7 @@ event_bus.register_plugin(CustomMetricsPlugin())
 ```
 
 ### 8.2 Template Library
+
 **Objectif** : Patterns & templates réutilisables
 
 ```bash
@@ -490,6 +525,7 @@ pubsub-tools new project \
 ```
 
 ### 8.3 Community Hub
+
 **Objectif** : Plateforme collaborative
 
 - **Plugin marketplace** : Partage de plugins
@@ -502,6 +538,7 @@ pubsub-tools new project \
 ## 📦 Améliorations Transversales
 
 ### Code Quality
+
 - ✅ 100% test coverage
 - ✅ Type hints complets (mypy strict)
 - ✅ Documentation docstrings complète
@@ -509,6 +546,7 @@ pubsub-tools new project \
 - ✅ Continuous benchmarking
 
 ### Performance
+
 - ✅ Async/await support complet
 - ✅ Connection pooling
 - ✅ Event batching
@@ -516,6 +554,7 @@ pubsub-tools new project \
 - ✅ Zero-copy serialization (msgpack, protobuf)
 
 ### Security
+
 - ✅ Event encryption at rest
 - ✅ Transport encryption (TLS)
 - ✅ Authentication & authorization
@@ -523,6 +562,7 @@ pubsub-tools new project \
 - ✅ PII detection & masking
 
 ### Deployment
+
 - ✅ Docker images optimisées
 - ✅ Kubernetes Helm charts
 - ✅ Terraform modules
@@ -534,16 +574,19 @@ pubsub-tools new project \
 ## 🎯 Success Metrics
 
 ### Adoption
+
 - 10K+ GitHub stars
 - 100K+ monthly downloads
 - 50+ production deployments
 
 ### Performance
+
 - < 1ms overhead par événement
 - Support 100K+ events/sec
 - < 100MB memory footprint
 
 ### Quality
+
 - 95%+ test coverage
 - 4.5+ rating on PyPI
 - < 5% bug rate
@@ -553,6 +596,7 @@ pubsub-tools new project \
 ## 🤝 Contributing
 
 Pour contribuer à cette roadmap :
+
 1. Discuter dans les issues GitHub
 2. Proposer des RFCs pour features majeures
 3. Soumettre des PRs avec tests
@@ -562,16 +606,16 @@ Pour contribuer à cette roadmap :
 
 ## 📅 Timeline Summary
 
-| Phase | Timeline | Focus |
-|-------|----------|-------|
-| Phase 1 | Q1 2025 | Observabilité & Monitoring |
-| Phase 2 | Q2 2025 | Reliability & Resilience |
-| Phase 3 | Q2 2025 | Schema Management |
-| Phase 4 | Q3 2025 | Event Sourcing & CQRS |
-| Phase 5 | Q3 2025 | Intégrations Cloud |
-| Phase 6 | Q4 2025 | Advanced Testing |
-| Phase 7 | Q4 2025 | Developer Experience |
-| Phase 8 | 2026 | Community & Ecosystem |
+| Phase   | Timeline | Focus                      |
+|---------|----------|----------------------------|
+| Phase 1 | Q1 2025  | Observabilité & Monitoring |
+| Phase 2 | Q2 2025  | Reliability & Resilience   |
+| Phase 3 | Q2 2025  | Schema Management          |
+| Phase 4 | Q3 2025  | Event Sourcing & CQRS      |
+| Phase 5 | Q3 2025  | Intégrations Cloud         |
+| Phase 6 | Q4 2025  | Advanced Testing           |
+| Phase 7 | Q4 2025  | Developer Experience       |
+| Phase 8 | 2026     | Community & Ecosystem      |
 
 ---
 

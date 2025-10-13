@@ -180,6 +180,7 @@ Monitor your event-driven system in real-time:
 - Export to JSON for integration with Prometheus/Grafana
 
 **Example:**
+
 ```python
 from python_pubsub_devtools.metrics import collect_metrics
 

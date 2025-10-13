@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Event Recorder Dashboard</title>
+    <link href="{{ url_for('static', filename='css/event_recorder.css') }}" rel="stylesheet">
+</head>
+<body>
+<div class="control-buttons">
+    <button class="control-btn" id="dark-mode-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode (D)">
+        🌙
+    </button>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h1>🎬 Event Recorder Dashboard</h1>
+        <p>View and replay event recordings</p>
+    </div>
+
+    <div class="navbar">
+        <a class="nav-link" href="http://localhost:5555">Event Flow</a>
+        <a class="nav-link active" href="http://localhost:5556">Recorder</a>
+        <a class="nav-link" href="http://localhost:5557">Exchange</a>
+        <a class="nav-link" href="http://localhost:5558">Testing</a>
+    </div>
+
+    <div class="content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_recordings }}</div>
+                <div class="stat-label">Recordings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ total_events }}</div>
+                <div class="stat-label">Total Events</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ total_duration }}</div>
+                <div class="stat-label">Total Duration</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ avg_events_per_recording }}</div>
+                <div class="stat-label">Avg Events/Recording</div>
+            </div>
+        </div>
+
+        {% if recordings %}
+        <div class="recordings-list">
+            {% for recording in recordings %}
+            <div class="recording-card" onclick="viewRecording('{{ recording.filename }}')">
+                <div class="recording-header">
+                    <div class="recording-name">{{ recording.session_name }}</div>
+                    <div class="recording-date">{{ recording.created_at }}</div>
+                </div>
+                <div class="recording-stats">
+                    <div class="recording-stat">
+                        <span class="icon">⏱</span>
+                        <span>{{ recording.duration }}</span>
+                    </div>
+                    <div class="recording-stat">
+                        <span class="icon">📊</span>
+                        <span>{{ recording.event_count }} events</span>
+                    </div>
+                    <div class="recording-stat">
+                        <span class="icon">🏷</span>
+                        <span>{{ recording.unique_events }} types</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🎬</div>
+            <div class="empty-state-text">No recordings found</div>
+            <div class="empty-state-hint">
+                Start recording with EventRecorder to see recordings here
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        <p>🎬 Event Recorder Dashboard | Port 5556 | <kbd>Ctrl+R</kbd> to refresh</p>
+    </div>
+</div>
+
+<button class="refresh-btn" onclick="location.reload()" title="Refresh">
+    ↻
+</button>
+
+<script src="{{ url_for('static', filename='js/event_recorder.js') }}"></script>
+</body>
+</html>

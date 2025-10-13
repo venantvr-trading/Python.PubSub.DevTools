@@ -7,18 +7,23 @@ Architecture d'un framework professionnel pour architectures événementielles.
 ## 🎯 Principes d'Architecture
 
 ### 1. **Plugin-Based Architecture**
+
 Extensibilité maximale via plugins et hooks.
 
 ### 2. **Backend-Agnostic**
+
 Support de multiples backends (in-memory, Kafka, RabbitMQ, etc.).
 
 ### 3. **Zero-Configuration Default**
+
 Fonctionne out-of-the-box avec configuration progressive.
 
 ### 4. **Performance First**
+
 Overhead minimal, optimisé pour production.
 
 ### 5. **Observability Built-in**
+
 Metrics, logging, tracing intégrés par défaut.
 
 ---
@@ -548,6 +553,7 @@ services:
 ## 📈 Performance Considerations
 
 ### 1. Async by Default
+
 ```python
 # Tout async pour performance maximale
 async def publish(self, event: Event):
@@ -555,6 +561,7 @@ async def publish(self, event: Event):
 ```
 
 ### 2. Connection Pooling
+
 ```python
 # Pool de connexions
 self.pool = ConnectionPool(
@@ -564,6 +571,7 @@ self.pool = ConnectionPool(
 ```
 
 ### 3. Event Batching
+
 ```python
 # Batch pour réduire overhead
 async def publish_batch(self, events: List[Event]):
@@ -571,6 +579,7 @@ async def publish_batch(self, events: List[Event]):
 ```
 
 ### 4. Zero-Copy Serialization
+
 ```python
 # msgpack ou protobuf pour performance
 serializer = MsgPackSerializer()  # Plus rapide que JSON
@@ -581,6 +590,7 @@ serializer = MsgPackSerializer()  # Plus rapide que JSON
 ## 🔒 Security Considerations
 
 ### 1. Event Encryption
+
 ```python
 # Encryption at rest
 encryptor = FieldEncryptor(key=os.getenv("ENCRYPTION_KEY"))
@@ -588,6 +598,7 @@ event.sensitive_data = encryptor.encrypt(event.sensitive_data)
 ```
 
 ### 2. Authentication
+
 ```python
 # API authentication
 @require_auth(roles=["admin"])
@@ -596,6 +607,7 @@ async def get_events(request):
 ```
 
 ### 3. Audit Logging
+
 ```python
 # Audit trail
 audit_logger.log_access(

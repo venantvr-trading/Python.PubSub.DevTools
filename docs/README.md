@@ -7,7 +7,9 @@ Documentation complète du framework PubSub DevTools pour architectures événem
 Les fichiers sont préfixés selon un ordre de lecture logique :
 
 ### 1️⃣ [01_ARCHITECTURE.md](./01_ARCHITECTURE.md)
+
 **Vue d'ensemble du système**
+
 - Principes d'architecture
 - Structure modulaire
 - Core components (EventBus, Middleware, Backend)
@@ -20,7 +22,9 @@ Les fichiers sont préfixés selon un ordre de lecture logique :
 ---
 
 ### 2️⃣ [02_USE_CASES.md](./02_USE_CASES.md)
+
 **Cas d'usage concrets**
+
 - E-Commerce Platform
 - Banking Fraud Detection
 - Social Media Notifications
@@ -32,7 +36,9 @@ Les fichiers sont préfixés selon un ordre de lecture logique :
 ---
 
 ### 3️⃣ [03_METRICS.md](./03_METRICS.md)
+
 **Event Metrics Collector** ⭐ Feature principale
+
 - Quick start guide
 - API complète
 - CLI commands
@@ -44,7 +50,9 @@ Les fichiers sont préfixés selon un ordre de lecture logique :
 ---
 
 ### 4️⃣ [04_ROADMAP.md](./04_ROADMAP.md)
+
 **Vision long terme**
+
 - Roadmap sur 8 phases (Q1 2025 - 2026)
 - Phase 1: Observabilité & Monitoring
 - Phase 2: Reliability & Resilience
@@ -57,7 +65,9 @@ Les fichiers sont préfixés selon un ordre de lecture logique :
 ---
 
 ### 5️⃣ [05_QUICK_WINS.md](./05_QUICK_WINS.md)
+
 **Améliorations rapides à fort impact**
+
 - Priorité 1 (1-2 semaines): Metrics ✅, Logging, Health checks, Replay, Browser
 - Priorité 2 (2-4 semaines): Validation, Router, Batch, Correlation
 - Impact vs Effort matrix
@@ -68,7 +78,9 @@ Les fichiers sont préfixés selon un ordre de lecture logique :
 ---
 
 ### 6️⃣ [06_MIGRATION_GUIDE.md](./06_MIGRATION_GUIDE.md)
+
 **Guide technique de migration**
+
 - Migration depuis versions précédentes
 - Breaking changes
 - Étapes de migration
@@ -92,16 +104,19 @@ Ces fichiers sont principalement pour référence historique.
 ## 🚀 Par où commencer ?
 
 ### Si vous découvrez le projet :
+
 1. [01_ARCHITECTURE.md](./01_ARCHITECTURE.md) - Comprendre la vision
 2. [02_USE_CASES.md](./02_USE_CASES.md) - Voir des exemples concrets
 3. [03_METRICS.md](./03_METRICS.md) - Commencer à utiliser
 
 ### Si vous voulez contribuer :
+
 1. [05_QUICK_WINS.md](./05_QUICK_WINS.md) - Voir les améliorations prioritaires
 2. [04_ROADMAP.md](./04_ROADMAP.md) - Comprendre la vision long terme
 3. [01_ARCHITECTURE.md](./01_ARCHITECTURE.md) - Comprendre l'architecture
 
 ### Si vous cherchez une feature spécifique :
+
 - **Métriques** → [03_METRICS.md](./03_METRICS.md)
 - **Architecture** → [01_ARCHITECTURE.md](./01_ARCHITECTURE.md)
 - **Exemples** → [02_USE_CASES.md](./02_USE_CASES.md)
@@ -112,6 +127,7 @@ Ces fichiers sont principalement pour référence historique.
 ## 📊 État actuel
 
 ✅ **Implémenté** :
+
 - Event Metrics Collector (Priority #1 Quick Win)
 - Trading indicators & patterns
 - Mock Exchange scenarios

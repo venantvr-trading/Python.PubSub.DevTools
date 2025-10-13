@@ -4,7 +4,8 @@ Système de collecte et d'analyse de métriques pour les événements.
 
 ## 🎯 Vue d'ensemble
 
-Le **Event Metrics Collector** fournit un système de collecte de métriques simple mais puissant pour monitorer les événements dans vos architectures event-driven. Il permet de :
+Le **Event Metrics Collector** fournit un système de collecte de métriques simple mais puissant pour monitorer les événements dans vos architectures event-driven. Il
+permet de :
 
 - ✅ Compter les événements publiés/traités/échoués
 - ✅ Mesurer les temps de traitement (P50, P95, P99)
@@ -491,17 +492,20 @@ def get_metrics_collector() -> EventMetricsCollector:
 ## 📊 Métriques collectées
 
 ### Compteurs
+
 - **events_published**: Nombre d'événements publiés par type
 - **events_processed**: Nombre d'événements traités avec succès
 - **events_failed**: Nombre d'événements en échec
 
 ### Histogrammes
+
 - **processing_time**: Distribution des temps de traitement
-  - Min, Max, Avg
-  - P50 (médiane), P95, P99
+    - Min, Max, Avg
+    - P50 (médiane), P95, P99
 - **handler_execution**: Distribution des temps d'exécution des handlers
 
 ### Métriques calculées
+
 - **error_rate**: Taux d'erreur global (%)
 - **event_rate**: Taux d'événements par seconde
 - **uptime**: Durée depuis le démarrage

@@ -3,10 +3,9 @@ Unit tests for Event Metrics Collector
 
 Tests complets du collecteur de métriques.
 """
-import pytest
 import time
-from unittest.mock import Mock
 
+import pytest
 from python_pubsub_devtools.metrics import (
     EventMetricsCollector,
     Counter,

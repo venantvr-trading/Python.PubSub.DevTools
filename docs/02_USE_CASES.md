@@ -7,9 +7,11 @@ Exemples concrets d'utilisation de PubSub DevTools dans des contextes profession
 ## 🏪 E-Commerce Platform
 
 ### Contexte
+
 Plateforme e-commerce avec microservices : Orders, Payments, Inventory, Shipping, Notifications.
 
 ### Problématiques
+
 - **Debugging** : Un client dit qu'il n'a pas reçu de confirmation de commande
 - **Testing** : Tester le flow complet de commande sans environnement de production
 - **Monitoring** : Surveiller les performances et détecter les goulots d'étranglement
@@ -29,6 +31,7 @@ $ pubsub-tools recorder stop --output order_12345_flow.json
 ```
 
 **Analyse du flow** :
+
 ```bash
 $ pubsub-tools flow analyze order_12345_flow.json
 
@@ -98,6 +101,7 @@ def test_successful_order_flow(order_scenario):
 ```
 
 **Scenario YAML** :
+
 ```yaml
 # scenarios/order_flow.yaml
 name: "Order Flow - Happy Path"
@@ -174,9 +178,11 @@ steps:
 ## 🏦 Banking - Fraud Detection System
 
 ### Contexte
+
 Système de détection de fraude temps réel pour transactions bancaires.
 
 ### Problématiques
+
 - **Performance critique** : Décisions en < 100ms
 - **Faux positifs** : Éviter de bloquer transactions légitimes
 - **Audit** : Traçabilité complète pour régulation
@@ -214,6 +220,7 @@ async def check_fraud(event: TransactionInitiated):
 ```
 
 **Dashboard automatique** :
+
 ```bash
 $ pubsub-tools dashboard start --service fraud-detection
 
@@ -258,6 +265,7 @@ audit.enable_auto_logging(
 ```
 
 **Query audit trail** :
+
 ```bash
 $ pubsub-tools audit query \
     --transaction-id TXN-123456 \
@@ -299,9 +307,11 @@ Signature: [SHA256 hash]
 ## 📱 Social Media Platform - Notification System
 
 ### Contexte
+
 Plateforme sociale avec système de notifications (likes, comments, mentions, etc.).
 
 ### Problématiques
+
 - **Volume élevé** : Millions de notifications/jour
 - **Rate limiting** : Ne pas spammer les users
 - **Prioritization** : Notifications importantes en premier
@@ -367,6 +377,7 @@ async def process_like_notifications(events: List[LikeReceived]):
 ```
 
 **Metrics** :
+
 ```bash
 $ pubsub-tools metrics show --service notification
 
@@ -399,9 +410,11 @@ Delivery:
 ## 🚗 Ride-Sharing App - Real-time Matching
 
 ### Contexte
+
 App de covoiturage avec matching temps réel drivers/riders.
 
 ### Problématiques
+
 - **Latence critique** : Match en < 3 secondes
 - **Geo-distributed** : Events dans multiple régions
 - **Complex saga** : Booking → Accept → Navigate → Complete
@@ -506,6 +519,7 @@ steps:
 ```
 
 **Visualize Saga** :
+
 ```bash
 $ pubsub-tools saga visualize BookingFlowSaga --output booking_flow.png
 ```
@@ -529,9 +543,11 @@ TripCompleted
 ## 🎮 Gaming Platform - Leaderboard System
 
 ### Contexte
+
 Plateforme gaming avec leaderboards temps réel et achievements.
 
 ### Problématiques
+
 - **Event storm** : Millions de score updates/minute
 - **Eventually consistent** : Leaderboards approximatifs OK
 - **CQRS** : Write optimized / Read optimized
@@ -603,31 +619,36 @@ async def process_score(event: ScoreSubmitted):
 
 ## 📊 Résumé : Value Proposition par Secteur
 
-| Secteur | Pain Points | Solution PubSub DevTools | Business Value |
-|---------|-------------|-------------------------|----------------|
-| **E-Commerce** | Orders perdus, debugging difficile | Event tracing, flow analysis | ↓ Support tickets, ↑ Customer satisfaction |
-| **Banking** | Compliance, performance critique | Audit trail, SLO monitoring | Régulation OK, 0 downtime |
-| **Social Media** | Rate limiting, volume élevé | Batch processing, rate limiting | ↓ Infrastructure costs 40% |
-| **Ride-Sharing** | Saga complexity, geo-distributed | Saga orchestration, testing | ↓ Failed bookings 80% |
-| **Gaming** | Event storms, consistency | CQRS, deduplication | ↑ Throughput 10x |
+| Secteur          | Pain Points                        | Solution PubSub DevTools        | Business Value                             |
+|------------------|------------------------------------|---------------------------------|--------------------------------------------|
+| **E-Commerce**   | Orders perdus, debugging difficile | Event tracing, flow analysis    | ↓ Support tickets, ↑ Customer satisfaction |
+| **Banking**      | Compliance, performance critique   | Audit trail, SLO monitoring     | Régulation OK, 0 downtime                  |
+| **Social Media** | Rate limiting, volume élevé        | Batch processing, rate limiting | ↓ Infrastructure costs 40%                 |
+| **Ride-Sharing** | Saga complexity, geo-distributed   | Saga orchestration, testing     | ↓ Failed bookings 80%                      |
+| **Gaming**       | Event storms, consistency          | CQRS, deduplication             | ↑ Throughput 10x                           |
 
 ---
 
 ## 🎯 Common Patterns Across Use Cases
 
 ### 1. **Observability First**
+
 Tous les cas nécessitent : metrics, tracing, logging structuré.
 
 ### 2. **Reliability Patterns**
+
 Circuit breakers, retries, DLQ sont universels.
 
 ### 3. **Testing Strategy**
+
 Scenario testing + chaos engineering = confidence en production.
 
 ### 4. **Performance Optimization**
+
 Batching, connection pooling, async = handle volume.
 
 ### 5. **Compliance & Audit**
+
 Audit trail automatique = regulators happy.
 
 ---

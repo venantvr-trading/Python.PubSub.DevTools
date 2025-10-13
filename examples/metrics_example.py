@@ -4,19 +4,22 @@ Example: Using Event Metrics Collector
 
 This example demonstrates how to use the metrics collector to monitor events.
 """
-import time
 import random
+import time
+
 from python_pubsub_devtools.metrics import get_metrics_collector, collect_metrics
 
 
 class OrderCreatedEvent:
     """Mock order created event"""
+
     def __init__(self, order_id):
         self.order_id = order_id
 
 
 class PaymentProcessingEvent:
     """Mock payment processing event"""
+
     def __init__(self, payment_id):
         self.payment_id = payment_id
 

@@ -3,7 +3,6 @@ import math
 
 import pandas as pd
 import pytest
-
 from python_pubsub_devtools.trading.indicators import (
     calculate_sma,
     calculate_ema,
