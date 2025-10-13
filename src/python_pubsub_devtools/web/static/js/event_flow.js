@@ -203,7 +203,15 @@ function renderFlow(tabId, isEditable) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
-    event.target.classList.add('active');
+
+    // Find and activate the corresponding tab button
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach((tab, index) => {
+        const tabTypes = ['simplified', 'complete', 'ia-editor'];
+        if (tabTypes[index] === tabId) {
+            tab.classList.add('active');
+        }
+    });
 
     const containerId = `flow-${tabId}`;
     const container = document.getElementById(containerId);
