@@ -4,6 +4,7 @@
 PYTHON := python3
 PIP := pip
 PROJECT_NAME := python_pubsub_devtools
+PROJECT_PATH := src/python_pubsub_devtools
 VENV := .venv
 
 # Default target
@@ -65,25 +66,25 @@ test:
 
 # Run tests with coverage
 test-cov:
-	pytest tests/ --cov=$(PROJECT_NAME) --cov-report=html --cov-report=term-missing -v
+	pytest tests/ --cov=$(PROJECT_PATH) --cov-report=html --cov-report=term-missing -v
 	@echo "Coverage report generated in htmlcov/index.html"
 
 # Run linting
 lint:
 	@echo "Running flake8..."
-	flake8 $(PROJECT_NAME) tests/ --max-line-length=100 --exclude=__pycache__,.venv,build,dist
+	flake8 $(PROJECT_PATH) tests/ --max-line-length=100 --exclude=__pycache__,.venv,build,dist
 	@echo "Running mypy..."
-	mypy $(PROJECT_NAME) --ignore-missing-imports
+	mypy $(PROJECT_PATH) --ignore-missing-imports
 
 # Format code
 format:
 	@echo "Formatting code with black..."
-	black $(PROJECT_NAME) tests/
+	black $(PROJECT_PATH) tests/
 
 # Check code formatting
 format-check:
 	@echo "Checking code formatting..."
-	black $(PROJECT_NAME) tests/ --check
+	black $(PROJECT_PATH) tests/ --check
 
 # Run all checks
 check: format-check lint test
