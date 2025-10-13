@@ -1,5 +1,5 @@
 // Event Flow Visualization with React Flow
-// Uses Babel to transpile JSX in the browser
+// Uses React.createElement (no JSX compilation needed)
 
 const { useState, useCallback, useEffect } = React;
 const ReactFlow = window.ReactFlow.default;
