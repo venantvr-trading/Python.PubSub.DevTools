@@ -23,22 +23,36 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "mock_exchange"))
 sys.path.insert(0, str(Path(__file__).parent.parent / "event_recorder"))
 sys.path.insert(0, str(Path(__file__).parent))
 
-# Type checking imports
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from scenario_schema import TestScenario
-    from chaos_injector import ChaosInjector
-    from assertion_checker import AssertionChecker, AssertionResult
-
 # Runtime imports
-from scenario_schema import TestScenario
-from chaos_injector import ChaosInjector
-from assertion_checker import AssertionChecker, AssertionResult
+from .schema import TestScenario
+from .chaos_injector import ChaosInjector
+from .assertion_checker import AssertionChecker, AssertionResult
 
 # Explicitly import from tools directories
-from scenario_exchange import ScenarioBasedMockExchange, MarketScenario  # type: ignore
-from event_recorder import EventRecorder  # type: ignore
+try:
+    from python_pubsub_devtools.mock_exchange.scenario_exchange import (
+        ScenarioBasedMockExchange,
+        MarketScenario
+    )
+except ImportError:
+    # Fallback to relative imports if package not installed
+    import sys
+    from pathlib import Path
+
+    mock_exchange_path = Path(__file__).parent.parent / "mock_exchange"
+    sys.path.insert(0, str(mock_exchange_path))
+    from scenario_exchange import ScenarioBasedMockExchange, MarketScenario  # type: ignore
+
+try:
+    from python_pubsub_devtools.event_recorder.recorder import EventRecorder
+except ImportError:
+    # Fallback to relative imports
+    import sys
+    from pathlib import Path
+
+    event_recorder_path = Path(__file__).parent.parent / "event_recorder"
+    sys.path.insert(0, str(event_recorder_path))
+    from recorder import EventRecorder  # type: ignore
 
 logging.basicConfig(
     level=logging.INFO,

@@ -22,6 +22,8 @@ Description-Content-Type: text/markdown
 Requires-Dist: flask>=2.0.0
 Requires-Dist: pyyaml>=6.0
 Requires-Dist: pydantic>=2.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: pydot>=1.4.0
 Provides-Extra: dev
 Requires-Dist: setuptools>=65.0; extra == "dev"
 Requires-Dist: wheel; extra == "dev"

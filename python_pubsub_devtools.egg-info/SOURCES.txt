@@ -24,3 +24,6 @@ python_pubsub_devtools/web/templates/event_recorder.html
 python_pubsub_devtools/web/templates/mock_exchange.html
 python_pubsub_devtools/web/templates/recording_detail.html
 python_pubsub_devtools/web/templates/scenario_testing.html
+tests/test_candle_patterns.py
+tests/test_indicators.py
+tests/test_market_scenarios.py

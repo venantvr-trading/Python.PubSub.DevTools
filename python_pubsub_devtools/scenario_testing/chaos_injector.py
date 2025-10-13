@@ -9,19 +9,14 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Optional, List
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from scenario_schema import ChaosAction
-else:
-    from scenario_schema import (
-        ChaosAction,
-        DelayEventChaos,
-        InjectFailureChaos,
-        DropEventChaos,
-        ModifyEventChaos,
-        NetworkLatencyChaos
-    )
+from .schema import (
+    ChaosAction,
+    DelayEventChaos,
+    InjectFailureChaos,
+    DropEventChaos,
+    ModifyEventChaos,
+    NetworkLatencyChaos
+)
 
 logger = logging.getLogger(__name__)
 
@@ -177,12 +172,26 @@ class ChaosInjector:
             if str(project_root) not in sys.path:
                 sys.path.insert(0, str(project_root))
 
-            from python_pubsub_risk.events import __dict__ as events_dict
+            # Try to import from python_pubsub_devtools events (if available)
+            try:
+                from python_pubsub_devtools import events as events_module
 
-            failed_event_class = events_dict.get(action.event)
+                failed_event_class = getattr(events_module, action.event, None)
+            except (ImportError, AttributeError):
+                # Fallback: create a generic failed event
+                failed_event_class = None
+
             if not failed_event_class:
-                logger.error(f"Failed event class {action.event} not found")
-                return
+                logger.warning(f"Failed event class {action.event} not found, creating generic failure")
+                # Create a generic Pydantic event
+                from pydantic import BaseModel
+
+                class GenericFailedEvent(BaseModel):
+                    cycle_id: int
+                    error_message: str
+                    timestamp: str
+
+                failed_event_class = GenericFailedEvent
 
             # Extract cycle_id from original event if available
             cycle_id = getattr(event, 'cycle_id', self._current_cycle)

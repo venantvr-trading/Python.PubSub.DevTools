@@ -122,6 +122,7 @@ pubsub-tools event-flow --port 8080
 ### 1. Event Flow Visualizer (Port 5555)
 
 Visualisation interactive de l'architecture événementielle :
+
 - Graphe complet des événements et agents
 - Arbre hiérarchique simplifié
 - Filtrage par namespace
@@ -129,6 +130,7 @@ Visualisation interactive de l'architecture événementielle :
 - Coloration par namespace
 
 **Lancer** :
+
 ```bash
 pubsub-tools event-flow
 ```
@@ -136,12 +138,14 @@ pubsub-tools event-flow
 ### 2. Event Recorder (Port 5556)
 
 Dashboard pour gérer les enregistrements d'événements :
+
 - Liste des enregistrements
 - Détails et statistiques
 - Timeline des événements
 - Distribution par type
 
 **Lancer** :
+
 ```bash
 pubsub-tools event-recorder
 ```
@@ -149,12 +153,14 @@ pubsub-tools event-recorder
 ### 3. Mock Exchange (Port 5557)
 
 Simulateur de marché pour tests :
+
 - Scénarios : bull, bear, sideways, volatile, crash
 - Configuration de la volatilité
 - Statistiques en temps réel
 - Graphiques de prix
 
 **Lancer** :
+
 ```bash
 pubsub-tools mock-exchange
 ```
@@ -162,12 +168,14 @@ pubsub-tools mock-exchange
 ### 4. Scenario Testing (Port 5558)
 
 Framework de tests basés sur scénarios YAML :
+
 - Exécution de scénarios
 - Injection de chaos
 - Vérification d'assertions
 - Rapports HTML détaillés
 
 **Lancer** :
+
 ```bash
 pubsub-tools test-scenarios
 ```
@@ -200,6 +208,7 @@ git commit -m "Initial commit - Python.PubSub.DevTools library with dependency i
 ### 4. Pousser vers GitHub
 
 Après avoir créé le repo sur GitHub :
+
 ```bash
 git branch -M main
 git push -u origin main
@@ -228,6 +237,7 @@ pip install -e .
 ### Command 'pubsub-tools' not found
 
 Vérifier que le virtualenv est activé, ou réinstaller :
+
 ```bash
 pip install -e /home/rvv/PycharmProjects/venantvr-pubsub/Python.PubSub.DevTools
 ```
@@ -235,12 +245,14 @@ pip install -e /home/rvv/PycharmProjects/venantvr-pubsub/Python.PubSub.DevTools
 ### Error: Config file not found
 
 Assurez-vous d'être dans le bon répertoire :
+
 ```bash
 cd /home/rvv/PycharmProjects/venantvr-pubsub/Python.PubSub.Risk
 pubsub-tools event-flow  # Cherche devtools_config.yaml dans le répertoire courant
 ```
 
 Ou spécifiez le chemin complet :
+
 ```bash
 pubsub-tools event-flow --config /path/to/devtools_config.yaml
 ```
