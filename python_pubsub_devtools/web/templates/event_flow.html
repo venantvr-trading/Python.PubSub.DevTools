@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Event Flow Visualization - Trading Bot</title>
+    <link href="{{ url_for('static', filename='css/event_flow.css') }}" rel="stylesheet">
+</head>
+<body>
+<!-- Control Buttons -->
+<div class="control-buttons">
+    <button class="control-btn" id="toggle-filters-btn" onclick="toggleFilters()" title="Toggle Filters (F)">
+        ☰
+    </button>
+    <button class="control-btn" id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen (Ctrl+Shift+F)">
+        ⛶
+    </button>
+    <button class="control-btn" id="dark-mode-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode (D)">
+        🌙
+    </button>
+</div>
+
+<!-- Filters Overlay -->
+<div class="filters-overlay" id="filters-overlay" onclick="toggleFilters()"></div>
+
+<!-- Filters Sidebar -->
+<div class="filters-sidebar" id="filters-sidebar">
+    <h3>
+        Filters
+        <button class="filters-close" onclick="toggleFilters()">×</button>
+    </h3>
+
+    <div class="filter-section">
+        <label>Namespaces:</label>
+        <div class="filter-options" id="namespace-filters">
+            {% for namespace in namespaces|sort %}
+            <label class="filter-checkbox namespace" style="border-left-color: {{ namespace_colors[namespace] }}">
+                <input checked name="namespace" type="checkbox" value="{{ namespace }}">
+                <span>{{ namespace }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <label>Options:</label>
+        <div class="filter-options">
+            <label class="filter-checkbox">
+                <input id="hide-failed" name="hide_failed" type="checkbox" value="1">
+                <span>Masquer les *Failed</span>
+            </label>
+            <label class="filter-checkbox">
+                <input id="hide-rejected" name="hide_rejected" type="checkbox" value="1">
+                <span>Masquer les *Rejected</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="filter-actions">
+        <button class="filter-btn filter-btn-secondary" onclick="selectAllNamespaces()">Tout sélectionner</button>
+        <button class="filter-btn filter-btn-secondary" onclick="deselectAllNamespaces()">Tout désélectionner</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h1>Event Flow Visualization</h1>
+        <p>Trading Bot Architecture</p>
+    </div>
+
+    <div class="navbar">
+        <a class="nav-link active" href="http://localhost:5555">Event Flow</a>
+        <a class="nav-link" href="http://localhost:5556">Recorder</a>
+        <a class="nav-link" href="http://localhost:5557">Exchange</a>
+        <a class="nav-link" href="http://localhost:5558">Testing</a>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value">{{ total_events }}</div>
+            <div class="stat-label">Events</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">{{ total_agents }}</div>
+            <div class="stat-label">Agents</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">{{ total_connections }}</div>
+            <div class="stat-label">Connections</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">{{ total_namespaces }}</div>
+            <div class="stat-label">Namespaces</div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('simplified')">
+            Simplified Flow
+        </button>
+        <button class="tab" onclick="showTab('complete')">
+            Complete Graph
+        </button>
+        <button class="tab" onclick="showTab('full-tree')">
+            Full Hierarchy
+        </button>
+    </div>
+
+    <div class="content">
+        <!-- Tab 1: Simplified Tree -->
+        <div class="tab-content active" id="simplified">
+            <div class="description">
+                <h3>Simplified Event Flow</h3>
+                <p>Main event flow from BotMonitoringCycleStarted to BotMonitoringCycleCompleted.</p>
+            </div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+                <button class="zoom-btn" onclick="resetZoom()" title="Reset">⟲</button>
+            </div>
+            <div class="graph-container" data-graph-type="simplified" id="graph-simplified">
+                <div class="svg-content"></div>
+                <div class="zoom-info">Molette: Zoom | Glisser: Déplacer | Double-clic: Reset</div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Complete Graph -->
+        <div class="tab-content" id="complete">
+            <div class="description">
+                <h3>Complete Event Graph</h3>
+                <p>All events and agents, including commands and error events.</p>
+            </div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+                <button class="zoom-btn" onclick="resetZoom()" title="Reset">⟲</button>
+            </div>
+            <div class="graph-container" data-graph-type="complete" id="graph-complete">
+                <div class="svg-content"></div>
+                <div class="zoom-info">Molette: Zoom | Glisser: Déplacer | Double-clic: Reset</div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Full Tree -->
+        <div class="tab-content" id="full-tree">
+            <div class="description">
+                <h3>Full Event Hierarchy</h3>
+                <p>Complete hierarchical view with all subscriptions and publications.</p>
+            </div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+                <button class="zoom-btn" onclick="resetZoom()" title="Reset">⟲</button>
+            </div>
+            <div class="graph-container" data-graph-type="full-tree" id="graph-full-tree">
+                <div class="svg-content"></div>
+                <div class="zoom-info">Molette: Zoom | Glisser: Déplacer | Double-clic: Reset</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h4>Namespaces</h4>
+            {% for namespace in namespaces|sort %}
+            <div class="legend-item">
+                <span class="legend-color" style="background: {{ namespace_colors[namespace] }};"></span>
+                {{ namespace }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>🤖 Trading Bot Event-Driven Architecture | <kbd>Ctrl+R</kbd> to refresh</p>
+    </div>
+</div>
+
+<button class="refresh-btn" onclick="location.reload()" title="Refresh graphs">
+    ↻
+</button>
+
+<script src="{{ url_for('static', filename='js/event_flow.js') }}"></script>
+</body>
+</html>
