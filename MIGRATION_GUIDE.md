@@ -214,7 +214,7 @@ Add to `requirements.txt` or `pyproject.toml`:
 Or after publishing to PyPI:
 
 ```
-python-pubsub-devtools>=0.1.0
+python_pubsub_devtools>=0.1.0
 ```
 
 ### 5. Create Migration Scripts (OPTIONAL)
@@ -304,7 +304,7 @@ twine upload dist/*
 Then in any project:
 
 ```bash
-pip install python-pubsub-devtools
+pip install python_pubsub_devtools
 ```
 
 ## 🔄 Migration Path for Existing Code

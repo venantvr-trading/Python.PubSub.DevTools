@@ -35,7 +35,7 @@ A comprehensive suite of development and debugging tools for PubSub-based event-
 ## Installation
 
 ```bash
-pip install python-pubsub-devtools
+pip install python_pubsub_devtools
 ```
 
 Or install from source:

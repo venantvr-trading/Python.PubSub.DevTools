@@ -17,7 +17,7 @@ Example:
 """
 
 __version__ = "0.1.0"
-__author__ = "VenantVR"
+__author__ = "venantvr"
 
 from .config import (
     DevToolsConfig,

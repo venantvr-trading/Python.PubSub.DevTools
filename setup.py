@@ -7,7 +7,7 @@ Modern installations should use pyproject.toml.
 from setuptools import setup, find_packages
 
 setup(
-    name="python-pubsub-devtools",
+    name="python_pubsub_devtools",
     version="0.1.0",
     packages=find_packages(),
     include_package_data=True,

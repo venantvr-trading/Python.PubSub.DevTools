@@ -19,7 +19,7 @@ Tous les renommages ont été effectués avec succès selon vos spécifications 
 ### 3. ✅ Nom du package pip
 
 - **Ancien** : `pubsub-dev-tools`
-- **Nouveau** : `python-pubsub-devtools`
+- **Nouveau** : `python_pubsub_devtools`
 - **Fichier** : `pyproject.toml`
 
 ### 4. ✅ Nom du projet (.idea)
@@ -80,7 +80,7 @@ cd /home/rvv/PycharmProjects/venantvr-pubsub/Python.PubSub.DevTools
 
 # Vérifier le nom du package
 grep "^name = " pyproject.toml
-# Résultat: name = "python-pubsub-devtools"
+# Résultat: name = "python_pubsub_devtools"
 
 # Vérifier le script CLI
 grep "pubsub-tools" pyproject.toml
@@ -112,7 +112,7 @@ pip install -e .
 
 Cela va :
 
-1. Installer le package `python-pubsub-devtools`
+1. Installer le package `python_pubsub_devtools`
 2. Créer la commande `pubsub-tools`
 3. Rendre importable : `from python_pubsub_devtools import ...`
 
@@ -151,7 +151,7 @@ python tools/launch_event_flow.py
 │   │   └── web/
 │   ├── examples/
 │   ├── tests/
-│   ├── pyproject.toml                   # ✅ python-pubsub-devtools
+│   ├── pyproject.toml                   # ✅ python_pubsub_devtools
 │   ├── setup.py                         # ✅ Mis à jour
 │   └── *.md                             # ✅ Documentation à jour
 └── Python.PubSub.Risk/

@@ -3,12 +3,12 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "python-pubsub-devtools"
+name = "python_pubsub_devtools"
 version = "0.1.0"
 description = "Comprehensive development and debugging tools for PubSub-based event-driven architectures"
 readme = "README.md"
 authors = [
-    { name = "VenantVR", email = "contact@example.com" }
+    { name = "venantvr", email = "contact@example.com" }
 ]
 license = { text = "MIT" }
 classifiers = [
@@ -31,6 +31,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "setuptools>=65.0",
+    "wheel",
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "flake8>=6.0",
