@@ -57,7 +57,7 @@ Tous les imports `pubsub_dev_tools` ont été remplacés par `python_pubsub_devt
 ### Documentation
 
 - ✅ `README.md`
-- ✅ `MIGRATION_GUIDE.md`
+- ✅ `06_MIGRATION_GUIDE.md`
 - ✅ `SETUP_COMPLETE.md`
 - ✅ `QUICK_START.sh`
 

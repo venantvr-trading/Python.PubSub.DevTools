@@ -47,7 +47,7 @@ Python.PubSub.DevTools/
 │   └── basic_usage.py             ✅ Exemple d'utilisation
 ├── tests/                         📝 À compléter
 ├── README.md                      ✅ Documentation complète
-├── MIGRATION_GUIDE.md             ✅ Guide de migration
+├── 06_MIGRATION_GUIDE.md          ✅ Guide de migration
 ├── pyproject.toml                 ✅ Configuration package
 ├── setup.py                       ✅ Setup classique
 └── .gitignore                     ✅ Fichiers ignorés
@@ -176,7 +176,7 @@ pubsub-tools test-scenarios --config devtools_config.yaml
 ## 📚 Documentation
 
 - **README.md** : Documentation générale de la librairie
-- **MIGRATION_GUIDE.md** : Guide détaillé de migration
+- **06_MIGRATION_GUIDE.md** : Guide détaillé de migration
 - **examples/** : Exemples d'utilisation
 - **pyproject.toml** : Métadonnées et dépendances du package
 

@@ -32,6 +32,15 @@ A comprehensive suite of development and debugging tools for PubSub-based event-
 - Automated assertion checking
 - Detailed HTML reports
 
+### 📊 Event Metrics Collector (NEW!)
+
+- Real-time event metrics collection
+- Performance monitoring (P50, P95, P99 latencies)
+- Error rate tracking
+- Handler profiling
+- CLI for quick inspection
+- Export for integration with monitoring tools
+
 ## Installation
 
 ```bash
@@ -98,6 +107,11 @@ pubsub-tools mock-exchange
 # Run scenario tests
 pubsub-tools test-scenarios --scenario my_scenario.yaml
 
+# View event metrics
+pubsub-tools metrics show
+pubsub-tools metrics event OrderCreated
+pubsub-tools metrics export metrics.json
+
 # Launch all dashboards
 pubsub-tools dashboard
 ```
@@ -154,6 +168,29 @@ Test your event-driven system:
 - Validate assertions
 - Generate detailed reports
 
+### Event Metrics (NEW!)
+
+Monitor your event-driven system in real-time:
+
+- Automatic metrics collection with `@collect_metrics` decorator
+- Performance tracking (latencies, throughput)
+- Error rate monitoring
+- Handler profiling
+- CLI for inspection
+- Export to JSON for integration with Prometheus/Grafana
+
+**Example:**
+```python
+from python_pubsub_devtools.metrics import collect_metrics
+
+@collect_metrics
+def handle_order(event):
+    process_order(event)
+    # Metrics automatically collected!
+```
+
+See [docs/03_METRICS.md](docs/03_METRICS.md) for full documentation.
+
 ## Architecture
 
 The library is designed with dependency injection for maximum flexibility:
@@ -165,6 +202,8 @@ python_pubsub_devtools/
 ├── event_recorder/     # Recording and replaying events
 ├── mock_exchange/      # Market simulation
 ├── scenario_testing/   # Scenario-based testing
+├── metrics/           # Event metrics collector (NEW!)
+├── trading/           # Trading indicators and patterns
 ├── web/               # Shared web assets (templates, CSS, JS)
 └── cli/               # Command-line interface
 ```

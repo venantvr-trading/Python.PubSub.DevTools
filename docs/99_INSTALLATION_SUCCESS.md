@@ -219,7 +219,7 @@ git push -u origin main
 ## 📚 Documentation
 
 - **README.md** : Documentation complète de la librairie
-- **MIGRATION_GUIDE.md** : Guide de migration détaillé
+- **06_MIGRATION_GUIDE.md** : Guide de migration détaillé
 - **RENAMING_COMPLETE.md** : Détails des renommages effectués
 - **examples/** : Exemples d'utilisation
 

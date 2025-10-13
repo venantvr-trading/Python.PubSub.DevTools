@@ -84,6 +84,11 @@ Examples:
         help='Launch all dashboards (event-flow, event-recorder, mock-exchange, test-scenarios)'
     )
 
+    # Metrics command
+    from .commands import setup_metrics_parser
+
+    setup_metrics_parser(subparsers)
+
     # Version command
     version_parser = subparsers.add_parser(
         'version',
@@ -103,6 +108,16 @@ Examples:
 
         print(f"PubSub Dev Tools version {__version__}")
         return 0
+
+    # Handle metrics command
+    if args.command == 'metrics':
+        # Metrics commands don't require config file
+        if hasattr(args, 'func'):
+            return args.func(args)
+        else:
+            print("❌ Error: No metrics subcommand specified")
+            print("Use: pubsub-tools metrics --help")
+            return 1
 
     # Load configuration
     config_path = Path(args.config)
