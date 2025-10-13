@@ -4,12 +4,10 @@ Event Flow Visualization Server
 Flask server for displaying event flow diagrams with modern UI.
 """
 import re
-import subprocess
-import tempfile
 from pathlib import Path
-from typing import Dict, Set
+from typing import Dict
 
-from flask import Flask, render_template, request, Response
+from flask import Flask, render_template, request, jsonify
 
 from .analyzer import EventFlowAnalyzer
 from ..config import EventFlowConfig
@@ -41,9 +39,15 @@ class EventFlowServer:
         def index():
             return self._index()
 
-        @app.route('/graph/<graph_type>')
-        def graph(graph_type):
-            return self._graph(graph_type)
+        @app.route('/api/graph-data/<graph_type>')
+        def api_graph_data(graph_type: str):
+            """Provide graph data in JSON format for React Flow"""
+            return self._api_graph_data(graph_type)
+
+        @app.route('/api/generate-prompt', methods=['POST'])
+        def api_generate_prompt():
+            """Generate LLM prompt for graph modifications"""
+            return self._api_generate_prompt()
 
         return app
 
@@ -155,196 +159,104 @@ class EventFlowServer:
             namespace_colors=self.config.namespace_colors
         )
 
-    def _graph(self, graph_type: str):
-        """Generate and serve graph SVG with filters"""
-        selected_namespaces = set(request.args.getlist('namespaces'))
-        hide_failed = request.args.get('hide_failed', '0') == '1'
-        hide_rejected = request.args.get('hide_rejected', '0') == '1'
+    def _api_graph_data(self, graph_type: str):
+        """API endpoint to provide graph data in JSON format for React Flow"""
+        analyzer = EventFlowAnalyzer(self.config.agents_dir)
+        analyzer.analyze()
+        self._filter_test_agents(analyzer)
 
-        if not selected_namespaces:
-            event_to_namespace, _ = self._map_event_namespaces()
-            selected_namespaces = set(event_to_namespace.values())
+        # For now, return the same data for all graph types
+        # You can add filtering logic here later for 'simplified' vs 'complete'
+        return jsonify(analyzer.to_interactive_json())
 
-        svg_content = self._generate_graph_svg(graph_type, selected_namespaces,
-                                               hide_failed, hide_rejected)
-        return Response(svg_content, mimetype='image/svg+xml')
+    def _api_generate_prompt(self):
+        """API endpoint to generate LLM prompts for graph modifications"""
+        data = request.json
+        action = data.get('action')
+        event = data.get('event')
+        agent = data.get('agent')
 
-    def _generate_graph_svg(self, graph_type: str, namespaces: Set[str],
-                            hide_failed: bool, hide_rejected: bool) -> bytes:
-        """Generate SVG for the specified graph type"""
         analyzer = EventFlowAnalyzer(self.config.agents_dir)
         analyzer.analyze()
 
-        self._filter_test_agents(analyzer)
+        if action == 'add_subscription':
+            prompt = self._generate_add_subscription_prompt(event, agent, analyzer)
+        elif action == 'remove_subscription':
+            prompt = self._generate_remove_subscription_prompt(event, agent, analyzer)
+        else:
+            prompt = "Action non supportée pour le moment."
 
-        event_to_namespace, event_to_annotations = self._map_event_namespaces()
+        return jsonify({'prompt': prompt})
 
-        def should_include_event(event_name: str) -> bool:
-            if hide_failed:
-                annotations = event_to_annotations.get(event_name, set())
-                if 'failed' in annotations:
-                    return False
+    def _generate_add_subscription_prompt(self, event: str, agent: str, analyzer: EventFlowAnalyzer) -> str:
+        """Generate prompt for adding a subscription"""
+        publishers = analyzer.event_to_publishers.get(event, [])
+        existing_subscribers = analyzer.event_to_subscribers.get(event, [])
 
-            if hide_rejected:
-                annotations = event_to_annotations.get(event_name, set())
-                if 'rejection' in annotations:
-                    return False
+        prompt = f"""# Task: Add Event Subscription
 
-            event_ns = event_to_namespace.get(event_name, 'unknown')
-            return event_ns in namespaces
+## Objective
+Make the agent `{agent}` subscribe to the event `{event}`.
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.dot', delete=False) as dot_file:
-            dot_path = Path(dot_file.name)
-            svg_path = dot_path.with_suffix('.svg')
+## Context
+- **Event**: `{event}`
+- **Current Publishers**: {', '.join(publishers) if publishers else 'None (external event)'}
+- **Current Subscribers**: {', '.join(existing_subscribers) if existing_subscribers else 'None'}
 
-            try:
-                if graph_type == 'simplified':
-                    from .hierarchical_tree import generate_simplified_tree
+## Implementation Steps
+1. Locate the `{agent}` agent file in the agents directory
+2. Add the following subscription in the agent's initialization:
+   ```python
+   self.service_bus.subscribe({event}.__name__, self._handle_{event.lower()})
+   ```
+3. Implement the event handler:
+   ```python
+   async def _handle_{event.lower()}(self, event_data: {event}):
+       # TODO: Implement event handling logic
+       pass
+   ```
+4. Ensure the event class is imported at the top of the file
+5. Test the subscription to verify it works correctly
 
-                    generate_simplified_tree(analyzer, str(dot_path), format='dot')
-                elif graph_type == 'complete':
-                    self._generate_complete_graph(analyzer, dot_path, event_to_namespace,
-                                                  namespaces, should_include_event)
-                elif graph_type == 'full-tree':
-                    self._generate_full_tree(analyzer, dot_path, namespaces, should_include_event)
-
-                result = subprocess.run(
-                    ['dot', '-Tsvg', str(dot_path), '-o', str(svg_path)],
-                    check=True,
-                    capture_output=True,
-                    text=True
-                )
-
-                svg_content = svg_path.read_bytes()
-                return svg_content
-
-            except subprocess.CalledProcessError as e:
-                error_msg = f"Error generating SVG: {e.stderr}"
-                return self._error_svg(error_msg)
-            except FileNotFoundError:
-                return self._error_svg("Graphviz not installed. Install with: sudo apt-get install graphviz")
-            except Exception as e:
-                return self._error_svg(f"Unexpected error: {str(e)}")
-            finally:
-                if dot_path.exists():
-                    dot_path.unlink()
-                if svg_path.exists():
-                    svg_path.unlink()
-
-    def _generate_complete_graph(self, analyzer, dot_path, event_to_namespace, namespaces, should_include_event):
-        """Generate complete graph DOT file"""
-        dot_content = """digraph EventFlow {
-    rankdir=TB;
-    node [shape=box, style="filled,rounded", fontname="Segoe UI", fontsize=10, color="#cccccc"];
-    edge [arrowsize=0.8, color="#999999"];
-
+## Notes
+- This is a new subscription, so you're adding functionality to `{agent}`
+- Consider what this agent should do when receiving `{event}`
 """
-        events = {e for e in analyzer.get_all_events() if should_include_event(e)}
-        connected_agents = set()
+        return prompt
 
-        for event in events:
-            if event in analyzer.event_to_subscribers:
-                connected_agents.update(analyzer.event_to_subscribers[event])
+    def _generate_remove_subscription_prompt(self, event: str, agent: str, analyzer: EventFlowAnalyzer) -> str:
+        """Generate prompt for removing a subscription"""
+        prompt = f"""# Task: Remove Event Subscription
 
-        for agent, publications in analyzer.publications.items():
-            for event in publications:
-                if event in events:
-                    connected_agents.add(agent)
-                    break
+## Objective
+Remove the subscription of agent `{agent}` to the event `{event}`.
 
-        for event in sorted(events):
-            namespace = event_to_namespace.get(event, 'unknown')
-            color = self._get_namespace_color(namespace)
-            dot_content += f'    "{event}" [fillcolor="{color}", shape=ellipse];\n'
+## Context
+- **Event**: `{event}`
+- **Agent**: `{agent}`
 
-        for agent in sorted(connected_agents):
-            dot_content += f'    "{agent}" [fillcolor="#ffcc80"];\n'
+## Implementation Steps
+1. Locate the `{agent}` agent file in the agents directory
+2. Remove or comment out the subscription:
+   ```python
+   # self.service_bus.subscribe({event}.__name__, self._handle_{event.lower()})
+   ```
+3. Optionally remove the associated event handler method `_handle_{event.lower()}`
+4. Remove the import for `{event}` if it's no longer used
+5. Test to ensure the agent no longer receives `{event}` events
 
-        dot_content += '\n'
-
-        for event, subscribers in sorted(analyzer.event_to_subscribers.items()):
-            if event not in events:
-                continue
-            for subscriber in subscribers:
-                if subscriber in connected_agents:
-                    dot_content += f'    "{event}" -> "{subscriber}";\n'
-
-        for agent, publications in sorted(analyzer.publications.items()):
-            if agent not in connected_agents:
-                continue
-            for event in publications:
-                if event not in events:
-                    continue
-                dot_content += f'    "{agent}" -> "{event}";\n'
-
-        dot_content += '}\n'
-        dot_path.write_text(dot_content)
-
-    def _generate_full_tree(self, analyzer, dot_path, namespaces, should_include_event):
-        """Generate full hierarchical tree DOT file"""
-        from .hierarchical_tree import generate_hierarchical_tree
-
-        events = {e for e in analyzer.get_all_events() if should_include_event(e)}
-        connected_agents = set()
-
-        for event in events:
-            if event in analyzer.event_to_subscribers:
-                connected_agents.update(analyzer.event_to_subscribers[event])
-
-        for agent, publications in analyzer.publications.items():
-            for event in publications:
-                if event in events:
-                    connected_agents.add(agent)
-                    break
-
-        filtered_analyzer = EventFlowAnalyzer(self.config.agents_dir)
-
-        for agent in connected_agents:
-            if agent in analyzer.subscriptions:
-                filtered_subs = [e for e in analyzer.subscriptions[agent] if e in events]
-                if filtered_subs:
-                    filtered_analyzer.subscriptions[agent] = filtered_subs
-
-        for agent in connected_agents:
-            if agent in analyzer.publications:
-                filtered_pubs = [e for e in analyzer.publications[agent] if e in events]
-                if filtered_pubs:
-                    filtered_analyzer.publications[agent] = filtered_pubs
-
-        for agent, subs in filtered_analyzer.subscriptions.items():
-            for event in subs:
-                if event not in filtered_analyzer.event_to_subscribers:
-                    filtered_analyzer.event_to_subscribers[event] = []
-                filtered_analyzer.event_to_subscribers[event].append(agent)
-
-        for agent, pubs in filtered_analyzer.publications.items():
-            for event in pubs:
-                if event not in filtered_analyzer.event_to_publishers:
-                    filtered_analyzer.event_to_publishers[event] = []
-                filtered_analyzer.event_to_publishers[event].append(agent)
-
-        generate_hierarchical_tree(filtered_analyzer, str(dot_path), format='dot')
-
-    def _error_svg(self, message: str) -> bytes:
-        """Generate error SVG"""
-        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400">
-            <text x="10" y="50" font-size="16" fill="red">{message}</text>
-        </svg>'''
-        return svg.encode('utf-8')
+## Notes
+- This removes existing functionality from `{agent}`
+- Ensure this doesn't break any critical business logic
+"""
+        return prompt
 
     def run(self, host: str = '0.0.0.0', debug: bool = True):
         """Run the Flask server"""
-        import shutil
-
         print("=" * 80)
-        print("🚀 Event Flow Visualization Server")
+        print("🚀 Event Flow Visualization Server (React Flow)")
         print("=" * 80)
         print()
-
-        if not shutil.which('dot'):
-            print("❌ ERROR: Graphviz not installed!")
-            print("Install with: sudo apt-get install graphviz")
-            return 1
 
         if not self.config.agents_dir.exists():
             print(f"❌ Error: Agents directory not found at {self.config.agents_dir}")

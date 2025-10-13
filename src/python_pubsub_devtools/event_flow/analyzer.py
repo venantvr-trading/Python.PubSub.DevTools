@@ -175,6 +175,64 @@ class EventFlowAnalyzer:
         lines.append('}')
         return '\n'.join(lines)
 
+    def to_interactive_json(self) -> dict:
+        """
+        Generate JSON data for interactive visualization (React Flow format)
+
+        Returns:
+            dict: Dictionary with 'nodes' and 'edges' lists for React Flow
+        """
+        nodes = []
+        edges = []
+
+        events = self.get_all_events()
+        agents = set(self.subscriptions.keys()) | set(self.publications.keys())
+
+        # Create event nodes
+        for event in sorted(events):
+            nodes.append({
+                'id': event,
+                'type': 'event',
+                'data': {'label': event},
+                'position': {'x': 0, 'y': 0}  # Will be positioned by React Flow
+            })
+
+        # Create agent nodes
+        for agent in sorted(agents):
+            nodes.append({
+                'id': agent,
+                'type': 'agent',
+                'data': {'label': agent},
+                'position': {'x': 0, 'y': 0}  # Will be positioned by React Flow
+            })
+
+        # Create edges for subscriptions (event -> agent)
+        for event, subscribers in self.event_to_subscribers.items():
+            for subscriber in subscribers:
+                edges.append({
+                    'id': f"{event}-to-{subscriber}",
+                    'source': event,
+                    'target': subscriber,
+                    'type': 'subscription',
+                    'animated': False
+                })
+
+        # Create edges for publications (agent -> event)
+        for agent, publications in self.publications.items():
+            for event in publications:
+                edges.append({
+                    'id': f"{agent}-to-{event}",
+                    'source': agent,
+                    'target': event,
+                    'type': 'publication',
+                    'animated': True  # Animated to show publication direction
+                })
+
+        return {
+            'nodes': nodes,
+            'edges': edges
+        }
+
     def print_summary(self):
         """Print a text summary of the event flow"""
         print("=" * 80)

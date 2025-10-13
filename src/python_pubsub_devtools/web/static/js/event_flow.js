@@ -1,333 +1,300 @@
-/**
- * Event Flow Visualization JavaScript
- */
+// Event Flow Visualization with React Flow
+// Uses Babel to transpile JSX in the browser
 
-// Filters sidebar toggle
+const { useState, useCallback, useEffect } = React;
+const ReactFlow = window.ReactFlow.default;
+const { Controls, Background, useNodesState, useEdgesState, addEdge, MarkerType } = window.ReactFlow;
+
+let currentRoot = null; // Keep track of current React root
+
+// Custom Node Components
+const EventNode = ({ data }) => {
+    return React.createElement('div', {
+        style: {
+            background: '#A7C7E7',
+            padding: '12px',
+            borderRadius: '50%',
+            border: '2px solid #5a7d9e',
+            fontSize: '11px',
+            textAlign: 'center',
+            minWidth: '60px',
+            maxWidth: '120px',
+            wordWrap: 'break-word',
+            color: '#000'
+        }
+    }, data.label);
+};
+
+const AgentNode = ({ data }) => {
+    return React.createElement('div', {
+        style: {
+            background: '#FDFD96',
+            padding: '10px 15px',
+            borderRadius: '5px',
+            border: '2px solid #c5c56d',
+            fontSize: '11px',
+            textAlign: 'center',
+            minWidth: '80px',
+            color: '#000'
+        }
+    }, data.label);
+};
+
+const nodeTypes = {
+    event: EventNode,
+    agent: AgentNode
+};
+
+// Main React Component for Event Flow Visualization
+function EventFlowDiagram({ graphType, isEditable }) {
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Load graph data from API
+    useEffect(() => {
+        setIsLoading(true);
+        fetch(`/api/graph-data/${graphType}`)
+            .then(res => res.json())
+            .then(data => {
+                // Position nodes in a grid layout
+                const nodesWithPosition = data.nodes.map((node, i) => {
+                    const cols = 6;
+                    const xSpacing = 200;
+                    const ySpacing = 150;
+                    return {
+                        ...node,
+                        position: {
+                            x: (i % cols) * xSpacing,
+                            y: Math.floor(i / cols) * ySpacing
+                        }
+                    };
+                });
+
+                // Add marker to edges
+                const edgesWithMarkers = data.edges.map(edge => ({
+                    ...edge,
+                    markerEnd: {
+                        type: MarkerType.ArrowClosed,
+                        width: 20,
+                        height: 20,
+                        color: edge.animated ? '#4CAF50' : '#999'
+                    },
+                    style: {
+                        strokeWidth: 2,
+                        stroke: edge.animated ? '#4CAF50' : '#999'
+                    }
+                }));
+
+                setNodes(nodesWithPosition);
+                setEdges(edgesWithMarkers);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error('Error loading graph data:', err);
+                setIsLoading(false);
+            });
+    }, [graphType]);
+
+    // Handle new connections (only in editable mode)
+    const onConnect = useCallback((params) => {
+        if (!isEditable) return;
+
+        setEdges((eds) => addEdge({
+            ...params,
+            markerEnd: {
+                type: MarkerType.ArrowClosed,
+                width: 20,
+                height: 20,
+                color: '#4CAF50'
+            },
+            style: {
+                strokeWidth: 2,
+                stroke: '#4CAF50'
+            },
+            animated: true
+        }, eds));
+
+        generatePromptForChange({ ...params, type: 'add' });
+    }, [isEditable, nodes]);
+
+    // Handle edge deletion (only in editable mode)
+    const onEdgesDelete = useCallback((edgesToDelete) => {
+        if (!isEditable) return;
+        edgesToDelete.forEach(edge => generatePromptForChange({ ...edge, type: 'remove' }));
+    }, [isEditable, nodes]);
+
+    // Generate prompt for graph modifications
+    const generatePromptForChange = async (change) => {
+        const promptDisplay = document.getElementById('prompt-display');
+        if (!promptDisplay) return;
+
+        const sourceNode = nodes.find(n => n.id === change.source);
+        const targetNode = nodes.find(n => n.id === change.target);
+
+        if (!sourceNode || !targetNode) return;
+
+        let payload;
+
+        if (sourceNode.type === 'event') {
+            // Event -> Agent (subscription)
+            payload = {
+                action: change.type === 'add' ? "add_subscription" : "remove_subscription",
+                event: change.source,
+                agent: change.target
+            };
+        } else {
+            // Agent -> Event (publication) - not supported yet
+            promptDisplay.textContent = "Modification des publications non supportée pour le moment.";
+            return;
+        }
+
+        promptDisplay.textContent = 'Génération du prompt...';
+
+        try {
+            const response = await fetch('/api/generate-prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            promptDisplay.textContent = data.prompt;
+        } catch (err) {
+            promptDisplay.textContent = `Erreur lors de la génération du prompt: ${err.message}`;
+        }
+    };
+
+    if (isLoading) {
+        return React.createElement('div', {
+            style: {
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                fontSize: '18px',
+                color: '#666'
+            }
+        }, 'Chargement du graphe...');
+    }
+
+    return React.createElement(ReactFlow, {
+        nodes: nodes,
+        edges: edges,
+        onNodesChange: onNodesChange,
+        onEdgesChange: onEdgesChange,
+        onConnect: onConnect,
+        onEdgesDelete: onEdgesDelete,
+        nodeTypes: nodeTypes,
+        fitView: true,
+        nodesDraggable: true, // Always draggable for better UX
+        nodesConnectable: isEditable,
+        elementsSelectable: isEditable,
+        minZoom: 0.1,
+        maxZoom: 2
+    }, [
+        React.createElement(Controls, { key: 'controls' }),
+        React.createElement(Background, { key: 'background', color: '#aaa', gap: 16 })
+    ]);
+}
+
+// Global function to render the flow diagram
+function renderFlow(tabId, isEditable) {
+    // Manage tab state
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+
+    const containerId = `flow-${tabId}`;
+    const container = document.getElementById(containerId);
+
+    if (!container) {
+        console.error(`Container ${containerId} not found`);
+        return;
+    }
+
+    // Destroy previous root if it exists
+    if (currentRoot) {
+        currentRoot.unmount();
+    }
+
+    // Create new root and render
+    currentRoot = ReactDOM.createRoot(container);
+    currentRoot.render(
+        React.createElement(EventFlowDiagram, {
+            graphType: tabId,
+            isEditable: isEditable
+        })
+    );
+}
+
+// Copy prompt to clipboard
+function copyPrompt() {
+    const promptText = document.getElementById('prompt-display').textContent;
+    navigator.clipboard.writeText(promptText).then(() => {
+        alert('Prompt copié dans le presse-papiers !');
+    }).catch(err => {
+        console.error('Erreur lors de la copie:', err);
+        alert('Erreur lors de la copie du prompt');
+    });
+}
+
+// Filter functions (keep existing functionality)
 function toggleFilters() {
     const sidebar = document.getElementById('filters-sidebar');
     const overlay = document.getElementById('filters-overlay');
+    const isActive = sidebar.classList.contains('active');
 
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('visible');
-
-    // Save state
-    localStorage.setItem('filtersSidebarOpen', sidebar.classList.contains('open'));
-}
-
-// Fullscreen toggle
-function toggleFullscreen() {
-    document.body.classList.toggle('fullscreen');
-
-    // Update button icon
-    const btn = document.getElementById('fullscreen-btn');
-    if (document.body.classList.contains('fullscreen')) {
-        btn.textContent = '⛶'; // Exit fullscreen icon
+    if (isActive) {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
     } else {
-        btn.textContent = '⛶'; // Fullscreen icon
+        sidebar.classList.add('active');
+        overlay.classList.add('active');
     }
-
-    // Save state
-    localStorage.setItem('fullscreenMode', document.body.classList.contains('fullscreen'));
-}
-
-// Dark mode toggle
-function toggleDarkMode() {
-    document.body.classList.toggle('dark-mode');
-
-    // Update button icon
-    const btn = document.getElementById('dark-mode-btn');
-    if (document.body.classList.contains('dark-mode')) {
-        btn.textContent = '☀️'; // Light mode icon
-        localStorage.setItem('darkMode', 'enabled');
-    } else {
-        btn.textContent = '🌙'; // Dark mode icon
-        localStorage.setItem('darkMode', 'disabled');
-    }
-}
-
-// Restore UI state
-function restoreUIState() {
-    // Restore filters sidebar state
-    const sidebarOpen = localStorage.getItem('filtersSidebarOpen') === 'true';
-    if (sidebarOpen) {
-        document.getElementById('filters-sidebar').classList.add('open');
-        document.getElementById('filters-overlay').classList.add('visible');
-    }
-
-    // Restore fullscreen state
-    const fullscreen = localStorage.getItem('fullscreenMode') === 'true';
-    if (fullscreen) {
-        document.body.classList.add('fullscreen');
-    }
-
-    // Restore dark mode state
-    const darkMode = localStorage.getItem('darkMode');
-    const btn = document.getElementById('dark-mode-btn');
-    if (darkMode === 'enabled') {
-        document.body.classList.add('dark-mode');
-        btn.textContent = '☀️';
-    } else {
-        btn.textContent = '🌙';
-    }
-}
-
-// Zoom and Pan functionality
-let currentZoom = 1;
-let currentX = 0;
-let currentY = 0;
-let isDragging = false;
-let startX = 0;
-let startY = 0;
-
-// Load SVG content directly into DOM
-async function loadSVG(container) {
-    const graphType = container.getAttribute('data-graph-type');
-    const svgContent = container.querySelector('.svg-content');
-
-    // Get current filters
-    const params = new URLSearchParams();
-
-    // Get selected namespaces
-    const checkedNamespaces = Array.from(
-        document.querySelectorAll('input[name="namespace"]:checked')
-    ).map(cb => cb.value);
-
-    checkedNamespaces.forEach(ns => params.append('namespaces', ns));
-
-    // Get hide_failed option
-    const hideFailed = document.querySelector('#hide-failed').checked;
-    if (hideFailed) {
-        params.append('hide_failed', '1');
-    }
-
-    // Get hide_rejected option
-    const hideRejected = document.querySelector('#hide-rejected').checked;
-    if (hideRejected) {
-        params.append('hide_rejected', '1');
-    }
-
-    try {
-        const response = await fetch(`/graph/${graphType}?${params.toString()}`);
-        const svgText = await response.text();
-        svgContent.innerHTML = svgText;
-    } catch (error) {
-        console.error('Error loading SVG:', error);
-        svgContent.innerHTML = '<p style="color: red;">Error loading graph</p>';
-    }
-}
-
-async function applyFilters() {
-    // Reload all SVGs with new filters
-    const containers = document.querySelectorAll('.graph-container');
-    for (const container of containers) {
-        await loadSVG(container);
-    }
-
-    // Save filter state
-    saveFilterState();
 }
 
 function selectAllNamespaces() {
-    document.querySelectorAll('input[name="namespace"]').forEach(cb => {
+    document.querySelectorAll('#namespace-filters input[type="checkbox"]').forEach(cb => {
         cb.checked = true;
     });
 }
 
 function deselectAllNamespaces() {
-    document.querySelectorAll('input[name="namespace"]').forEach(cb => {
+    document.querySelectorAll('#namespace-filters input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
     });
 }
 
-function saveFilterState() {
-    const checkedNamespaces = Array.from(
-        document.querySelectorAll('input[name="namespace"]:checked')
-    ).map(cb => cb.value);
-    const hideFailed = document.querySelector('#hide-failed').checked;
-    const hideRejected = document.querySelector('#hide-rejected').checked;
-
-    localStorage.setItem('filterNamespaces', JSON.stringify(checkedNamespaces));
-    localStorage.setItem('filterHideFailed', hideFailed);
-    localStorage.setItem('filterHideRejected', hideRejected);
-}
-
-function restoreFilterState() {
-    const savedNamespaces = localStorage.getItem('filterNamespaces');
-    const savedHideFailed = localStorage.getItem('filterHideFailed');
-    const savedHideRejected = localStorage.getItem('filterHideRejected');
-
-    if (savedNamespaces) {
-        const namespaces = JSON.parse(savedNamespaces);
-        document.querySelectorAll('input[name="namespace"]').forEach(cb => {
-            cb.checked = namespaces.includes(cb.value);
-        });
-    }
-
-    if (savedHideFailed !== null) {
-        document.querySelector('#hide-failed').checked = savedHideFailed === 'true';
-    }
-
-    if (savedHideRejected !== null) {
-        document.querySelector('#hide-rejected').checked = savedHideRejected === 'true';
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        document.exitFullscreen();
     }
 }
 
-function showTab(tabName) {
-    // Hide all tabs
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-
-    // Show selected tab
-    document.getElementById(tabName).classList.add('active');
-    event.target.classList.add('active');
-
-    // Save to localStorage
-    localStorage.setItem('lastActiveTab', tabName);
-
-    // Reset zoom for new tab
-    currentZoom = 1;
-    currentX = 0;
-    currentY = 0;
-    updateTransform();
-}
-
-function zoomIn() {
-    currentZoom = Math.min(currentZoom * 1.2, 10);
-    updateTransform();
-}
-
-function zoomOut() {
-    currentZoom = Math.max(currentZoom / 1.2, 0.1);
-    updateTransform();
-}
-
-function resetZoom() {
-    currentZoom = 1;
-    currentX = 0;
-    currentY = 0;
-    updateTransform();
-}
-
-function updateTransform() {
-    const activeTab = document.querySelector('.tab-content.active');
-    if (!activeTab) return;
-
-    const container = activeTab.querySelector('.graph-container');
-    if (!container) return;
-
-    const svgContent = container.querySelector('.svg-content');
-    if (!svgContent) return;
-
-    svgContent.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentZoom})`;
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
 }
 
 // Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-    // F = Toggle filters
-    if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F' || e.key === 'f') {
         toggleFilters();
-    }
-    // ESC = Close filters if open
-    if (e.key === 'Escape') {
-        const sidebar = document.getElementById('filters-sidebar');
-        if (sidebar.classList.contains('open')) {
-            toggleFilters();
-        }
-    }
-    // Ctrl/Cmd + Shift + F = Toggle fullscreen
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+    } else if (e.key === 'D' || e.key === 'd') {
+        toggleDarkMode();
+    } else if (e.ctrlKey && e.shiftKey && e.key === 'F') {
         e.preventDefault();
         toggleFullscreen();
     }
-    // D = Toggle dark mode
-    if (e.key === 'd' || e.key === 'D') {
-        e.preventDefault();
-        toggleDarkMode();
-    }
 });
 
-// Setup zoom and pan for all graph containers
-document.addEventListener('DOMContentLoaded', async function() {
-    // Restore UI state
-    restoreUIState();
-
-    // Restore filter state
-    restoreFilterState();
-
-    const containers = document.querySelectorAll('.graph-container');
-
-    // Load all SVGs
-    for (const container of containers) {
-        await loadSVG(container);
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Render the first tab by default
+    const firstTab = document.querySelector('.tab');
+    if (firstTab) {
+        renderFlow('simplified', false);
     }
-
-    // Restore last active tab
-    const lastTab = localStorage.getItem('lastActiveTab') || 'simplified';
-    const tabButton = document.querySelector(`button.tab[onclick="showTab('${lastTab}')"]`);
-    if (tabButton) {
-        tabButton.click();
-    }
-
-    // Add real-time filter change listeners
-    document.querySelectorAll('input[name="namespace"]').forEach(checkbox => {
-        checkbox.addEventListener('change', applyFilters);
-    });
-
-    document.querySelector('#hide-failed').addEventListener('change', applyFilters);
-    document.querySelector('#hide-rejected').addEventListener('change', applyFilters);
-
-    // Setup interactions
-    containers.forEach(container => {
-        // Mouse wheel zoom
-        container.addEventListener('wheel', function(e) {
-            e.preventDefault();
-
-            const delta = e.deltaY;
-            const zoomSpeed = 0.001;
-            const zoomFactor = 1 - delta * zoomSpeed;
-
-            const newZoom = currentZoom * zoomFactor;
-            currentZoom = Math.max(0.1, Math.min(10, newZoom));
-
-            updateTransform();
-        });
-
-        // Mouse drag pan
-        container.addEventListener('mousedown', function(e) {
-            if (e.button === 0) { // Left click only
-                isDragging = true;
-                startX = e.clientX - currentX;
-                startY = e.clientY - currentY;
-                container.style.cursor = 'grabbing';
-            }
-        });
-
-        container.addEventListener('mousemove', function(e) {
-            if (isDragging) {
-                currentX = e.clientX - startX;
-                currentY = e.clientY - startY;
-                updateTransform();
-            }
-        });
-
-        container.addEventListener('mouseup', function() {
-            isDragging = false;
-            container.style.cursor = 'grab';
-        });
-
-        container.addEventListener('mouseleave', function() {
-            isDragging = false;
-            container.style.cursor = 'grab';
-        });
-
-        // Double click to reset
-        container.addEventListener('dblclick', function() {
-            resetZoom();
-        });
-    });
 });

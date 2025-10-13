@@ -5,6 +5,13 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Event Flow Visualization - Trading Bot</title>
     <link href="{{ url_for('static', filename='css/event_flow.css') }}" rel="stylesheet">
+
+    <!-- React Flow Dependencies -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reactflow@11.10.1/dist/umd/index.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/reactflow@11.10.1/dist/style.min.css" rel="stylesheet"/>
 </head>
 <body>
 <!-- Control Buttons -->
@@ -95,33 +102,25 @@
     </div>
 
     <div class="tabs">
-        <button class="tab active" onclick="showTab('simplified')">
+        <button class="tab active" onclick="renderFlow('simplified', false)">
             Simplified Flow
         </button>
-        <button class="tab" onclick="showTab('complete')">
+        <button class="tab" onclick="renderFlow('complete', false)">
             Complete Graph
         </button>
-        <button class="tab" onclick="showTab('full-tree')">
-            Full Hierarchy
+        <button class="tab" onclick="renderFlow('ia-editor', true)">
+            🤖 Éditeur IA
         </button>
     </div>
 
     <div class="content">
-        <!-- Tab 1: Simplified Tree -->
+        <!-- Tab 1: Simplified Flow -->
         <div class="tab-content active" id="simplified">
             <div class="description">
                 <h3>Simplified Event Flow</h3>
-                <p>Main event flow from BotMonitoringCycleStarted to BotMonitoringCycleCompleted.</p>
+                <p>Main event flow visualization with interactive controls.</p>
             </div>
-            <div class="zoom-controls">
-                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
-                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
-                <button class="zoom-btn" onclick="resetZoom()" title="Reset">⟲</button>
-            </div>
-            <div class="graph-container" data-graph-type="simplified" id="graph-simplified">
-                <div class="svg-content"></div>
-                <div class="zoom-info">Molette: Zoom | Glisser: Déplacer | Double-clic: Reset</div>
-            </div>
+            <div class="flow-container" id="flow-simplified"></div>
         </div>
 
         <!-- Tab 2: Complete Graph -->
@@ -130,36 +129,36 @@
                 <h3>Complete Event Graph</h3>
                 <p>All events and agents, including commands and error events.</p>
             </div>
-            <div class="zoom-controls">
-                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
-                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
-                <button class="zoom-btn" onclick="resetZoom()" title="Reset">⟲</button>
-            </div>
-            <div class="graph-container" data-graph-type="complete" id="graph-complete">
-                <div class="svg-content"></div>
-                <div class="zoom-info">Molette: Zoom | Glisser: Déplacer | Double-clic: Reset</div>
-            </div>
+            <div class="flow-container" id="flow-complete"></div>
         </div>
 
-        <!-- Tab 3: Full Tree -->
-        <div class="tab-content" id="full-tree">
+        <!-- Tab 3: AI Editor -->
+        <div class="tab-content" id="ia-editor">
             <div class="description">
-                <h3>Full Event Hierarchy</h3>
-                <p>Complete hierarchical view with all subscriptions and publications.</p>
+                <h3>🤖 Éditeur IA - Architecture Interactive</h3>
+                <p>Modifiez les connexions et générez automatiquement des prompts pour le LLM.</p>
             </div>
-            <div class="zoom-controls">
-                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
-                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
-                <button class="zoom-btn" onclick="resetZoom()" title="Reset">⟲</button>
-            </div>
-            <div class="graph-container" data-graph-type="full-tree" id="graph-full-tree">
-                <div class="svg-content"></div>
-                <div class="zoom-info">Molette: Zoom | Glisser: Déplacer | Double-clic: Reset</div>
+            <div class="grid-container" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start;">
+                <div class="flow-container" id="flow-editor"></div>
+                <div class="panel">
+                    <div class="panel-title">🤖 Prompt pour LLM</div>
+                    <pre id="prompt-display" style="max-height: 600px; overflow-y: auto;">Modifiez le graphe pour voir un prompt apparaître ici...</pre>
+                    <button class="btn btn-secondary" onclick="copyPrompt()" style="margin-top: 10px; width: 100%;">📋 Copier le Prompt</button>
+                </div>
             </div>
         </div>
 
         <div class="legend">
-            <h4>Namespaces</h4>
+            <h4>Légende</h4>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #A7C7E7; border-radius: 50%;"></span>
+                Events (cercles)
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #FDFD96;"></span>
+                Agents (rectangles)
+            </div>
+            <h4 style="margin-top: 15px;">Namespaces</h4>
             {% for namespace in namespaces|sort %}
             <div class="legend-item">
                 <span class="legend-color" style="background: {{ namespace_colors[namespace] }};"></span>
@@ -178,6 +177,6 @@
     ↻
 </button>
 
-<script src="{{ url_for('static', filename='js/event_flow.js') }}"></script>
+<script src="{{ url_for('static', filename='js/event_flow.js') }}" type="text/babel"></script>
 </body>
 </html>
