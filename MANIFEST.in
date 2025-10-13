@@ -1,0 +1,30 @@
+# Include package metadata
+include README.md
+include LICENSE
+
+# Include web assets (templates, CSS, JS) - only for event_flow, event_recorder, mock_exchange
+include src/python_pubsub_devtools/web/templates/event_flow.html
+include src/python_pubsub_devtools/web/templates/event_recorder.html
+include src/python_pubsub_devtools/web/templates/recording_detail.html
+include src/python_pubsub_devtools/web/templates/mock_exchange.html
+include src/python_pubsub_devtools/web/static/css/event_flow.css
+include src/python_pubsub_devtools/web/static/css/event_recorder.css
+include src/python_pubsub_devtools/web/static/css/recording_detail.css
+include src/python_pubsub_devtools/web/static/css/mock_exchange.css
+include src/python_pubsub_devtools/web/static/js/event_flow.js
+include src/python_pubsub_devtools/web/static/js/event_recorder.js
+include src/python_pubsub_devtools/web/static/js/recording_detail.js
+include src/python_pubsub_devtools/web/static/js/mock_exchange.js
+
+# Exclude everything else
+global-exclude *.py[cod]
+global-exclude __pycache__
+global-exclude *.so
+global-exclude .DS_Store
+global-exclude tests/*
+recursive-exclude tests *
+recursive-exclude docs *
+recursive-exclude examples *
+prune tests
+prune docs
+prune examples

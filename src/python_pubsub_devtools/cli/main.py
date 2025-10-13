@@ -21,7 +21,6 @@ Examples:
   pubsub-tools event-flow --config devtools_config.yaml
   pubsub-tools event-recorder
   pubsub-tools mock-exchange
-  pubsub-tools test-scenarios
   pubsub-tools dashboard  # Launch all tools
         '''
     )
@@ -67,21 +66,10 @@ Examples:
         help='Port to run server on (overrides config)'
     )
 
-    # Scenario Testing command
-    testing_parser = subparsers.add_parser(
-        'test-scenarios',
-        help='Launch scenario testing dashboard'
-    )
-    testing_parser.add_argument(
-        '--port', '-p',
-        type=int,
-        help='Port to run server on (overrides config)'
-    )
-
     # Dashboard command (all services)
     dashboard_parser = subparsers.add_parser(
         'dashboard',
-        help='Launch all dashboards (event-flow, event-recorder, mock-exchange, test-scenarios)'
+        help='Launch all dashboards (event-flow, event-recorder, mock-exchange)'
     )
 
     # Metrics command
@@ -161,15 +149,6 @@ Examples:
         server = MockExchangeServer(config.mock_exchange)
         return server.run()
 
-    elif args.command == 'test-scenarios':
-        from ..scenario_testing.server import ScenarioTestingServer
-
-        if args.port:
-            config.scenario_testing.port = args.port
-
-        server = ScenarioTestingServer(config.scenario_testing)
-        return server.run()
-
     elif args.command == 'dashboard':
         print("🚀 Launching all dashboards...")
         print()
@@ -177,7 +156,6 @@ Examples:
         print(f"  • Event Flow:        http://localhost:{config.event_flow.port}")
         print(f"  • Event Recorder:    http://localhost:{config.event_recorder.port}")
         print(f"  • Mock Exchange:     http://localhost:{config.mock_exchange.port}")
-        print(f"  • Scenario Testing:  http://localhost:{config.scenario_testing.port}")
         print()
         print("⚠️  Note: Running all services simultaneously requires multiple terminals.")
         print("   Consider using tmux or screen for better management.")
@@ -186,7 +164,6 @@ Examples:
         print(f"  pubsub-tools event-flow --config {args.config}")
         print(f"  pubsub-tools event-recorder --config {args.config}")
         print(f"  pubsub-tools mock-exchange --config {args.config}")
-        print(f"  pubsub-tools test-scenarios --config {args.config}")
         return 0
 
     else:

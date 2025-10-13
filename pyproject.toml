@@ -53,7 +53,15 @@ Issues = "https://github.com/venantvr-trading/Python.PubSub.DevTools/issues"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
-packages = ["python_pubsub_devtools"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["python_pubsub_devtools*"]
+exclude = [
+    "python_pubsub_devtools.scenario_testing*",
+    "python_pubsub_devtools.trading*",
+]
+namespaces = false
 
 [tool.setuptools.package-data]
 python_pubsub_devtools = [

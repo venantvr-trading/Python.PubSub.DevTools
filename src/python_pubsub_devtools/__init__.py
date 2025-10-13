@@ -5,7 +5,7 @@ This library provides:
 - Event Flow Visualization: Interactive diagrams of your event-driven architecture
 - Event Recorder: Record and replay event streams
 - Mock Exchange: Simulate market scenarios for testing
-- Scenario Testing: YAML-based scenario testing with chaos injection
+- Metrics Collection: Collect and analyze event metrics
 
 Example:
     from python_pubsub_devtools import DevToolsConfig
@@ -19,19 +19,48 @@ Example:
 __version__ = "0.1.0"
 __author__ = "venantvr"
 
+# Core configuration
 from .config import (
     DevToolsConfig,
     EventFlowConfig,
     EventRecorderConfig,
     MockExchangeConfig,
-    ScenarioTestingConfig,
 )
+# Event Flow
+from .event_flow import EventFlowAnalyzer
+# Event Recorder
+from .event_recorder import EventRecorder, EventReplayer
+# Metrics
+from .metrics import (
+    EventMetricsCollector,
+    Counter,
+    Histogram,
+    get_metrics_collector,
+    collect_metrics,
+)
+# Mock Exchange
+from .mock_exchange import ScenarioBasedMockExchange, MarketScenario
 
 __all__ = [
+    # Version and metadata
+    "__version__",
+    # Core configuration
     "DevToolsConfig",
     "EventFlowConfig",
     "EventRecorderConfig",
     "MockExchangeConfig",
-    "ScenarioTestingConfig",
-    "__version__",
+    # Event Flow
+    "EventFlowAnalyzer",
+    # Event Recorder
+    "EventRecorder",
+    "EventReplayer",
+    # Mock Exchange
+    "ScenarioBasedMockExchange",
+    "MarketScenario",
+    # Metrics
+    "EventMetricsCollector",
+    "Counter",
+    "Histogram",
+    "get_metrics_collector",
+    "collect_metrics",
 ]
