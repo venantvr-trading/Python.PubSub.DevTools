@@ -1,5 +1,7 @@
 """Tests for candlestick pattern detection with trading concepts"""
+import pandas as pd
 import pytest
+
 from python_pubsub_devtools.trading.candle_patterns import (
     is_doji,
     is_hammer,
@@ -11,7 +13,6 @@ from python_pubsub_devtools.trading.candle_patterns import (
     is_bullish,
     is_bearish,
 )
-import pandas as pd
 
 
 class TestBasicCandleProperties:

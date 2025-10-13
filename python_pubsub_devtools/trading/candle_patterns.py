@@ -1,5 +1,6 @@
 """Candlestick pattern detection for trading analysis"""
 from typing import Dict, Any
+
 import pandas as pd
 
 
@@ -84,9 +85,9 @@ def is_hammer(candle: Dict[str, float], wick_ratio: float = 1.5) -> bool:
     # Upper wick should be small (less than body size)
     # Lower wick should be significant portion of total range
     return (
-        lower_wick >= wick_ratio * body_size and
-        upper_wick <= body_size and
-        lower_wick >= total_range * 0.5  # Lower wick is at least 50% of total range
+            lower_wick >= wick_ratio * body_size and
+            upper_wick <= body_size and
+            lower_wick >= total_range * 0.5  # Lower wick is at least 50% of total range
     )
 
 
@@ -119,9 +120,9 @@ def is_shooting_star(candle: Dict[str, float], wick_ratio: float = 1.5) -> bool:
     # Lower wick should be small (less than body size)
     # Upper wick should be significant portion of total range
     return (
-        upper_wick >= wick_ratio * body_size and
-        lower_wick <= body_size and
-        upper_wick >= total_range * 0.5  # Upper wick is at least 50% of total range
+            upper_wick >= wick_ratio * body_size and
+            lower_wick <= body_size and
+            upper_wick >= total_range * 0.5  # Upper wick is at least 50% of total range
     )
 
 
@@ -148,22 +149,22 @@ def is_engulfing(candle1: Dict[str, float], candle2: Dict[str, float]) -> str:
     # candle2 body completely engulfs candle1 body
     if is_bearish(candle1) and is_bullish(candle2):
         if (candle2['open'] <= min(candle1['open'], candle1['close']) and
-            candle2['close'] >= max(candle1['open'], candle1['close'])):
+                candle2['close'] >= max(candle1['open'], candle1['close'])):
             return 'bullish_engulfing'
 
     # Bearish engulfing: bullish candle1, bearish candle2
     if is_bullish(candle1) and is_bearish(candle2):
         if (candle2['open'] >= max(candle1['open'], candle1['close']) and
-            candle2['close'] <= min(candle1['open'], candle1['close'])):
+                candle2['close'] <= min(candle1['open'], candle1['close'])):
             return 'bearish_engulfing'
 
     return 'none'
 
 
 def is_morning_star(
-    candle1: Dict[str, float],
-    candle2: Dict[str, float],
-    candle3: Dict[str, float]
+        candle1: Dict[str, float],
+        candle2: Dict[str, float],
+        candle3: Dict[str, float]
 ) -> bool:
     """Detect Morning Star pattern (bullish reversal)
 
@@ -208,9 +209,9 @@ def is_morning_star(
 
 
 def is_evening_star(
-    candle1: Dict[str, float],
-    candle2: Dict[str, float],
-    candle3: Dict[str, float]
+        candle1: Dict[str, float],
+        candle2: Dict[str, float],
+        candle3: Dict[str, float]
 ) -> bool:
     """Detect Evening Star pattern (bearish reversal)
 

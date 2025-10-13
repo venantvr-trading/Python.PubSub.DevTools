@@ -5,9 +5,10 @@ This module tests realistic trading scenarios combining:
 - Technical indicators
 - Candlestick patterns
 """
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -210,7 +211,7 @@ class TestSidewaysScenario:
 
         # Check band width at end (should be relatively narrow)
         valid_indices = [i for i in range(len(prices))
-                        if bb['upper'][i] == bb['upper'][i]]  # Not NaN
+                         if bb['upper'][i] == bb['upper'][i]]  # Not NaN
 
         if len(valid_indices) > 0:
             last_idx = valid_indices[-1]
@@ -322,7 +323,7 @@ class TestVolatileScenario:
 
         # Check final band width
         valid_indices = [i for i in range(len(prices))
-                        if bb['upper'][i] == bb['upper'][i]]
+                         if bb['upper'][i] == bb['upper'][i]]
 
         if len(valid_indices) > 0:
             last_idx = valid_indices[-1]
@@ -398,9 +399,9 @@ class TestPumpAndDumpScenario:
         # Should detect bearish patterns during dump
         # (May detect bearish_engulfing, shooting_star, or evening_star)
         bearish_pattern_count = (
-            len(patterns['bearish_engulfing']) +
-            len(patterns['shooting_star']) +
-            len(patterns['evening_star'])
+                len(patterns['bearish_engulfing']) +
+                len(patterns['shooting_star']) +
+                len(patterns['evening_star'])
         )
         assert bearish_pattern_count > 0
 
@@ -525,8 +526,8 @@ class TestRealisticTradingStrategy:
                 if len(histogram) > 1:
                     # Check for crossover (negative to positive)
                     if (histogram[-2] == histogram[-2] and  # Not NaN
-                        histogram[-1] == histogram[-1] and
-                        histogram[-2] < 0 and histogram[-1] > 0):
+                            histogram[-1] == histogram[-1] and
+                            histogram[-2] < 0 and histogram[-1] > 0):
                         entry_signals.append(i)
 
         # In bull run, should get some crossover signals

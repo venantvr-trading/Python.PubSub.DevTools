@@ -1,7 +1,8 @@
 """Technical indicators for trading analysis"""
-from typing import List, Tuple, Dict
-import pandas as pd
 import math
+from typing import List, Dict
+
+import pandas as pd
 
 
 def calculate_sma(prices: List[float], period: int) -> List[float]:
@@ -115,10 +116,10 @@ def calculate_rsi(prices: List[float], period: int = 14) -> List[float]:
 
 
 def calculate_macd(
-    prices: List[float],
-    fast_period: int = 12,
-    slow_period: int = 26,
-    signal_period: int = 9
+        prices: List[float],
+        fast_period: int = 12,
+        slow_period: int = 26,
+        signal_period: int = 9
 ) -> Dict[str, List[float]]:
     """Calculate MACD (Moving Average Convergence Divergence)
 
@@ -169,9 +170,9 @@ def calculate_macd(
 
 
 def calculate_bollinger_bands(
-    prices: List[float],
-    period: int = 20,
-    num_std: float = 2.0
+        prices: List[float],
+        period: int = 20,
+        num_std: float = 2.0
 ) -> Dict[str, List[float]]:
     """Calculate Bollinger Bands
 

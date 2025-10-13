@@ -1,7 +1,9 @@
 """Tests for technical indicators with realistic trading scenarios"""
-import pytest
 import math
+
 import pandas as pd
+import pytest
+
 from python_pubsub_devtools.trading.indicators import (
     calculate_sma,
     calculate_ema,
@@ -224,7 +226,7 @@ class TestBollingerBands:
 
         # Upper band should be above middle, lower below
         valid_indices = [i for i in range(len(prices))
-                        if not math.isnan(bb['upper'][i])]
+                         if not math.isnan(bb['upper'][i])]
 
         for i in valid_indices:
             assert bb['upper'][i] > bb['middle'][i]
@@ -254,8 +256,8 @@ class TestBollingerBands:
         """Test Bollinger Bands during BTC high volatility"""
         # High volatility period
         volatile_prices = [50000, 52000, 48000, 54000, 47000, 55000, 49000,
-                          56000, 50000, 57000, 51000, 58000, 52000, 59000,
-                          53000, 60000, 54000, 61000, 55000, 62000, 56000]
+                           56000, 50000, 57000, 51000, 58000, 52000, 59000,
+                           53000, 60000, 54000, 61000, 55000, 62000, 56000]
 
         bb = calculate_bollinger_bands(volatile_prices, period=20, num_std=2.0)
 
@@ -275,7 +277,7 @@ class TestBollingerBands:
         """Test price bouncing off lower Bollinger Band (buy signal)"""
         # Price touches lower band then bounces
         prices = [100, 98, 96, 94, 92, 90, 88, 86, 84, 82,
-                 80, 78, 76, 75, 74, 73, 72, 71, 70, 71, 73, 75, 78]
+                  80, 78, 76, 75, 74, 73, 72, 71, 70, 71, 73, 75, 78]
 
         bb = calculate_bollinger_bands(prices, period=20, num_std=2.0)
 
@@ -391,7 +393,7 @@ class TestRealisticTradingScenarios:
         golden_cross = False
         for i in range(200, len(prices) - 1):
             if (sma_50[i] <= sma_200[i] and
-                sma_50[i + 1] > sma_200[i + 1]):
+                    sma_50[i + 1] > sma_200[i + 1]):
                 golden_cross = True
                 break
 
@@ -402,8 +404,8 @@ class TestRealisticTradingScenarios:
         """Test RSI divergence (price makes new high, RSI doesn't)"""
         # Price continues up but momentum weakening
         prices = [50000, 52000, 54000, 56000, 58000, 60000,
-                 59000, 61000, 62000, 61500, 63000, 62500,
-                 64000, 63500, 64500]  # Higher highs but slower
+                  59000, 61000, 62000, 61500, 63000, 62500,
+                  64000, 63500, 64500]  # Higher highs but slower
 
         rsi = calculate_rsi(prices, period=14)
         valid_rsi = [x for x in rsi if not math.isnan(x)]
