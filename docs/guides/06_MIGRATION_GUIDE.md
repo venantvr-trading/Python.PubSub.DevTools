@@ -146,6 +146,7 @@ from python_pubsub_devtools.event_recorder.server import EventRecorderServer
 from python_pubsub_devtools.mock_exchange.server import MockExchangeServer
 from python_pubsub_devtools.scenario_testing.server import ScenarioTestingServer
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="PubSub Dev Tools - Development tools for PubSub architectures"
@@ -193,6 +194,7 @@ def main():
     # ... etc
 
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())

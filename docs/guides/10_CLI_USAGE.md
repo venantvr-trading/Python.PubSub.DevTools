@@ -202,7 +202,9 @@ Contains Python files with event publishers and subscribers:
 # agents/market_agent.py
 from pubsub import ServiceBus
 
+
 class MarketAgent:
+
     def __init__(self, service_bus: ServiceBus):
         self.service_bus = service_bus
 
@@ -248,12 +250,16 @@ Contains recorded event sessions:
     {
       "event_name": "MarketDataFetched",
       "timestamp_offset_ms": 0,
-      "data": {...}
+      "data": {
+        ...
+      }
     },
     {
       "event_name": "PriceUpdated",
       "timestamp_offset_ms": 100,
-      "data": {...}
+      "data": {
+        ...
+      }
     }
   ]
 }
@@ -417,7 +423,7 @@ ls -la events/
 
 ```yaml
 name: Visualize Architecture
-on: [push]
+on: [ push ]
 
 jobs:
   visualize:

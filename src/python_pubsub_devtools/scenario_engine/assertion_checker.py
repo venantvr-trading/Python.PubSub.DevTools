@@ -4,10 +4,9 @@ Generic Assertion Checker
 Validates conditions on event streams - completely domain-agnostic.
 """
 from abc import ABC, abstractmethod
+from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
-
-from collections import Counter
 
 
 @dataclass

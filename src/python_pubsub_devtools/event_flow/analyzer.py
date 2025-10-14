@@ -5,10 +5,9 @@ Parses all agents to extract event subscriptions and publications,
 then generates a visual graph of the event flow.
 """
 import re
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Set
-
-from collections import defaultdict
 
 
 class EventFlowAnalyzer:

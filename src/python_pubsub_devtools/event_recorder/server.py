@@ -4,11 +4,11 @@ Event Recorder Dashboard Server
 Web interface for viewing and replaying event recordings.
 """
 import json
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
-from collections import Counter
 from flask import Flask, render_template, jsonify
 
 from ..config import EventRecorderConfig
