@@ -85,11 +85,11 @@ class ScenarioEngine:
     """
 
     def __init__(
-        self,
-        generator: DataGenerator,
-        service_bus: Any,
-        enable_chaos: bool = False,
-        record_events: bool = True
+            self,
+            generator: DataGenerator,
+            service_bus: Any,
+            enable_chaos: bool = False,
+            record_events: bool = True
     ):
         """Initialize scenario engine
 
@@ -149,9 +149,9 @@ class ScenarioEngine:
         self.service_bus.publish = recording_publish
 
     def run_scenario(
-        self,
-        steps: List[ScenarioStep],
-        context: Optional[Dict[str, Any]] = None
+            self,
+            steps: List[ScenarioStep],
+            context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Run a scenario with multiple steps
 
@@ -165,9 +165,9 @@ class ScenarioEngine:
         self.scenario_start_time = datetime.now(timezone.utc)
         context = context or {}
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"STARTING SCENARIO: {context.get('name', 'Unnamed')}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         # Reset state
         self.current_cycle = 0
@@ -184,7 +184,7 @@ class ScenarioEngine:
         step_results = []
         for i, step in enumerate(steps):
             self.current_step_index = i
-            print(f"\n--- Step {i+1}/{len(steps)}: {step.name or step.step_type.value} ---")
+            print(f"\n--- Step {i + 1}/{len(steps)}: {step.name or step.step_type.value} ---")
 
             result = self._execute_step(step, context)
             step_results.append(result)
@@ -202,16 +202,16 @@ class ScenarioEngine:
         # Generate report
         report = self._generate_report(steps, step_results, context)
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"SCENARIO COMPLETED")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         return report
 
     def _execute_step(
-        self,
-        step: ScenarioStep,
-        context: Dict[str, Any]
+            self,
+            step: ScenarioStep,
+            context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Execute a single scenario step
 
@@ -282,9 +282,9 @@ class ScenarioEngine:
         }
 
     def _wait_event(
-        self,
-        event_name: str,
-        timeout_cycles: Optional[int] = None
+            self,
+            event_name: str,
+            timeout_cycles: Optional[int] = None
     ) -> Dict[str, Any]:
         """Wait for a specific event to occur"""
         print(f"⏳ Waiting for event: {event_name}")
@@ -312,9 +312,9 @@ class ScenarioEngine:
         }
 
     def _run_assertions(
-        self,
-        assertions: List,
-        context: Dict[str, Any]
+            self,
+            assertions: List,
+            context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Run assertions on recorded events"""
         print(f"🔍 Running {len(assertions)} assertion(s)...")
@@ -384,10 +384,10 @@ class ScenarioEngine:
         }
 
     def _generate_report(
-        self,
-        steps: List[ScenarioStep],
-        step_results: List[Dict[str, Any]],
-        context: Dict[str, Any]
+            self,
+            steps: List[ScenarioStep],
+            step_results: List[Dict[str, Any]],
+            context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate comprehensive scenario report"""
         duration = (self.scenario_end_time - self.scenario_start_time).total_seconds()
@@ -428,9 +428,9 @@ class ScenarioEngine:
 
     def print_report(self, report: Dict[str, Any]):
         """Print human-readable scenario report"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("SCENARIO REPORT")
-        print("="*80)
+        print("=" * 80)
 
         print(f"\nScenario: {report['scenario_name']}")
         print(f"Duration: {report['duration_seconds']:.2f}s")
@@ -449,4 +449,4 @@ class ScenarioEngine:
             print(f"  Actions: {report['chaos_statistics']['chaos_actions']}")
             print(f"  Events affected: {report['chaos_statistics']['total_events']}")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)

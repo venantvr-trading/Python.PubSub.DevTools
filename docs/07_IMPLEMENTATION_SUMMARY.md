@@ -271,7 +271,7 @@ assert stats['error_rate'] < 5.0
 - [ ] OpenTelemetry integration
 - [ ] Real-time web dashboard
 
-See [05_QUICK_WINS.md](docs/05_QUICK_WINS.md) for full roadmap.
+See [05_QUICK_WINS.md](05_QUICK_WINS.md) for full roadmap.
 
 ---
 
@@ -391,7 +391,7 @@ This lays the foundation for the observability stack outlined in the roadmap and
 
 ---
 
-**Next**: Choose another Quick Win from [05_QUICK_WINS.md](docs/05_QUICK_WINS.md) or start Phase 1 features from [04_ROADMAP.md](docs/04_ROADMAP.md).
+**Next**: Choose another Quick Win from [05_QUICK_WINS.md](05_QUICK_WINS.md) or start Phase 1 features from [04_ROADMAP.md](04_ROADMAP.md).
 
 **Version**: 1.0.0
 **Date**: 2025-10-13

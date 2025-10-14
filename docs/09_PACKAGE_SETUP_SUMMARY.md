@@ -186,6 +186,7 @@ pubsub-tools event-flow --help
 ### Import au niveau du package principal
 
 ```python
+# noinspection PyUnresolvedReferences,PyInterpreter
 from python_pubsub_devtools import (
     # Configuration
     DevToolsConfig,
@@ -238,9 +239,13 @@ from python_pubsub_devtools import (
 ### Import des serveurs
 
 ```python
+# noinspection PyUnresolvedReferences
 from python_pubsub_devtools.event_flow.server import EventFlowServer
+# noinspection PyUnresolvedReferences
 from python_pubsub_devtools.event_recorder.server import EventRecorderServer
+# noinspection PyUnresolvedReferences
 from python_pubsub_devtools.mock_exchange.server import MockExchangeServer
+# noinspection PyUnresolvedReferences
 from python_pubsub_devtools.scenario_testing.server import ScenarioTestingServer
 ```
 

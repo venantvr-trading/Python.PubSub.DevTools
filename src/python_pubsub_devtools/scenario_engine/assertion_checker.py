@@ -3,10 +3,11 @@ Generic Assertion Checker
 
 Validates conditions on event streams - completely domain-agnostic.
 """
-from collections import Counter
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
-from abc import ABC, abstractmethod
+
+from collections import Counter
 
 
 @dataclass
@@ -171,7 +172,7 @@ class NoEventAssertion(Assertion):
             matching_events = [
                 e for e in events
                 if e.get("event_name") == self.event_name
-                and start_cycle <= e.get("cycle", 0) <= end_cycle
+                   and start_cycle <= e.get("cycle", 0) <= end_cycle
             ]
             message_suffix = f" during cycles {start_cycle}-{end_cycle}"
         else:

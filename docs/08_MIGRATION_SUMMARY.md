@@ -2,7 +2,8 @@
 
 ## Overview
 
-Successfully migrated and refactored `mock_exchange` and `scenario_testing` from the Risk project into a **generic, domain-agnostic scenario testing framework** in DevTools, with trading-specific implementations remaining in the Risk project.
+Successfully migrated and refactored `mock_exchange` and `scenario_testing` from the Risk project into a **generic, domain-agnostic scenario testing framework** in
+DevTools, with trading-specific implementations remaining in the Risk project.
 
 ## What Was Accomplished
 
@@ -11,6 +12,7 @@ Successfully migrated and refactored `mock_exchange` and `scenario_testing` from
 Created a complete generic framework in `/src/python_pubsub_devtools/scenario_engine/`:
 
 #### Core Interfaces (`interfaces.py`)
+
 - `DataGenerator` (ABC): Abstract interface for generating domain-specific data
 - `ScenarioProfile` (ABC): Abstract interface for defining behavior patterns
 - `MultiPhaseScenarioProfile`: Base class for multi-phase scenarios
@@ -18,6 +20,7 @@ Created a complete generic framework in `/src/python_pubsub_devtools/scenario_en
 - `ScenarioPhase` (Enum): Common phase types
 
 #### Chaos Engineering (`chaos_injector.py`)
+
 - `ChaosInjector`: Main chaos orchestration class
 - `ChaosAction` (ABC): Base class for chaos actions
 - `DelayEvent`: Delay event publication
@@ -26,12 +29,14 @@ Created a complete generic framework in `/src/python_pubsub_devtools/scenario_en
 - `InjectFailureEvent`: Inject failure events
 
 **Key Features:**
+
 - Wraps any service bus with `publish()` method
 - Configurable triggers (cycle, event, probability)
 - Event history tracking
 - Statistics reporting
 
 #### Assertion Framework (`assertion_checker.py`)
+
 - `AssertionChecker`: Main assertion orchestration class
 - `Assertion` (ABC): Base class for assertions
 - `AssertionResult`: Result container
@@ -41,17 +46,20 @@ Created a complete generic framework in `/src/python_pubsub_devtools/scenario_en
 - `CustomAssertion`: User-defined assertion functions
 
 **Key Features:**
+
 - Works with generic event dictionaries
 - Human-readable reports
 - Detailed failure messages
 - Composable assertions
 
 #### Orchestration Engine (`scenario_engine.py`)
+
 - `ScenarioEngine`: Main orchestration class
 - `ScenarioStep`: Declarative step definition
 - `StepType` (Enum): Step types (WAIT_CYCLES, WAIT_EVENT, RUN_ASSERTIONS, EXECUTE_ACTION, GENERATE_DATA)
 
 **Key Features:**
+
 - Declarative scenario definition
 - Automatic event recording
 - Chaos injection integration
@@ -64,12 +72,14 @@ Created a complete generic framework in `/src/python_pubsub_devtools/scenario_en
 Created domain-specific implementations in `/Python.PubSub.Risk/python_pubsub_risk/scenario_testing/`:
 
 #### Trading Data Generator (`trading_data_generator.py`)
+
 - `TradingDataGenerator`: Extends `DataGenerator` for market data
 - Generates realistic prices with bid/ask spread
 - Configurable volatility
 - Trading-specific statistics (price change %, min/max, range)
 
 #### Market Scenario Profiles (`market_scenarios.py`)
+
 - `BullRunProfile`: Steadily increasing prices
 - `BearCrashProfile`: Steadily decreasing prices
 - `SidewaysMarketProfile`: Consolidation with oscillation
@@ -79,7 +89,9 @@ Created domain-specific implementations in `/Python.PubSub.Risk/python_pubsub_ri
 - `GradualTrendProfile`: Configurable trend direction and speed
 
 #### Example Usage (`example_usage.py`)
+
 Complete examples demonstrating:
+
 - Basic scenario execution
 - Chaos injection with trading scenarios
 - Custom trading assertions
@@ -89,50 +101,24 @@ Complete examples demonstrating:
 ### 3. Package Updates ✅
 
 #### DevTools Updates
+
 - **`__init__.py`**: Added `scenario_engine` module export
 - **`pyproject.toml`**:
-  - Updated version to `0.2.0`
-  - Updated description to include "Scenario Testing with Chaos Engineering"
+    - Updated version to `0.2.0`
+    - Updated description to include "Scenario Testing with Chaos Engineering"
 - **`scenario_engine/__init__.py`**: Clean module exports with all components
 
 #### Risk Updates
+
 - **`scenario_testing/__init__.py`**: Exports all trading-specific components
 
 ## Architecture Highlights
 
 ### Clean Separation of Concerns
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    DevTools (Generic)                    │
-│                                                           │
-│  ┌────────────┐  ┌──────────────┐  ┌─────────────────┐ │
-│  │ Interfaces │  │ Chaos Engine │  │ Assertion Engine│ │
-│  │ (Abstract) │  │  (Concrete)  │  │   (Concrete)    │ │
-│  └────────────┘  └──────────────┘  └─────────────────┘ │
-│         │                                                 │
-│         │           ┌──────────────┐                     │
-│         │           │   Scenario   │                     │
-│         └──────────▶│    Engine    │                     │
-│                     │ (Orchestrate)│                     │
-│                     └──────────────┘                     │
-└─────────────────────────────────────────────────────────┘
-                            ▲
-                            │ extends
-                            │
-┌─────────────────────────────────────────────────────────┐
-│                   Risk (Domain-Specific)                 │
-│                                                           │
-│  ┌──────────────────┐        ┌──────────────────────┐  │
-│  │  TradingData     │        │  Market Scenario     │  │
-│  │   Generator      │◀───────│     Profiles         │  │
-│  │ (implements ABC) │        │ (implements ABC)     │  │
-│  └──────────────────┘        └──────────────────────┘  │
-│                                                           │
-│         Bull Run, Bear Crash, Flash Crash,               │
-│         Pump & Dump, Volatile, Sideways...               │
-└─────────────────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="08_MIGRATION_SUMMARY.png" alt="08_MIGRATION_SUMMARY" width="50%">
+</p>
 
 ### Key Design Principles Applied
 
@@ -203,6 +189,7 @@ engine.print_report(report)
 ## Benefits of This Architecture
 
 ### For DevTools Users
+
 - ✅ Generic framework works with **any** domain (not just trading)
 - ✅ No trading-specific code polluting the library
 - ✅ Clean, documented interfaces for extension
@@ -210,6 +197,7 @@ engine.print_report(report)
 - ✅ Reusable for sensor data, network traffic, user behavior, etc.
 
 ### For Risk Project
+
 - ✅ Trading-specific code stays in domain project
 - ✅ Clean separation from infrastructure
 - ✅ Easy to create new market scenarios
@@ -217,6 +205,7 @@ engine.print_report(report)
 - ✅ Complete examples and documentation
 
 ### For Testing
+
 - ✅ Declarative scenario definitions
 - ✅ Chaos injection for resilience testing
 - ✅ Comprehensive assertion framework
@@ -226,6 +215,7 @@ engine.print_report(report)
 ## Files Created
 
 ### DevTools
+
 ```
 src/python_pubsub_devtools/scenario_engine/
 ├── __init__.py                 # Module exports
@@ -237,6 +227,7 @@ src/python_pubsub_devtools/scenario_engine/
 ```
 
 ### Risk
+
 ```
 python_pubsub_risk/scenario_testing/
 ├── __init__.py                      # Module exports
@@ -246,6 +237,7 @@ python_pubsub_risk/scenario_testing/
 ```
 
 ### Documentation
+
 ```
 MIGRATION_SUMMARY.md                 # This file
 ```
@@ -255,24 +247,24 @@ MIGRATION_SUMMARY.md                 # This file
 ### For Further Development
 
 1. **Add More Scenario Profiles** (Risk):
-   - Support/Resistance scenarios
-   - Liquidity events
-   - Correlation scenarios
+    - Support/Resistance scenarios
+    - Liquidity events
+    - Correlation scenarios
 
 2. **Add Domain-Specific Assertions** (Risk):
-   - Price range assertions
-   - Volatility assertions
-   - Trading pattern assertions
+    - Price range assertions
+    - Volatility assertions
+    - Trading pattern assertions
 
 3. **Add More Chaos Actions** (DevTools):
-   - ReorderEvents
-   - DuplicateEvent
-   - CorruptEvent
+    - ReorderEvents
+    - DuplicateEvent
+    - CorruptEvent
 
 4. **Integration with Tests**:
-   - Use in Risk project tests
-   - Create scenario test suites
-   - Document testing patterns
+    - Use in Risk project tests
+    - Create scenario test suites
+    - Document testing patterns
 
 ### For Other Domains
 
@@ -307,6 +299,7 @@ None - this is all new functionality. Existing DevTools functionality (Event Flo
 ## Conclusion
 
 Successfully created a **clean, generic, domain-agnostic scenario testing framework** with:
+
 - ✅ Strong separation of concerns
 - ✅ Proper dependency injection
 - ✅ Comprehensive chaos engineering

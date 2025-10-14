@@ -5,8 +5,8 @@ Provides abstract base classes that domain-specific implementations must extend.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 from enum import Enum
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -181,7 +181,7 @@ class MultiPhaseScenarioProfile(ScenarioProfile):
 
     @abstractmethod
     def calculate_phase_value(self, phase: Dict[str, Any], current_value: Any,
-                             phase_progress: float) -> Any:
+                              phase_progress: float) -> Any:
         """Calculate value within a specific phase
 
         Args:
@@ -195,7 +195,7 @@ class MultiPhaseScenarioProfile(ScenarioProfile):
         pass
 
     def calculate_next_value(self, current_value: Any, call_count: int,
-                            history: List[Any]) -> Any:
+                             history: List[Any]) -> Any:
         """Calculate next value based on current phase"""
         phase = self.get_current_phase(call_count)
 
