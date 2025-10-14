@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python_pubsub_devtools"
-version = "0.1.0"
-description = "Comprehensive development and debugging tools for PubSub-based event-driven architectures"
+version = "0.2.0"
+description = "Generic development and debugging tools for PubSub-based event-driven architectures - Event Flow Visualization and Event Recording"
 readme = "README.md"
 authors = [
     { name = "venantvr", email = "venantvr@gmail.com" }
@@ -29,6 +29,8 @@ dependencies = [
     "pydantic>=2.0",
     "pandas>=2.0.0",
     "pydot>=1.4.0",
+    "matplotlib>=3.5.0",
+    "networkx>=2.8.0",
 ]
 
 [project.optional-dependencies]
@@ -41,9 +43,6 @@ dev = [
     "mypy>=1.0",
     "black>=23.0",
 ]
-
-[project.scripts]
-pubsub-tools = "python_pubsub_devtools.cli.main:main"
 
 [project.urls]
 Homepage = "https://github.com/venantvr-trading/Python.PubSub.DevTools"
@@ -62,10 +61,12 @@ namespaces = false
 
 [tool.setuptools.package-data]
 python_pubsub_devtools = [
-    "web/templates/*.html",
-    "web/static/css/*.css",
-    "web/static/js/*.js",
-    "web/static/*.svg",
+    "event_flow/web/templates/*.html",
+    "event_flow/web/static/css/*.css",
+    "event_flow/web/static/js/*.js",
+    "event_recorder/web/templates/*.html",
+    "event_recorder/web/static/css/*.css",
+    "event_recorder/web/static/js/*.js",
 ]
 
 [tool.pytest.ini_options]

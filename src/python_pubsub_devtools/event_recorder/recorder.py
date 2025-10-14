@@ -2,7 +2,7 @@
 """
 Event Recorder and Replayer - Time-Traveling Debugging
 
-Record all events from a trading session and replay them later at any speed.
+Record all events from an application session and replay them later at any speed.
 Perfect for debugging, testing, and reproducing issues.
 """
 import json
@@ -16,9 +16,9 @@ class EventRecorder:
     """Record all events to disk for later replay
 
     Usage:
-        recorder = EventRecorder("bull_run_session")
+        recorder = EventRecorder("my_session")
         recorder.start_recording(service_bus)
-        # ... bot runs ...
+        # ... application runs ...
         recorder.save()
     """
 
@@ -179,11 +179,22 @@ class EventReplayer:
         import importlib
 
         # Import events module dynamically
+        # Note: This will try to import the events module from the current application
+        # Override this by passing the events module to the replayer if needed
+        events_module = None
         try:
-            events_module = importlib.import_module('python_pubsub_risk.events')
-        except ImportError:
+            # Try common event module names
+            for module_name in ['events', 'app.events', 'src.events']:
+                try:
+                    events_module = importlib.import_module(module_name)
+                    break
+                except ImportError:
+                    continue
+        except Exception:
+            pass
+
+        if not events_module:
             print("⚠️  Warning: Could not import events module. Event reconstruction may fail.")
-            events_module = None
 
         print(f"🎬 Replaying at {speed_multiplier}x speed...")
 
@@ -298,11 +309,11 @@ class EventReplayer:
             source = event_data["source"]
 
             # Color code by event type
-            if "Failed" in event_name:
+            if "Failed" in event_name or "Error" in event_name:
                 marker = "❌"
-            elif "Purchased" in event_name or "Sold" in event_name:
-                marker = "💰"
-            elif "Started" in event_name or "Completed" in event_name:
+            elif "Success" in event_name or "Completed" in event_name:
+                marker = "✅"
+            elif "Started" in event_name or "Initiated" in event_name:
                 marker = "🔄"
             else:
                 marker = "📨"

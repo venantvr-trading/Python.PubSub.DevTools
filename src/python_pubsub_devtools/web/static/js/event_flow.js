@@ -57,41 +57,106 @@ function EventFlowDiagram({ graphType, isEditable }) {
         fetch(`/api/graph-data/${graphType}`)
             .then(res => res.json())
             .then(data => {
-                // Position nodes in a grid layout
-                const nodesWithPosition = data.nodes.map((node, i) => {
-                    const cols = 6;
-                    const xSpacing = 200;
-                    const ySpacing = 150;
-                    return {
-                        ...node,
-                        position: {
-                            x: (i % cols) * xSpacing,
-                            y: Math.floor(i / cols) * ySpacing
-                        }
-                    };
-                });
+                // Separate events and agents
+                const events = data.nodes.filter(n => n.type === 'event');
+                const agents = data.nodes.filter(n => n.type === 'agent');
 
-                // Add marker to edges
-                const edgesWithMarkers = data.edges.map(edge => ({
-                    ...edge,
-                    markerEnd: {
-                        type: MarkerType.ArrowClosed,
-                        width: 20,
-                        height: 20,
-                        color: edge.animated ? '#4CAF50' : '#999'
-                    },
-                    style: {
-                        strokeWidth: 2,
-                        stroke: edge.animated ? '#4CAF50' : '#999'
+                // Position nodes in a better layout: events on left, agents on right
+                const eventsCols = 8;
+                const agentsCols = 6;
+                const xSpacing = 180;
+                const ySpacing = 100;
+                const agentsXOffset = eventsCols * xSpacing + 200; // Space between columns
+
+                const eventsWithPosition = events.map((node, i) => ({
+                    ...node,
+                    position: {
+                        x: (i % eventsCols) * xSpacing,
+                        y: Math.floor(i / eventsCols) * ySpacing
                     }
                 }));
+
+                const agentsWithPosition = agents.map((node, i) => ({
+                    ...node,
+                    position: {
+                        x: agentsXOffset + (i % agentsCols) * xSpacing,
+                        y: Math.floor(i / agentsCols) * ySpacing
+                    }
+                }));
+
+                const nodesWithPosition = [...eventsWithPosition, ...agentsWithPosition];
+
+                // Create a set of valid node IDs for validation
+                const nodeIds = new Set(nodesWithPosition.map(n => n.id));
+
+                // Add marker to edges with better visibility and ensure ID field
+                const edgesWithMarkers = data.edges
+                    .map((edge, index) => {
+                        const isPublication = edge.type === 'publication';
+                        const color = isPublication ? '#4CAF50' : '#2196F3';
+
+                        // Ensure edge has an ID (required by React Flow)
+                        const edgeId = edge.id || `edge-${edge.source}-${edge.target}-${index}`;
+
+                        return {
+                            ...edge,
+                            id: edgeId,
+                            source: String(edge.source),
+                            target: String(edge.target),
+                            animated: isPublication,
+                            markerEnd: {
+                                type: MarkerType.ArrowClosed,
+                                width: 25,
+                                height: 25,
+                                color: color
+                            },
+                            style: {
+                                strokeWidth: 2.5,
+                                stroke: color
+                            },
+                            label: edge.type === 'publication' ? '▶' : '→',
+                            labelStyle: { fill: color, fontWeight: 700 },
+                            labelBgStyle: { fill: 'transparent' }
+                        };
+                    })
+                    .filter(edge => {
+                        // Validate edge references existing nodes
+                        const sourceExists = nodeIds.has(edge.source);
+                        const targetExists = nodeIds.has(edge.target);
+
+                        if (!sourceExists) {
+                            console.warn(`⚠️ Edge ${edge.id} has invalid source: ${edge.source}`);
+                        }
+                        if (!targetExists) {
+                            console.warn(`⚠️ Edge ${edge.id} has invalid target: ${edge.target}`);
+                        }
+
+                        return sourceExists && targetExists;
+                    });
+
+                console.log('📊 Loaded graph data:', {
+                    totalNodes: nodesWithPosition.length,
+                    eventNodes: eventsWithPosition.length,
+                    agentNodes: agentsWithPosition.length,
+                    totalEdges: edgesWithMarkers.length,
+                    rawEdges: data.edges.length,
+                    sampleNode: nodesWithPosition[0],
+                    sampleEdge: edgesWithMarkers[0],
+                    allNodeIds: Array.from(nodeIds).slice(0, 10),
+                    firstFiveEdges: edgesWithMarkers.slice(0, 5).map(e => ({
+                        id: e.id,
+                        source: e.source,
+                        target: e.target,
+                        type: e.type
+                    }))
+                });
 
                 setNodes(nodesWithPosition);
                 setEdges(edgesWithMarkers);
                 setIsLoading(false);
             })
             .catch(err => {
-                console.error('Error loading graph data:', err);
+                console.error('❌ Error loading graph data:', err);
                 setIsLoading(false);
             });
     }, [graphType]);
@@ -177,6 +242,14 @@ function EventFlowDiagram({ graphType, isEditable }) {
         }, 'Chargement du graphe...');
     }
 
+    // Debug: log current state
+    console.log('🔍 ReactFlow render:', {
+        nodesCount: nodes.length,
+        edgesCount: edges.length,
+        firstNode: nodes[0]?.id,
+        firstEdge: edges[0]
+    });
+
     return React.createElement(ReactFlow, {
         nodes: nodes,
         edges: edges,
@@ -186,11 +259,19 @@ function EventFlowDiagram({ graphType, isEditable }) {
         onEdgesDelete: onEdgesDelete,
         nodeTypes: nodeTypes,
         fitView: true,
-        nodesDraggable: true, // Always draggable for better UX
+        nodesDraggable: true,
         nodesConnectable: isEditable,
         elementsSelectable: isEditable,
+        edgesUpdatable: isEditable,
+        edgesFocusable: isEditable,
+        defaultEdgeOptions: {
+            type: 'default',
+            markerEnd: { type: MarkerType.ArrowClosed }
+        },
+        connectionLineStyle: { stroke: '#4CAF50', strokeWidth: 2 },
         minZoom: 0.1,
-        maxZoom: 2
+        maxZoom: 2,
+        style: { width: '100%', height: '100%' }
     }, [
         React.createElement(Controls, { key: 'controls' }),
         React.createElement(Background, { key: 'background', color: '#aaa', gap: 16 })

@@ -1238,3 +1238,34 @@ body.dark-mode #prompt-display {
     border-color: #3a3a3a;
     color: #e0e0e0;
 }
+
+/* Additional React Flow styles */
+.flow-container .react-flow {
+    width: 100%;
+    height: 100%;
+}
+
+.flow-container .react-flow__viewport {
+    width: 100%;
+    height: 100%;
+}
+
+/* Make edges more visible */
+.react-flow__edge-path {
+    stroke-width: 3px !important;
+}
+
+.react-flow__edge.animated path {
+    stroke-dasharray: 5;
+    animation: dashdraw 0.5s linear infinite;
+}
+
+@keyframes dashdraw {
+    to {
+        stroke-dashoffset: -10;
+    }
+}
+
+.react-flow__arrowhead {
+    fill: currentColor;
+}
