@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "python_pubsub_devtools"
 version = "0.2.0"
-description = "Generic development and debugging tools for PubSub-based event-driven architectures - Event Flow Visualization and Event Recording"
+description = "Generic development and debugging tools for PubSub-based event-driven architectures - Event Flow Visualization, Event Recording, and Scenario Testing with Chaos Engineering"
 readme = "README.md"
 authors = [
     { name = "venantvr", email = "venantvr@gmail.com" }
