@@ -3,7 +3,7 @@ Event Flow Server - Wrapper for serve_event_flow Flask app
 """
 from pathlib import Path
 
-from .serve_event_flow import app, AGENTS_DIR, EVENTS_DIR
+from .serve_event_flow import app
 
 
 class EventFlowServer:

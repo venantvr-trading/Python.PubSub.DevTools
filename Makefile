@@ -109,3 +109,6 @@ install-hooks:
 	else \
 		echo "pre-commit not installed. Install with: pip install pre-commit"; \
 	fi
+
+
+# Note: To use this library in your application, install it via pip and provide your own agents_dir and events_dir in the config YAML.

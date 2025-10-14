@@ -271,7 +271,6 @@ def generate_graph_svg(graph_type: str, namespaces: Set[str], hide_failed: bool,
                         break
 
             # Create a filtered copy of the analyzer
-            # We need to filter the analyzer's data structures before passing to generate_hierarchical_tree
             filtered_analyzer = EventFlowAnalyzer(AGENTS_DIR)
 
             # Copy only filtered subscriptions

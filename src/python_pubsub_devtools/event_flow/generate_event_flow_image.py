@@ -14,7 +14,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import networkx as nx
-
 from analyze_event_flow import EventFlowAnalyzer
 
 

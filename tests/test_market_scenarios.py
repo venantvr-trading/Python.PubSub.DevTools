@@ -5,18 +5,13 @@ This module tests realistic trading scenarios combining:
 - Technical indicators
 - Candlestick patterns
 """
-import sys
-from pathlib import Path
 
 import pytest
-
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from python_pubsub_devtools.mock_exchange.scenario_exchange import (
     ScenarioBasedMockExchange,
     MarketScenario
 )
+from python_pubsub_devtools.trading.candle_patterns import scan_patterns
 from python_pubsub_devtools.trading.indicators import (
     calculate_sma,
     calculate_ema,
@@ -25,7 +20,6 @@ from python_pubsub_devtools.trading.indicators import (
     calculate_bollinger_bands,
     detect_trend,
 )
-from python_pubsub_devtools.trading.candle_patterns import scan_patterns
 
 
 class TestBullRunScenario:
@@ -60,7 +54,7 @@ class TestBullRunScenario:
             prices.append(data.current_price.price)
 
         rsi = calculate_rsi(prices, period=14)
-        valid_rsi = [x for x in rsi if not x != x]  # Remove NaN
+        valid_rsi = [x for x in rsi if x == x]  # Remove NaN
 
         # In bull run, RSI should frequently be overbought (>70)
         overbought_count = sum(1 for x in valid_rsi if x > 70)

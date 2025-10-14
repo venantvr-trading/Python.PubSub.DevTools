@@ -12,7 +12,6 @@ import argparse
 from pathlib import Path
 
 import pydot
-
 from analyze_event_flow import EventFlowAnalyzer
 
 
@@ -264,6 +263,7 @@ def generate_simplified_tree(analyzer: EventFlowAnalyzer, output_path: str, form
 
 def main():
     parser = argparse.ArgumentParser(description="Generate hierarchical event flow tree")
+    parser.add_argument("--agents-dir", type=str, required=True, help="Path to agents directory (required)")
     parser.add_argument("--output", "-o", type=str, default="event_tree.png",
                         help="Output file path (default: event_tree.png)")
     parser.add_argument("--format", "-f", choices=["png", "svg", "pdf", "dot"],
@@ -272,10 +272,7 @@ def main():
                         help="Generate simplified main flow only")
     args = parser.parse_args()
 
-    # Find agents directory
-    script_dir = Path(__file__).parent
-    project_root = script_dir.parent
-    agents_dir = project_root / "python_pubsub_risk" / "agents"
+    agents_dir = Path(args.agents_dir)
 
     if not agents_dir.exists():
         print(f"Error: Agents directory not found at {agents_dir}")

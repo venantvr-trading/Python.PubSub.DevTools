@@ -16,7 +16,7 @@ class EventRecorder:
     """Record all events to disk for later replay
 
     Usage:
-        recorder = EventRecorder("bull_run_session")
+        recorder = EventRecorder("bull_run_session", output_dir="/your/project/recordings")
         recorder.start_recording(service_bus)
         # ... bot runs ...
         recorder.save()
@@ -27,10 +27,10 @@ class EventRecorder:
 
         Args:
             session_name: Name of the recording session
-            output_dir: Directory to save recordings (relative to tools/)
+            output_dir: Directory to save recordings (relative to your project or absolute)
         """
         self.session_name = session_name
-        self.output_dir = Path(__file__).parent / output_dir
+        self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.events = []
         self.start_time = None
@@ -143,10 +143,6 @@ class EventReplayer:
         """
         recording_path = Path(recording_file)
 
-        # Try relative to tools/ if not absolute
-        if not recording_path.is_absolute():
-            recording_path = Path(__file__).parent / recording_path
-
         if not recording_path.exists():
             raise FileNotFoundError(f"Recording not found: {recording_path}")
 
@@ -180,7 +176,7 @@ class EventReplayer:
 
         # Import events module dynamically
         try:
-            events_module = importlib.import_module('python_pubsub_risk.events')
+            events_module = importlib.import_module('your_project.events')  # Replace 'your_project' with your project's module
         except ImportError:
             print("⚠️  Warning: Could not import events module. Event reconstruction may fail.")
             events_module = None
@@ -343,7 +339,7 @@ def main():
         replayer = EventReplayer(args.recording)
         print("\n📊 Event Summary:")
         for event_name, count in replayer.get_event_summary().items():
-            print(f"  {event_name:50s} {count:4d}x")
+            print(f"  {event_name:50s} {count:3d}x")
 
     elif args.command == 'timeline':
         replayer = EventReplayer(args.recording)
