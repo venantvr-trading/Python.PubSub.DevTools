@@ -92,7 +92,9 @@ from pathlib import Path
 from .analyzer import EventFlowAnalyzer
 from ..config import EventFlowConfig
 
+
 class EventFlowServer:
+
     def __init__(self, config: EventFlowConfig):
         self.config = config
         self.app = self._create_app()
@@ -101,8 +103,8 @@ class EventFlowServer:
         # Get package root for web assets
         package_root = Path(__file__).parent.parent
         app = Flask(__name__,
-                   template_folder=str(package_root / 'web' / 'templates'),
-                   static_folder=str(package_root / 'web' / 'static'))
+                    template_folder=str(package_root / 'web' / 'templates'),
+                    static_folder=str(package_root / 'web' / 'static'))
 
         @app.route('/')
         def index():

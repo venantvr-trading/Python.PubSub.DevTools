@@ -39,20 +39,24 @@ pubsub-devtools config-example
 Launch the Event Flow Visualization service.
 
 **Usage:**
+
 ```bash
 pubsub-devtools event-flow [OPTIONS]
 ```
 
 **Required Options:**
+
 - `--agents-dir PATH`: Directory containing agent Python files
 - `--events-dir PATH`: Directory containing event JSON files
 
 **Optional Options:**
+
 - `--port INTEGER`: Port to run on (default: 5555)
 - `--host TEXT`: Host to bind to (default: 0.0.0.0)
 - `--debug / --no-debug`: Enable debug mode (default: enabled)
 
 **Example:**
+
 ```bash
 pubsub-devtools event-flow \
     --agents-dir /path/to/agents \
@@ -63,12 +67,13 @@ pubsub-devtools event-flow \
 ```
 
 **What it does:**
+
 - Analyzes agent files to find event publishers and subscribers
 - Analyzes event JSON files to extract event metadata
 - Generates interactive flow diagrams showing:
-  - Who publishes which events
-  - Who subscribes to which events
-  - Event namespaces and relationships
+    - Who publishes which events
+    - Who subscribes to which events
+    - Event namespaces and relationships
 - Provides web interface at http://localhost:5555
 
 ### event-recorder
@@ -76,19 +81,23 @@ pubsub-devtools event-flow \
 Launch the Event Recorder Dashboard service.
 
 **Usage:**
+
 ```bash
 pubsub-devtools event-recorder [OPTIONS]
 ```
 
 **Required Options:**
+
 - `--recordings-dir PATH`: Directory containing event recording JSON files
 
 **Optional Options:**
+
 - `--port INTEGER`: Port to run on (default: 5556)
 - `--host TEXT`: Host to bind to (default: 0.0.0.0)
 - `--debug / --no-debug`: Enable debug mode (default: enabled)
 
 **Example:**
+
 ```bash
 pubsub-devtools event-recorder \
     --recordings-dir /path/to/recordings \
@@ -96,12 +105,13 @@ pubsub-devtools event-recorder \
 ```
 
 **What it does:**
+
 - Lists all recorded event sessions
 - Shows statistics for each recording:
-  - Duration
-  - Number of events
-  - Event frequency
-  - Unique event types
+    - Duration
+    - Number of events
+    - Event frequency
+    - Unique event types
 - Provides detailed view of individual recordings
 - Web interface at http://localhost:5556
 
@@ -110,20 +120,24 @@ pubsub-devtools event-recorder \
 Launch all DevTools services simultaneously in parallel.
 
 **Usage:**
+
 ```bash
 pubsub-devtools serve-all [OPTIONS]
 ```
 
 **Required Options:**
+
 - `--agents-dir PATH`: Directory containing agent Python files
 - `--events-dir PATH`: Directory containing event JSON files
 - `--recordings-dir PATH`: Directory containing recording JSON files
 
 **Optional Options:**
+
 - `--event-flow-port INTEGER`: Port for Event Flow (default: 5555)
 - `--event-recorder-port INTEGER`: Port for Event Recorder (default: 5556)
 
 **Example:**
+
 ```bash
 pubsub-devtools serve-all \
     --agents-dir ./agents \
@@ -134,12 +148,14 @@ pubsub-devtools serve-all \
 ```
 
 **What it does:**
+
 - Starts Event Flow service on port 5555
 - Starts Event Recorder service on port 5556
 - Runs both in parallel using multiprocessing
 - Press Ctrl+C to stop all services
 
 **Services Available:**
+
 - Event Flow: http://localhost:5555
 - Event Recorder: http://localhost:5556
 
@@ -148,11 +164,13 @@ pubsub-devtools serve-all \
 Print an example configuration showing directory structure and usage.
 
 **Usage:**
+
 ```bash
 pubsub-devtools config-example
 ```
 
 **What it does:**
+
 - Shows recommended directory structure
 - Provides command examples
 - Shows Python configuration code
@@ -288,8 +306,8 @@ Contains recorded event sessions:
    ```
 
 2. **Run your tests while monitoring in real-time:**
-   - Event Flow (http://localhost:5555): See architecture
-   - Event Recorder (http://localhost:5556): Browse test recordings
+    - Event Flow (http://localhost:5555): See architecture
+    - Event Recorder (http://localhost:5556): Browse test recordings
 
 ## Tips
 
@@ -320,6 +338,7 @@ services:
 ```
 
 Run with:
+
 ```bash
 docker-compose up
 ```
@@ -449,5 +468,6 @@ server.run(host='0.0.0.0', debug=True)
 ## Support
 
 For issues and questions:
+
 - GitHub Issues: https://github.com/venantvr-trading/Python.PubSub.DevTools/issues
 - Documentation: https://github.com/venantvr-trading/Python.PubSub.DevTools/wiki

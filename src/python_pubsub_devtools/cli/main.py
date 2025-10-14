@@ -3,11 +3,9 @@ CLI for launching PubSub DevTools web services
 """
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 
-from ..config import DevToolsConfig
 from ..event_flow.server import EventFlowServer
 from ..event_recorder.server import EventRecorderServer
 
@@ -54,11 +52,11 @@ def cli():
     help='Enable debug mode (default: enabled)'
 )
 def event_flow(
-    agents_dir: Path,
-    events_dir: Path,
-    port: int,
-    host: str,
-    debug: bool
+        agents_dir: Path,
+        events_dir: Path,
+        port: int,
+        host: str,
+        debug: bool
 ):
     """
     Launch the Event Flow Visualization service.
@@ -106,10 +104,10 @@ def event_flow(
     help='Enable debug mode (default: enabled)'
 )
 def event_recorder(
-    recordings_dir: Path,
-    port: int,
-    host: str,
-    debug: bool
+        recordings_dir: Path,
+        port: int,
+        host: str,
+        debug: bool
 ):
     """
     Launch the Event Recorder Dashboard service.
@@ -163,11 +161,11 @@ def event_recorder(
     help='Port for Event Recorder service (default: 5556)'
 )
 def serve_all(
-    agents_dir: Path,
-    events_dir: Path,
-    recordings_dir: Path,
-    event_flow_port: int,
-    event_recorder_port: int
+        agents_dir: Path,
+        events_dir: Path,
+        recordings_dir: Path,
+        event_flow_port: int,
+        event_recorder_port: int
 ):
     """
     Launch all DevTools services simultaneously.
@@ -179,6 +177,7 @@ def serve_all(
 
     def run_event_flow():
         from ..config import EventFlowConfig
+
         config = EventFlowConfig(
             agents_dir=agents_dir,
             events_dir=events_dir,
@@ -189,6 +188,7 @@ def serve_all(
 
     def run_event_recorder():
         from ..config import EventRecorderConfig
+
         config = EventRecorderConfig(
             recordings_dir=recordings_dir,
             port=event_recorder_port

@@ -69,7 +69,9 @@ Extend `DataGenerator` to generate your domain-specific data:
 ```python
 from python_pubsub_devtools.scenario_engine import DataGenerator, GeneratedData
 
+
 class MyDataGenerator(DataGenerator):
+
     def generate_next(self) -> GeneratedData:
         # Your domain-specific logic
         value = self.scenario_profile.calculate_next_value(
@@ -101,7 +103,9 @@ Extend `ScenarioProfile` to define behavior patterns:
 ```python
 from python_pubsub_devtools.scenario_engine import ScenarioProfile
 
+
 class SteadyGrowthProfile(ScenarioProfile):
+
     def __init__(self, growth_rate: float = 0.01):
         super().__init__(
             name="Steady Growth",
@@ -254,7 +258,9 @@ Create complex scenarios with multiple phases:
 ```python
 from python_pubsub_devtools.scenario_engine import MultiPhaseScenarioProfile, ScenarioPhase
 
+
 class MyMultiPhaseProfile(MultiPhaseScenarioProfile):
+
     def __init__(self):
         phases = [
             {
