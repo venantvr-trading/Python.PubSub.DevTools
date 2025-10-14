@@ -10,36 +10,25 @@ A comprehensive suite of development and debugging tools for PubSub-based event-
 - Hierarchical tree and complete graph views
 - Namespace filtering and color coding
 - Failed/rejected event filtering
+- Dark mode support
+- GraphViz-powered layout
 
 ### 🎬 Event Recorder & Replayer
 
 - Record event streams with timestamps
-- Replay recorded events at different speeds
+- Browse recorded sessions via web dashboard
 - Filter and analyze event sequences
-- Web dashboard for managing recordings
+- Detailed statistics per recording
+- Event frequency analysis
 
-### 🎰 Mock Exchange Simulator
+### 🧪 Generic Scenario Testing Framework
 
-- Simulate market scenarios (bull, bear, sideways, volatile, crash)
-- Real-time price generation with configurable volatility
-- Web interface for scenario testing
-- Statistics and visualization
-
-### 🧪 Scenario Testing Framework
-
-- YAML-based scenario definitions
-- Chaos injection (latency, failures, data corruption)
+- Domain-agnostic scenario engine
+- Data generation with pluggable profiles
+- Chaos injection (delays, failures, data corruption)
 - Automated assertion checking
-- Detailed HTML reports
-
-### 📊 Event Metrics Collector (NEW!)
-
-- Real-time event metrics collection
-- Performance monitoring (P50, P95, P99 latencies)
-- Error rate tracking
-- Handler profiling
-- CLI for quick inspection
-- Export for integration with monitoring tools
+- Multi-phase scenario support
+- Comprehensive reporting
 
 ## Installation
 
@@ -57,64 +46,40 @@ pip install -e .
 
 ## Quick Start
 
-### Configuration
-
-Create a `devtools_config.yaml` in your project:
-
-```yaml
-# Project paths
-agents_dir: "path/to/agents"
-events_dir: "path/to/events"
-recordings_dir: "recordings"
-scenarios_dir: "scenarios"
-reports_dir: "reports"
-
-# Event Flow configuration
-event_flow:
-  port: 5555
-  test_agents:
-    - "token_balance_refresh"
-  namespace_colors:
-    bot_lifecycle: "#81c784"
-    market_data: "#64b5f6"
-    indicator: "#9575cd"
-
-# Event Recorder configuration
-event_recorder:
-  port: 5556
-
-# Mock Exchange configuration
-mock_exchange:
-  port: 5557
-
-# Scenario Testing configuration
-scenario_testing:
-  port: 5558
-```
-
 ### Command Line Usage
 
+The CLI provides commands to launch various DevTools services:
+
 ```bash
-# Launch event flow visualizer
-pubsub-tools event-flow
+# View available commands
+pubsub-devtools --help
 
-# Launch event recorder
-pubsub-tools event-recorder
+# Launch Event Flow Visualization (port 5555)
+pubsub-devtools event-flow \
+    --agents-dir ./agents \
+    --events-dir ./events \
+    --port 5555
 
-# Launch mock exchange
-pubsub-tools mock-exchange
+# Launch Event Recorder Dashboard (port 5556)
+pubsub-devtools event-recorder \
+    --recordings-dir ./recordings \
+    --port 5556
 
-# Run scenario tests
-pubsub-tools test-scenarios --scenario my_scenario.yaml
+# Launch all services simultaneously
+pubsub-devtools serve-all \
+    --agents-dir ./agents \
+    --events-dir ./events \
+    --recordings-dir ./recordings \
+    --event-flow-port 5555 \
+    --event-recorder-port 5556
 
-# View event metrics
-pubsub-tools metrics show
-pubsub-tools metrics event OrderCreated
-pubsub-tools metrics export metrics.json
-
-# Launch all dashboards
-pubsub-tools dashboard
+# View example configuration
+pubsub-devtools config-example
 ```
+
+**Available Services:**
+- **Event Flow** (port 5555): Visualize event flows between agents
+- **Event Recorder** (port 5556): Browse and replay recorded event sessions
 
 ### Programmatic Usage
 
@@ -135,62 +100,33 @@ server.run()
 
 Visualize the complete event-driven architecture:
 
-- Who publishes which events
-- Who subscribes to which events
-- Event namespaces and categorization
-- Filter by namespace, hide failed/rejected events
+- **Publishers & Subscribers**: See who publishes and subscribes to which events
+- **Event Namespaces**: Organize events by namespace with color coding
+- **Interactive Diagrams**: Hierarchical tree and complete graph views
+- **Filtering**: Filter by namespace, hide failed/rejected events
+- **Dark Mode**: Comfortable visualization in any lighting condition
+- **GraphViz Layout**: Professional-quality diagram rendering
 
 ### Event Recorder
 
 Record and replay event streams for:
 
-- Debugging complex event sequences
-- Creating test fixtures
-- Performance analysis
-- Scenario reproduction
+- **Debugging**: Analyze complex event sequences
+- **Test Fixtures**: Create reproducible test scenarios
+- **Performance Analysis**: Track event timing and frequency
+- **Session Management**: Browse and compare multiple recordings
+- **Statistics**: Event counts, duration, frequency analysis
 
-### Mock Exchange
+### Generic Scenario Testing
 
-Simulate market behavior:
+Build domain-agnostic scenario tests:
 
-- Bull market (steady uptrend)
-- Bear market (steady downtrend)
-- Sideways (ranging market)
-- Volatile (high volatility)
-- Crash (sudden drop then recovery)
-
-### Scenario Testing
-
-Test your event-driven system:
-
-- Define scenarios in YAML
-- Inject chaos (delays, failures, corruption)
-- Validate assertions
-- Generate detailed reports
-
-### Event Metrics (NEW!)
-
-Monitor your event-driven system in real-time:
-
-- Automatic metrics collection with `@collect_metrics` decorator
-- Performance tracking (latencies, throughput)
-- Error rate monitoring
-- Handler profiling
-- CLI for inspection
-- Export to JSON for integration with Prometheus/Grafana
-
-**Example:**
-
-```python
-from python_pubsub_devtools.metrics import collect_metrics
-
-@collect_metrics
-def handle_order(event):
-    process_order(event)
-    # Metrics automatically collected!
-```
-
-See [docs/03_METRICS.md](docs/03_METRICS.md) for full documentation.
+- **Data Generation**: Pluggable data generators for any domain
+- **Scenario Profiles**: Bull/bear markets, load patterns, failure modes, etc.
+- **Chaos Engineering**: Inject delays, failures, data corruption
+- **Assertions**: Built-in and custom assertion checkers
+- **Multi-Phase**: Complex scenarios with multiple phases
+- **Reporting**: Comprehensive test reports with statistics
 
 ## Architecture
 
@@ -198,23 +134,34 @@ The library is designed with dependency injection for maximum flexibility:
 
 ```
 python_pubsub_devtools/
-├── config.py           # Configuration management
-├── event_flow/         # Event flow analysis and visualization
-├── event_recorder/     # Recording and replaying events
-├── mock_exchange/      # Market simulation
-├── scenario_testing/   # Scenario-based testing
-├── metrics/           # Event metrics collector (NEW!)
-├── trading/           # Trading indicators and patterns
-├── web/               # Shared web assets (templates, CSS, JS)
-└── cli/               # Command-line interface
+├── config.py              # Configuration management
+├── event_flow/            # Event flow analysis and visualization
+│   ├── analyzer.py        # Event flow analyzer
+│   └── server.py          # Flask web server
+├── event_recorder/        # Recording and replaying events
+│   └── server.py          # Dashboard for recordings
+├── scenario_engine/       # Generic scenario testing framework
+│   ├── interfaces.py      # Abstract base classes
+│   ├── scenario_engine.py # Core engine
+│   ├── assertion_checker.py # Assertion system
+│   └── chaos_injector.py  # Chaos engineering
+├── web/                   # Shared web assets
+│   ├── templates/         # HTML templates
+│   └── static/           # CSS, JavaScript, images
+└── cli/                   # Command-line interface
+    └── main.py           # CLI commands
 ```
 
 ## Dependencies
 
-- Flask >= 2.0.0
-- Graphviz (for event flow diagrams)
-- PyYAML >= 6.0
-- Pydantic >= 2.0
+- Flask >= 2.0.0 (Web interface)
+- Click >= 8.0.0 (CLI)
+- pydot >= 1.4.0 (Event flow diagrams)
+- pandas >= 2.0.0 (Data analysis)
+- matplotlib >= 3.5.0 (Visualization)
+- networkx >= 2.8.0 (Graph analysis)
+- PyYAML >= 6.0 (Configuration)
+- Pydantic >= 2.0 (Data validation)
 
 ## Development
 

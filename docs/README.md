@@ -2,143 +2,87 @@
 
 Documentation complète du framework PubSub DevTools pour architectures événementielles.
 
-## 📖 Ordre de lecture recommandé
-
-Les fichiers sont préfixés selon un ordre de lecture logique :
-
-### 1️⃣ [01_ARCHITECTURE.md](./01_ARCHITECTURE.md)
-
-**Vue d'ensemble du système**
-
-- Principes d'architecture
-- Structure modulaire
-- Core components (EventBus, Middleware, Backend)
-- Plugin system
-- Observability stack
-- Reliability patterns
-
-**À lire en premier** pour comprendre la vision globale et l'architecture du framework.
-
 ---
 
-### 2️⃣ [02_USE_CASES.md](./02_USE_CASES.md)
+## 📂 Structure de la Documentation
 
-**Cas d'usage concrets**
+La documentation est organisée en 5 catégories principales :
 
-- E-Commerce Platform
-- Banking Fraud Detection
-- Social Media Notifications
-- Ride-Sharing App
-- Gaming Platform Leaderboards
+### 🏗️ [Architecture](./architecture/)
+Documentation de l'architecture système et cas d'usage.
+- [01_ARCHITECTURE.md](./architecture/01_ARCHITECTURE.md) - Principes, structure modulaire, composants
+- [02_USE_CASES.md](./architecture/02_USE_CASES.md) - Cas d'usage concrets (e-commerce, banking, etc.)
 
-**À lire ensuite** pour voir des exemples réels d'utilisation et comprendre la valeur business.
+### 📋 [Planning](./planning/)
+Vision produit, roadmap et priorités.
+- [03_METRICS.md](./planning/03_METRICS.md) - Event Metrics Collector (feature principale)
+- [04_ROADMAP.md](./planning/04_ROADMAP.md) - Roadmap 2025-2026 (8 phases)
+- [05_QUICK_WINS.md](./planning/05_QUICK_WINS.md) - Améliorations rapides à fort impact
 
----
+### 📘 [Guides](./guides/)
+Guides pratiques d'utilisation et migration.
+- [CLI_USAGE.md](guides/10_CLI_USAGE.md) - Guide complet du CLI
+- [06_MIGRATION_GUIDE.md](./guides/06_MIGRATION_GUIDE.md) - Migration depuis versions précédentes
 
-### 3️⃣ [03_METRICS.md](./03_METRICS.md)
+### 🔧 [Implementation](./implementation/)
+Résumés techniques d'implémentation.
+- [07_IMPLEMENTATION_SUMMARY.md](./implementation/07_IMPLEMENTATION_SUMMARY.md) - Metrics Collector
+- [08_MIGRATION_SUMMARY.md](./implementation/08_MIGRATION_SUMMARY.md) - Scenario Engine Migration
+- [09_PACKAGE_SETUP_SUMMARY.md](./implementation/09_PACKAGE_SETUP_SUMMARY.md) - Configuration package
 
-**Event Metrics Collector** ⭐ Feature principale
-
-- Quick start guide
-- API complète
-- CLI commands
-- Exemples d'usage
-- Best practices
-
-**À lire pour commencer à utiliser** la fonctionnalité de collecte de métriques (feature la plus récente).
-
----
-
-### 4️⃣ [04_ROADMAP.md](./04_ROADMAP.md)
-
-**Vision long terme**
-
-- Roadmap sur 8 phases (Q1 2025 - 2026)
-- Phase 1: Observabilité & Monitoring
-- Phase 2: Reliability & Resilience
-- Phase 3: Schema Management
-- Phase 4: Event Sourcing & CQRS
-- Phases 5-8: Intégrations, Testing, DX, Community
-
-**À lire pour comprendre** où va le projet et les fonctionnalités futures.
-
----
-
-### 5️⃣ [05_QUICK_WINS.md](./05_QUICK_WINS.md)
-
-**Améliorations rapides à fort impact**
-
-- Priorité 1 (1-2 semaines): Metrics ✅, Logging, Health checks, Replay, Browser
-- Priorité 2 (2-4 semaines): Validation, Router, Batch, Correlation
-- Impact vs Effort matrix
-- Timeline d'implémentation
-
-**À lire pour contribuer** ou pour savoir quelles features arrivent prochainement.
-
----
-
-### 6️⃣ [06_MIGRATION_GUIDE.md](./06_MIGRATION_GUIDE.md)
-
-**Guide technique de migration**
-
-- Migration depuis versions précédentes
-- Breaking changes
-- Étapes de migration
-
-**À lire si nécessaire** lors de migrations ou mises à jour.
-
----
-
-## 📄 Fichiers de statut (99_*.md)
-
-Ces fichiers documentent l'historique du projet :
-
-- **99_INSTALLATION_SUCCESS.md** - Succès d'installation initiale
-- **99_SETUP_COMPLETE.md** - Configuration complète
-- **99_RENAMING_COMPLETE.md** - Détails des renommages
-
-Ces fichiers sont principalement pour référence historique.
+### ✅ [Status](./status/)
+Historique et statut du projet (référence).
+- [99_SETUP_COMPLETE.md](./status/99_SETUP_COMPLETE.md) - Setup initial
+- [99_RENAMING_COMPLETE.md](./status/99_RENAMING_COMPLETE.md) - Renommages
+- [99_INSTALLATION_SUCCESS.md](./status/99_INSTALLATION_SUCCESS.md) - Vérification installation
 
 ---
 
 ## 🚀 Par où commencer ?
 
 ### Si vous découvrez le projet :
+1. [**Architecture**](./architecture/01_ARCHITECTURE.md) - Comprendre la vision globale
+2. [**Use Cases**](./architecture/02_USE_CASES.md) - Voir des exemples concrets
+3. [**Metrics**](./planning/03_METRICS.md) - Commencer à utiliser les métriques
 
-1. [01_ARCHITECTURE.md](./01_ARCHITECTURE.md) - Comprendre la vision
-2. [02_USE_CASES.md](./02_USE_CASES.md) - Voir des exemples concrets
-3. [03_METRICS.md](./03_METRICS.md) - Commencer à utiliser
+### Si vous voulez utiliser le CLI :
+👉 [**CLI Usage Guide**](guides/10_CLI_USAGE.md) - Guide complet avec exemples
 
 ### Si vous voulez contribuer :
+1. [**Quick Wins**](./planning/05_QUICK_WINS.md) - Améliorations prioritaires
+2. [**Roadmap**](./planning/04_ROADMAP.md) - Vision long terme
+3. [**Architecture**](./architecture/01_ARCHITECTURE.md) - Structure technique
 
-1. [05_QUICK_WINS.md](./05_QUICK_WINS.md) - Voir les améliorations prioritaires
-2. [04_ROADMAP.md](./04_ROADMAP.md) - Comprendre la vision long terme
-3. [01_ARCHITECTURE.md](./01_ARCHITECTURE.md) - Comprendre l'architecture
-
-### Si vous cherchez une feature spécifique :
-
-- **Métriques** → [03_METRICS.md](./03_METRICS.md)
-- **Architecture** → [01_ARCHITECTURE.md](./01_ARCHITECTURE.md)
-- **Exemples** → [02_USE_CASES.md](./02_USE_CASES.md)
-- **Future** → [04_ROADMAP.md](./04_ROADMAP.md)
+### Si vous migrez depuis une ancienne version :
+👉 [**Migration Guide**](./guides/06_MIGRATION_GUIDE.md)
 
 ---
 
-## 📊 État actuel
+## 📊 État actuel du projet
 
-✅ **Implémenté** :
+### ✅ Implémenté
+- Event Metrics Collector ⭐
+- Event Flow Visualization (React Flow)
+- Event Recorder & Replay
+- Mock Exchange with scenarios
+- Scenario Testing Framework with Chaos Engineering
+- CLI tools (`pubsub-devtools`)
 
-- Event Metrics Collector (Priority #1 Quick Win)
-- Trading indicators & patterns
-- Mock Exchange scenarios
-- Event recorder & replay
-- Scenario testing framework
-- CLI tools
-
-🚧 **En cours** :
-Voir [05_QUICK_WINS.md](./05_QUICK_WINS.md) pour les prochaines étapes.
+### 🚧 En cours
+Voir [Quick Wins](./planning/05_QUICK_WINS.md) pour les prochaines étapes.
 
 ---
 
-**Version**: 1.0.0
-**Last Updated**: 2025-10-13
+## 🔗 Quick Links
+
+| Feature | Port | Command |
+|---------|------|---------|
+| Event Flow | 5555 | `pubsub-devtools event-flow` |
+| Event Recorder | 5556 | `pubsub-devtools event-recorder` |
+| Mock Exchange | 5557 | `pubsub-devtools mock-exchange` |
+| Test Scenarios | 5558 | `pubsub-devtools test-scenarios` |
+| **Dashboard** | All | `pubsub-devtools dashboard` |
+
+---
+
+**Version**: 0.2.0 | **Last Updated**: 2025-10-14 | **License**: MIT

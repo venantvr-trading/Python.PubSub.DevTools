@@ -31,6 +31,7 @@ dependencies = [
     "pydot>=1.4.0",
     "matplotlib>=3.5.0",
     "networkx>=2.8.0",
+    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
@@ -43,6 +44,9 @@ dev = [
     "mypy>=1.0",
     "black>=23.0",
 ]
+
+[project.scripts]
+pubsub-devtools = "python_pubsub_devtools.cli.main:cli"
 
 [project.urls]
 Homepage = "https://github.com/venantvr-trading/Python.PubSub.DevTools"
@@ -61,12 +65,9 @@ namespaces = false
 
 [tool.setuptools.package-data]
 python_pubsub_devtools = [
-    "event_flow/web/templates/*.html",
-    "event_flow/web/static/css/*.css",
-    "event_flow/web/static/js/*.js",
-    "event_recorder/web/templates/*.html",
-    "event_recorder/web/static/css/*.css",
-    "event_recorder/web/static/js/*.js",
+    "web/templates/*.html",
+    "web/static/css/*.css",
+    "web/static/js/*.js",
 ]
 
 [tool.pytest.ini_options]
