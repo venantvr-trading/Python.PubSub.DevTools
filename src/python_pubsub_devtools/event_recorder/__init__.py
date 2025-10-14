@@ -1,9 +1,11 @@
 """
-Event Recorder Module
+Event Recorder
 
-Provides tools for recording and replaying event streams.
+Records and replays event bus events for testing and debugging.
 """
+from .event_recorder import EventRecorder, EventReplayer
 
-from .recorder import EventRecorder, EventReplayer
-
-__all__ = ["EventRecorder", "EventReplayer"]
+__all__ = [
+    "EventRecorder",
+    "EventReplayer",
+]

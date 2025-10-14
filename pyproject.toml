@@ -68,6 +68,7 @@ python_pubsub_devtools = [
     "web/templates/*.html",
     "web/static/css/*.css",
     "web/static/js/*.js",
+    "web/static/*.svg",
 ]
 
 [tool.pytest.ini_options]

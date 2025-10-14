@@ -10,7 +10,7 @@
 }
 
 body {
-    font-family: monospace;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     padding: 15px;
@@ -246,50 +246,14 @@ body.dark-mode .graph-container svg {
     filter: brightness(0.9) contrast(1.1);
 }
 
-/* SVG background polygon (Graphviz background) */
-body.dark-mode .graph-container svg > g > polygon {
-    fill: #1a1a1a !important;
-}
-
-/* All SVG text elements in dark mode - must be light colored */
 body.dark-mode .graph-container svg text {
     fill: #e0e0e0 !important;
 }
 
-/* Node borders in dark mode */
 body.dark-mode .graph-container svg .node rect,
 body.dark-mode .graph-container svg .node ellipse,
 body.dark-mode .graph-container svg .node polygon {
     stroke: #8fa3f5 !important;
-}
-
-/* Additional selector for Graphviz background polygon */
-body.dark-mode .graph-container svg polygon[stroke="transparent"],
-body.dark-mode .graph-container svg polygon[fill="white"],
-body.dark-mode .graph-container svg polygon[fill=""],
-body.dark-mode .graph-container svg polygon:not([fill]):not([class]) {
-    fill: #1a1a1a !important;
-}
-
-/* React Flow dark mode adjustments */
-body.dark-mode .react-flow__background {
-    background: #1a1a1a !important;
-}
-
-body.dark-mode .react-flow__minimap {
-    background: #2d2d2d !important;
-}
-
-body.dark-mode .react-flow__minimap-mask {
-    fill: rgba(102, 126, 234, 0.2) !important;
-}
-
-body.dark-mode .react-flow__edge-path {
-    stroke: #8fa3f5 !important;
-}
-
-body.dark-mode .react-flow__edge.selected .react-flow__edge-path {
-    stroke: #63b3ed !important;
 }
 
 body.fullscreen {
@@ -1200,108 +1164,4 @@ body.fullscreen .description {
     max-height: 300px;
     overflow-y: auto;
     white-space: pre-wrap;
-}
-
-/* React Flow Container */
-.flow-container {
-    background: white;
-    border-radius: 8px;
-    padding: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    height: 70vh;
-    min-height: 600px;
-    position: relative;
-}
-
-body.dark-mode .flow-container {
-    background: #1a1a1a;
-}
-
-body.fullscreen .flow-container {
-    height: 100vh;
-    border-radius: 0;
-    box-shadow: none;
-}
-
-/* React Flow specific styles */
-.react-flow__node {
-    font-family: monospace;
-}
-
-.react-flow__edge-path {
-    stroke-width: 2px;
-}
-
-.react-flow__controls {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-body.dark-mode .react-flow__controls {
-    background: #2d2d2d;
-}
-
-.react-flow__controls-button {
-    border: none;
-    background: transparent;
-    color: #667eea;
-}
-
-body.dark-mode .react-flow__controls-button {
-    color: #8fa3f5;
-}
-
-.react-flow__controls-button:hover {
-    background: rgba(102, 126, 234, 0.1);
-}
-
-/* AI Editor specific styles */
-#prompt-display {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.85em;
-    color: #333;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
-body.dark-mode #prompt-display {
-    background: #1a1a1a;
-    border-color: #3a3a3a;
-    color: #e0e0e0;
-}
-
-/* Additional React Flow styles */
-.flow-container .react-flow {
-    width: 100%;
-    height: 100%;
-}
-
-.flow-container .react-flow__viewport {
-    width: 100%;
-    height: 100%;
-}
-
-/* Make edges more visible */
-.react-flow__edge-path {
-    stroke-width: 3px !important;
-}
-
-.react-flow__edge.animated path {
-    stroke-dasharray: 5;
-    animation: dashdraw 0.5s linear infinite;
-}
-
-@keyframes dashdraw {
-    to {
-        stroke-dashoffset: -10;
-    }
-}
-
-.react-flow__arrowhead {
-    fill: currentColor;
 }

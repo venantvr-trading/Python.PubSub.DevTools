@@ -1,9 +1,13 @@
 """
-Event Flow Visualization Module
+Event Flow Visualization Tools
 
-Provides tools for analyzing and visualizing event flows in PubSub architectures.
+Tools for analyzing and visualizing event flow architecture.
 """
+from .analyze_event_flow import EventFlowAnalyzer
+from .generate_hierarchical_tree import generate_hierarchical_tree, generate_simplified_tree
 
-from .analyzer import EventFlowAnalyzer
-
-__all__ = ["EventFlowAnalyzer"]
+__all__ = [
+    "EventFlowAnalyzer",
+    "generate_hierarchical_tree",
+    "generate_simplified_tree",
+]

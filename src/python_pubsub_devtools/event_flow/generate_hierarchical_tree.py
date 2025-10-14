@@ -1,8 +1,19 @@
-"""\nHierarchical Event Flow Tree Generator\n\nCreates top-to-bottom hierarchical visualizations of event flows.\n"""
+#!/usr/bin/env python3
+"""
+Generate Hierarchical Event Flow Tree
+
+Creates a top-to-bottom hierarchical visualization of the event flow.
+
+Usage:
+    python tools/generate_hierarchical_tree.py
+    python tools/generate_hierarchical_tree.py --output event_tree.png --format png
+"""
+import argparse
+from pathlib import Path
 
 import pydot
 
-from .analyzer import EventFlowAnalyzer
+from analyze_event_flow import EventFlowAnalyzer
 
 
 def generate_hierarchical_tree(analyzer: EventFlowAnalyzer, output_path: str, format: str = "png"):
@@ -249,3 +260,50 @@ def generate_simplified_tree(analyzer: EventFlowAnalyzer, output_path: str, form
             print(f"✅ DOT file saved to {dot_path}")
             print(f"   Install graphviz: sudo apt-get install graphviz")
             print(f"   Then run: dot -T{format} {dot_path} -o {output_path}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate hierarchical event flow tree")
+    parser.add_argument("--output", "-o", type=str, default="event_tree.png",
+                        help="Output file path (default: event_tree.png)")
+    parser.add_argument("--format", "-f", choices=["png", "svg", "pdf", "dot"],
+                        default="png", help="Output format (default: png)")
+    parser.add_argument("--simplified", "-s", action="store_true",
+                        help="Generate simplified main flow only")
+    args = parser.parse_args()
+
+    # Find agents directory
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    agents_dir = project_root / "python_pubsub_risk" / "agents"
+
+    if not agents_dir.exists():
+        print(f"Error: Agents directory not found at {agents_dir}")
+        return 1
+
+    # Prepare output path - if relative, put in tools directory
+    output_path = Path(args.output)
+    if not output_path.is_absolute():
+        output_path = script_dir / output_path
+    output_path = str(output_path)
+
+    # Analyze
+    print("Analyzing event flow...")
+    analyzer = EventFlowAnalyzer(agents_dir)
+    analyzer.analyze()
+
+    # Generate tree
+    if args.simplified:
+        print("Generating simplified hierarchical tree...")
+        generate_simplified_tree(analyzer, output_path, args.format)
+    else:
+        print("Generating complete hierarchical tree...")
+        generate_hierarchical_tree(analyzer, output_path, args.format)
+
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())

@@ -1,9 +1,16 @@
+#!/usr/bin/env python3
 """
 Event Flow Analyzer
 
 Parses all agents to extract event subscriptions and publications,
 then generates a visual graph of the event flow.
+
+Usage:
+    python tools/analyze_event_flow.py
+    python tools/analyze_event_flow.py --format png
+    python tools/analyze_event_flow.py --output event_flow.svg
 """
+import argparse
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -174,64 +181,6 @@ class EventFlowAnalyzer:
         lines.append('}')
         return '\n'.join(lines)
 
-    def to_interactive_json(self) -> dict:
-        """
-        Generate JSON data for interactive visualization (React Flow format)
-
-        Returns:
-            dict: Dictionary with 'nodes' and 'edges' lists for React Flow
-        """
-        nodes = []
-        edges = []
-
-        events = self.get_all_events()
-        agents = set(self.subscriptions.keys()) | set(self.publications.keys())
-
-        # Create event nodes
-        for event in sorted(events):
-            nodes.append({
-                'id': event,
-                'type': 'event',
-                'data': {'label': event},
-                'position': {'x': 0, 'y': 0}  # Will be positioned by React Flow
-            })
-
-        # Create agent nodes
-        for agent in sorted(agents):
-            nodes.append({
-                'id': agent,
-                'type': 'agent',
-                'data': {'label': agent},
-                'position': {'x': 0, 'y': 0}  # Will be positioned by React Flow
-            })
-
-        # Create edges for subscriptions (event -> agent)
-        for event, subscribers in self.event_to_subscribers.items():
-            for subscriber in subscribers:
-                edges.append({
-                    'id': f"{event}-to-{subscriber}",
-                    'source': event,
-                    'target': subscriber,
-                    'type': 'subscription',
-                    'animated': False
-                })
-
-        # Create edges for publications (agent -> event)
-        for agent, publications in self.publications.items():
-            for event in publications:
-                edges.append({
-                    'id': f"{agent}-to-{event}",
-                    'source': agent,
-                    'target': event,
-                    'type': 'publication',
-                    'animated': True  # Animated to show publication direction
-                })
-
-        return {
-            'nodes': nodes,
-            'edges': edges
-        }
-
     def print_summary(self):
         """Print a text summary of the event flow"""
         print("=" * 80)
@@ -280,3 +229,66 @@ class EventFlowAnalyzer:
                 print(f"   Listens to: {', '.join(sorted(subscribed))}")
             if published:
                 print(f"   Publishes:  {', '.join(sorted(published))}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Analyze event flow in the trading bot")
+    parser.add_argument("--agents-dir", type=str, help="Path to agents directory")
+    parser.add_argument("--format", choices=["mermaid", "graphviz", "summary"], default="summary",
+                        help="Output format (default: summary)")
+    parser.add_argument("--output", "-o", type=str, help="Output file path")
+    args = parser.parse_args()
+
+    # Determine agents directory
+    if args.agents_dir:
+        agents_dir = Path(args.agents_dir)
+    else:
+        # Default: infer from project structure
+        script_dir = Path(__file__).parent
+        project_root = script_dir.parent.parent
+        agents_dir = project_root / "python_pubsub_risk" / "agents"
+
+    if not agents_dir.exists():
+        print(f"Error: Agents directory not found at {agents_dir}")
+        return 1
+
+    # Analyze
+    analyzer = EventFlowAnalyzer(agents_dir)
+    analyzer.analyze()
+
+    # Generate output
+    if args.format == "summary":
+        analyzer.print_summary()
+
+    elif args.format == "mermaid":
+        output = analyzer.generate_mermaid()
+        if args.output:
+            output_path = Path(args.output)
+            # If relative path, put in tools directory
+            if not output_path.is_absolute():
+                output_path = script_dir / output_path
+            output_path.write_text(output)
+            print(f"Mermaid diagram saved to {output_path}")
+        else:
+            print(output)
+
+    elif args.format == "graphviz":
+        output = analyzer.generate_graphviz()
+        if args.output:
+            output_path = Path(args.output)
+            # If relative path, put in tools directory
+            if not output_path.is_absolute():
+                output_path = script_dir / output_path
+            output_path.write_text(output)
+            print(f"Graphviz DOT file saved to {output_path}")
+            print(f"Generate image with: dot -Tpng {output_path} -o {output_path.with_suffix('.png')}")
+        else:
+            print(output)
+
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())
