@@ -246,14 +246,50 @@ body.dark-mode .graph-container svg {
     filter: brightness(0.9) contrast(1.1);
 }
 
+/* SVG background polygon (Graphviz background) */
+body.dark-mode .graph-container svg > g > polygon {
+    fill: #1a1a1a !important;
+}
+
+/* All SVG text elements in dark mode - must be light colored */
 body.dark-mode .graph-container svg text {
     fill: #e0e0e0 !important;
 }
 
+/* Node borders in dark mode */
 body.dark-mode .graph-container svg .node rect,
 body.dark-mode .graph-container svg .node ellipse,
 body.dark-mode .graph-container svg .node polygon {
     stroke: #8fa3f5 !important;
+}
+
+/* Additional selector for Graphviz background polygon */
+body.dark-mode .graph-container svg polygon[stroke="transparent"],
+body.dark-mode .graph-container svg polygon[fill="white"],
+body.dark-mode .graph-container svg polygon[fill=""],
+body.dark-mode .graph-container svg polygon:not([fill]):not([class]) {
+    fill: #1a1a1a !important;
+}
+
+/* React Flow dark mode adjustments */
+body.dark-mode .react-flow__background {
+    background: #1a1a1a !important;
+}
+
+body.dark-mode .react-flow__minimap {
+    background: #2d2d2d !important;
+}
+
+body.dark-mode .react-flow__minimap-mask {
+    fill: rgba(102, 126, 234, 0.2) !important;
+}
+
+body.dark-mode .react-flow__edge-path {
+    stroke: #8fa3f5 !important;
+}
+
+body.dark-mode .react-flow__edge.selected .react-flow__edge-path {
+    stroke: #63b3ed !important;
 }
 
 body.fullscreen {

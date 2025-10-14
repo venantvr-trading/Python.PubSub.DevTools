@@ -9,33 +9,37 @@ let currentRoot = null; // Keep track of current React root
 
 // Custom Node Components
 const EventNode = ({ data }) => {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+
     return React.createElement('div', {
         style: {
-            background: '#A7C7E7',
+            background: isDarkMode ? '#4a6b8a' : '#A7C7E7',
             padding: '12px',
             borderRadius: '50%',
-            border: '2px solid #5a7d9e',
+            border: isDarkMode ? '2px solid #7a9bbe' : '2px solid #5a7d9e',
             fontSize: '11px',
             textAlign: 'center',
             minWidth: '60px',
             maxWidth: '120px',
             wordWrap: 'break-word',
-            color: '#000'
+            color: isDarkMode ? '#e0e0e0' : '#000'
         }
     }, data.label);
 };
 
 const AgentNode = ({ data }) => {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+
     return React.createElement('div', {
         style: {
-            background: '#FDFD96',
+            background: isDarkMode ? '#6b6b3d' : '#FDFD96',
             padding: '10px 15px',
             borderRadius: '5px',
-            border: '2px solid #c5c56d',
+            border: isDarkMode ? '2px solid #9b9b5d' : '2px solid #c5c56d',
             fontSize: '11px',
             textAlign: 'center',
             minWidth: '80px',
-            color: '#000'
+            color: isDarkMode ? '#e0e0e0' : '#000'
         }
     }, data.label);
 };
@@ -250,6 +254,11 @@ function EventFlowDiagram({ graphType, isEditable }) {
         firstEdge: edges[0]
     });
 
+    // Detect dark mode for background color
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const backgroundColor = isDarkMode ? '#2a2a2a' : '#f8f9fa';
+    const backgroundDotColor = isDarkMode ? '#4a4a4a' : '#aaa';
+
     return React.createElement(ReactFlow, {
         nodes: nodes,
         edges: edges,
@@ -271,10 +280,10 @@ function EventFlowDiagram({ graphType, isEditable }) {
         connectionLineStyle: { stroke: '#4CAF50', strokeWidth: 2 },
         minZoom: 0.1,
         maxZoom: 2,
-        style: { width: '100%', height: '100%' }
+        style: { width: '100%', height: '100%', background: backgroundColor }
     }, [
         React.createElement(Controls, { key: 'controls' }),
-        React.createElement(Background, { key: 'background', color: '#aaa', gap: 16 })
+        React.createElement(Background, { key: 'background', color: backgroundDotColor, gap: 16 })
     ]);
 }
 
@@ -365,6 +374,18 @@ function toggleFullscreen() {
 
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
+
+    // Re-render the current flow to update colors
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab) {
+        const tabText = activeTab.textContent.trim();
+        const tabId = tabText.includes('Simplified') ? 'simplified'
+                    : tabText.includes('Complete') ? 'complete'
+                    : tabText.includes('Éditeur') ? 'ia-editor'
+                    : 'simplified';
+        const isEditable = tabId === 'ia-editor';
+        renderFlow(tabId, isEditable);
+    }
 }
 
 // Keyboard shortcuts
