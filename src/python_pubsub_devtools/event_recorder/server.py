@@ -1,6 +1,8 @@
 """
 Event Recorder Server - Serveur web pour la visualisation des enregistrements d'événements.
 """
+from __future__ import annotations
+
 from pathlib import Path
 
 from flask import Flask

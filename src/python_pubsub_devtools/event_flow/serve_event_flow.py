@@ -8,6 +8,8 @@ Usage:
     python tools/serve_event_flow.py
     make docs-serve
 """
+from __future__ import annotations
+
 import re
 import subprocess
 from pathlib import Path
@@ -122,13 +124,10 @@ def get_namespace_color(namespace: str) -> str:
 
 def generate_graph_svg(graph_type: str, namespaces: Set[str], hide_failed: bool, hide_rejected: bool) -> bytes:
     """Generate SVG for the specified graph type with filters"""
-    import sys
     import tempfile
 
-    # Add event_flow dir to path for imports
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-    from analyze_event_flow import EventFlowAnalyzer
+    # Use relative import
+    from .analyze_event_flow import EventFlowAnalyzer
 
     # Analyze event flow
     print(f"Analyzing event flow for {graph_type}...")
@@ -187,7 +186,7 @@ def generate_graph_svg(graph_type: str, namespaces: Set[str], hide_failed: bool,
         # Generate DOT based on type
         if graph_type == 'simplified':
             print("Generating simplified tree...")
-            from generate_hierarchical_tree import generate_simplified_tree
+            from .generate_hierarchical_tree import generate_simplified_tree
 
             generate_simplified_tree(analyzer, str(dot_file), format='dot')
         elif graph_type == 'complete':
@@ -249,7 +248,7 @@ def generate_graph_svg(graph_type: str, namespaces: Set[str], hide_failed: bool,
             dot_file.write_text(dot_content)
         elif graph_type == 'full-tree':
             print("Generating full hierarchy tree...")
-            from generate_hierarchical_tree import generate_hierarchical_tree
+            from .generate_hierarchical_tree import generate_hierarchical_tree
 
             # Apply filters to full-tree like we do for complete graph
             # Filter events
@@ -349,7 +348,7 @@ def generate_graph_svg(graph_type: str, namespaces: Set[str], hide_failed: bool,
 @app.route('/')
 def index():
     """Main page with tabs and filters"""
-    from analyze_event_flow import EventFlowAnalyzer
+    from .analyze_event_flow import EventFlowAnalyzer
 
     # Analyze to get stats
     analyzer = EventFlowAnalyzer(AGENTS_DIR)
@@ -453,7 +452,7 @@ def main():
         print(f"❌ Error: Agents directory not found at {AGENTS_DIR}")
         return 1
 
-    from analyze_event_flow import EventFlowAnalyzer
+    from .analyze_event_flow import EventFlowAnalyzer
 
     analyzer = EventFlowAnalyzer(AGENTS_DIR)
     analyzer.analyze()

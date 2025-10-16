@@ -3,6 +3,8 @@ CLI unifié pour le lancement des services web PubSub DevTools.
 
 Ce CLI simplifié utilise un fichier de configuration YAML unique pour tous les services.
 """
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 

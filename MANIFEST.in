@@ -2,21 +2,16 @@
 include README.md
 include LICENSE
 
-# Include web assets (templates, CSS, JS, favicon)
+# Include web assets (templates, CSS, JS)
+# Note: Ces fichiers sont aussi déclarés dans pyproject.toml [tool.setuptools.package-data]
+# pour assurer l'inclusion dans les wheels et sdist
 recursive-include src/python_pubsub_devtools/web/templates *.html
 recursive-include src/python_pubsub_devtools/web/static/css *.css
 recursive-include src/python_pubsub_devtools/web/static/js *.js
-include src/python_pubsub_devtools/web/static/favicon.svg
+recursive-include src/python_pubsub_devtools/web/static *.svg *.ico *.png
 
 # Exclude everything else
 global-exclude *.py[cod]
 global-exclude __pycache__
 global-exclude *.so
 global-exclude .DS_Store
-global-exclude tests/*
-recursive-exclude tests *
-recursive-exclude docs *
-recursive-exclude examples *
-prune tests
-prune docs
-prune examples

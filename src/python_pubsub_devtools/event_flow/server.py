@@ -1,6 +1,8 @@
 """
 Event Flow Server - Wrapper for serve_event_flow Flask app
 """
+from __future__ import annotations
+
 from pathlib import Path
 
 from .serve_event_flow import app
@@ -19,6 +21,9 @@ class EventFlowServer:
         self.agents_dir = config.agents_dir
         self.events_dir = config.events_dir
         self.port = config.port
+
+        # Store Flask app reference for testing
+        self.app = app
 
         # Update global paths in serve_event_flow
         import python_pubsub_devtools.event_flow.serve_event_flow as serve_module

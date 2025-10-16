@@ -70,6 +70,8 @@ python_pubsub_devtools = [
     "web/static/css/*.css",
     "web/static/js/*.js",
     "web/static/*.svg",
+    "web/static/*.ico",
+    "web/static/*.png",
 ]
 
 [tool.pytest.ini_options]

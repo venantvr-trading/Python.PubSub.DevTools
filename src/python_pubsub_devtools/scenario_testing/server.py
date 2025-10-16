@@ -1,6 +1,8 @@
 """
 Scenario Testing Server - Serveur web pour l'exécution de tests de scénarios.
 """
+from __future__ import annotations
+
 from pathlib import Path
 
 from flask import Flask

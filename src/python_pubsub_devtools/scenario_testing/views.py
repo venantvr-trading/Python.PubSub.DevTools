@@ -1,7 +1,8 @@
 """
 Routes Flask pour le tableau de bord Scenario Testing.
 """
-import sys
+from __future__ import annotations
+
 import threading
 import time
 from datetime import datetime

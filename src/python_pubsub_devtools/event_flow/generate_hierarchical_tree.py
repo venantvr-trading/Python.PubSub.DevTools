@@ -8,11 +8,13 @@ Usage:
     python tools/generate_hierarchical_tree.py
     python tools/generate_hierarchical_tree.py --output event_tree.png --format png
 """
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
 
 import pydot
-from analyze_event_flow import EventFlowAnalyzer
+from .analyze_event_flow import EventFlowAnalyzer
 
 
 def generate_hierarchical_tree(analyzer: EventFlowAnalyzer, output_path: str, format: str = "png"):

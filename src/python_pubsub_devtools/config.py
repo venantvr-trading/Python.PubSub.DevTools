@@ -1,6 +1,8 @@
 """
 Configuration centralisée pour PubSub DevTools avec support Pydantic et YAML.
 """
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Dict, List, Any
 

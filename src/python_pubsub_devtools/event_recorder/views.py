@@ -1,6 +1,8 @@
 """
 Routes Flask pour le tableau de bord Event Recorder.
 """
+from __future__ import annotations
+
 import json
 from collections import Counter
 from datetime import datetime

@@ -1,6 +1,8 @@
 """
 Routes Flask pour le tableau de bord Mock Exchange.
 """
+from __future__ import annotations
+
 import sys
 import threading
 import time
@@ -8,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any
 
-from flask import Flask, render_template, request, jsonify, current_app
+from flask import Flask, render_template, request, jsonify
 
 # Import du moteur de simulation
 sys.path.insert(0, str(Path(__file__).parent))

@@ -1,48 +1,55 @@
 """
-PubSub Dev Tools - Comprehensive development and debugging tools for PubSub-based event-driven architectures
+PubSub DevTools - Outils de développement pour architectures événementielles PubSub.
 
-This library provides:
-- Event Flow Visualization: Interactive diagrams of your event-driven architecture
-- Event Recorder: Record and replay event streams for debugging
-- Scenario Engine: Generic scenario-based testing with chaos engineering and assertions
+Cette bibliothèque fournit :
+- Event Flow Visualization: Diagrammes interactifs de votre architecture événementielle
+- Event Recorder: Enregistrement et rejeu de flux d'événements
+- Mock Exchange: Simulateur de marché pour tests
+- Scenario Testing: Tests de scénarios avec chaos engineering
 
-Example:
-    from python_pubsub_devtools.event_flow import EventFlowAnalyzer
-    from python_pubsub_devtools.event_recorder import EventRecorder
-    from python_pubsub_devtools.scenario_engine import ScenarioEngine, DataGenerator
+Example (CLI):
+    $ pubsub-tools serve-all --config devtools_config.yaml
 
-    # Record events
-    recorder = EventRecorder("my_session")
-    recorder.start_recording(service_bus)
+Example (API programmatique):
+    from python_pubsub_devtools.config import DevToolsConfig
+    from python_pubsub_devtools.event_flow.server import EventFlowServer
 
-    # Analyze event flow
-    analyzer = EventFlowAnalyzer()
-    analyzer.analyze_events(events)
-
-    # Run scenario testing
-    engine = ScenarioEngine(generator=my_generator, service_bus=service_bus)
-    engine.run_scenario(steps)
+    config = DevToolsConfig.from_yaml("devtools_config.yaml")
+    server = EventFlowServer(config.event_flow)
+    server.run()  # Bloquant
 """
 
 __version__ = "0.2.0"
 __author__ = "venantvr"
 
-# Scenario Engine - import module, users import specific classes from it
-from . import scenario_engine
-# Event Flow
+# Configuration
+from .config import (
+    DevToolsConfig,
+    EventFlowConfig,
+    EventRecorderConfig,
+    MockExchangeConfig,
+    ScenarioTestingConfig,
+)
+
+# Event Flow - Analyse et visualisation
 from .event_flow import EventFlowAnalyzer
-# Event Recorder
+
+# Event Recorder - Enregistrement et rejeu
 from .event_recorder import EventRecorder, EventReplayer
 
 __all__ = [
-    # Version and metadata
+    # Version et métadonnées
     "__version__",
     "__author__",
+    # Configuration
+    "DevToolsConfig",
+    "EventFlowConfig",
+    "EventRecorderConfig",
+    "MockExchangeConfig",
+    "ScenarioTestingConfig",
     # Event Flow
     "EventFlowAnalyzer",
     # Event Recorder
     "EventRecorder",
     "EventReplayer",
-    # Scenario Engine (module)
-    "scenario_engine",
 ]
