@@ -64,6 +64,10 @@ class InjectFailureChaos(BaseModel):
     at_cycle: Optional[int] = Field(default=None, description="Inject at specific cycle")
     after_event: Optional[str] = Field(default=None, description="Inject after specific event")
     error_message: str = Field(default="Chaos engineering injected failure")
+    event_data: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Additional event properties (cycle_id, timestamp auto-populated if not provided)"
+    )
 
 
 class DropEventChaos(BaseModel):

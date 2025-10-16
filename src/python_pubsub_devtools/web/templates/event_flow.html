@@ -95,10 +95,7 @@
     </div>
 
     <div class="tabs">
-        <button class="tab active" onclick="showTab('simplified')">
-            Simplified Flow
-        </button>
-        <button class="tab" onclick="showTab('complete')">
+        <button class="tab active" onclick="showTab('complete')">
             Complete Graph
         </button>
         <button class="tab" onclick="showTab('full-tree')">
@@ -107,25 +104,8 @@
     </div>
 
     <div class="content">
-        <!-- Tab 1: Simplified Tree -->
-        <div class="tab-content active" id="simplified">
-            <div class="description">
-                <h3>Simplified Event Flow</h3>
-                <p>Main event flow from BotMonitoringCycleStarted to BotMonitoringCycleCompleted.</p>
-            </div>
-            <div class="zoom-controls">
-                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
-                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
-                <button class="zoom-btn" onclick="resetZoom()" title="Reset">⟲</button>
-            </div>
-            <div class="graph-container" data-graph-type="simplified" id="graph-simplified">
-                <div class="svg-content"></div>
-                <div class="zoom-info">Molette: Zoom | Glisser: Déplacer | Double-clic: Reset</div>
-            </div>
-        </div>
-
-        <!-- Tab 2: Complete Graph -->
-        <div class="tab-content" id="complete">
+        <!-- Tab 1: Complete Graph -->
+        <div class="tab-content active" id="complete">
             <div class="description">
                 <h3>Complete Event Graph</h3>
                 <p>All events and agents, including commands and error events.</p>
@@ -141,7 +121,7 @@
             </div>
         </div>
 
-        <!-- Tab 3: Full Tree -->
+        <!-- Tab 2: Full Tree -->
         <div class="tab-content" id="full-tree">
             <div class="description">
                 <h3>Full Event Hierarchy</h3>

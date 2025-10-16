@@ -49,7 +49,7 @@ class GraphStorage:
     Thread-safe in-memory storage for graph data
 
     Supports:
-    - Storing multiple graph types (simplified, complete, full-tree)
+    - Storing multiple graph types (complete, full-tree)
     - Metadata about last update
     - Optional persistence to disk
     """
@@ -88,7 +88,7 @@ class GraphStorage:
         Retrieve graph data
 
         Args:
-            graph_type: Type of graph (simplified, complete, full-tree)
+            graph_type: Type of graph (complete, full-tree)
 
         Returns:
             GraphData if found, None otherwise

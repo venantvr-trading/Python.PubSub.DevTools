@@ -105,7 +105,7 @@ def api_store_graph():
 
     Expected JSON payload:
     {
-        "graph_type": "simplified|complete|full-tree",
+        "graph_type": "complete|full-tree",
         "dot_content": "digraph {...}",
         "svg_content": "<svg>...</svg>",  // optional
         "namespaces": ["market_data", "position"],  // optional
@@ -126,7 +126,7 @@ def api_store_graph():
             return jsonify({'error': 'Missing required field: dot_content'}), 400
 
         # Valid graph types
-        valid_types = {'simplified', 'complete', 'full-tree'}
+        valid_types = {'complete', 'full-tree'}
         if data['graph_type'] not in valid_types:
             return jsonify({
                 'error': f'Invalid graph_type. Must be one of: {", ".join(valid_types)}'

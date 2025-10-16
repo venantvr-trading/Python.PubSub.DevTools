@@ -577,8 +577,8 @@ Voir [04_ROADMAP.md](./04_ROADMAP.md) pour plus de détails.
 ## 📚 Références
 
 - [05_QUICK_WINS.md](./05_QUICK_WINS.md) - Autres améliorations rapides
-- [01_ARCHITECTURE.md](./01_ARCHITECTURE.md) - Architecture du système
-- [02_USE_CASES.md](./02_USE_CASES.md) - Cas d'usage complets
+- [01_ARCHITECTURE.md](../architecture/01_ARCHITECTURE.md) - Architecture du système
+- [02_USE_CASES.md](../architecture/02_USE_CASES.md) - Cas d'usage complets
 
 ---
 

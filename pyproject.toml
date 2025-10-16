@@ -28,7 +28,6 @@ dependencies = [
     "pyyaml>=6.0",
     "pydantic>=2.0",
     "pandas>=2.0.0",
-    "pydot>=1.4.0",
     "matplotlib>=3.5.0",
     "networkx>=2.8.0",
     "click>=8.0.0",

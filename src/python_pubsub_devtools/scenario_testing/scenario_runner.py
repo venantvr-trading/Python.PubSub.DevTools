@@ -41,13 +41,18 @@ logger = logging.getLogger(__name__)
 class ScenarioRunner:
     """Runs declarative test scenarios"""
 
-    def __init__(self, scenario_path: str):
+    def __init__(self, scenario_path: str, event_registry=None):
         """Initialize scenario runner
 
         Args:
             scenario_path: Path to YAML scenario file
+            event_registry: Optional event registry for chaos injector. Can be:
+                - Dict[str, type]: Mapping of event names to classes
+                - Callable: Factory function (event_name, event_data) -> event
+                - None: Use SimpleNamespace (zero coupling, default)
         """
         self.scenario_path = Path(scenario_path)
+        self.event_registry = event_registry
         self.scenario: Optional[TestScenario] = None
         self.exchange: Optional[ScenarioBasedMockExchange] = None
         self.recorder: Optional[EventRecorder] = None
@@ -124,7 +129,11 @@ class ScenarioRunner:
 
         logger.info(f"🔥 Setting up chaos engineering with {len(self.scenario.chaos)} actions")
 
-        self.chaos_injector = ChaosInjector(service_bus, self.scenario.chaos)
+        self.chaos_injector = ChaosInjector(
+            service_bus,
+            self.scenario.chaos,
+            event_registry=self.event_registry
+        )
         self.chaos_injector.start()
 
         return self.chaos_injector

@@ -31,9 +31,6 @@ from .config import (
     ScenarioTestingConfig,
 )
 
-# Event Flow - Analyse et visualisation
-from .event_flow import EventFlowAnalyzer
-
 # Event Recorder - Enregistrement et rejeu
 from .event_recorder import EventRecorder, EventReplayer
 
@@ -48,7 +45,7 @@ __all__ = [
     "MockExchangeConfig",
     "ScenarioTestingConfig",
     # Event Flow
-    "EventFlowAnalyzer",
+    # "EventFlowAnalyzer",
     # Event Recorder
     "EventRecorder",
     "EventReplayer",

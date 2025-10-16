@@ -7,7 +7,8 @@ import logging
 import random
 import time
 from datetime import datetime, timezone
-from typing import Any, Optional, List
+from types import SimpleNamespace
+from typing import Any, Optional, List, Dict, Callable, Union
 
 from typing import TYPE_CHECKING
 
@@ -40,15 +41,25 @@ logger = logging.getLogger(__name__)
 class ChaosInjector:
     """Intercepts service bus to inject chaos actions"""
 
-    def __init__(self, service_bus, chaos_actions: List[ChaosAction]):
+    def __init__(
+            self,
+            service_bus,
+            chaos_actions: List[ChaosAction],
+            event_registry: Optional[Union[Dict[str, type], Callable[[str, Dict[str, Any]], Any]]] = None
+    ):
         """Initialize chaos injector
 
         Args:
             service_bus: The service bus to intercept
             chaos_actions: List of chaos actions to apply
+            event_registry: Optional registry for creating failure events. Can be:
+                - Dict[str, type]: Mapping of event names to event classes
+                - Callable: Factory function (event_name, event_data) -> event_instance
+                - None: Create simple namespace objects (default, zero coupling)
         """
         self.service_bus = service_bus
         self.chaos_actions = chaos_actions
+        self.event_registry = event_registry
         self._original_publish = None
         self._current_cycle = 0
         self._event_history = []
@@ -178,39 +189,63 @@ class ChaosInjector:
         """Inject a failure event"""
         logger.warning(f"🔥 CHAOS: Injecting failure event {action.event}")
 
-        # Dynamically import the failed event class
         try:
-            import sys
-            from pathlib import Path
-
-            # Add project root to path if not already
-            project_root = Path(__file__).parent.parent.parent
-            if str(project_root) not in sys.path:
-                sys.path.insert(0, str(project_root))
-
-            from python_pubsub_risk.events import __dict__ as events_dict
-
-            failed_event_class = events_dict.get(action.event)
-            if not failed_event_class:
-                logger.error(f"Failed event class {action.event} not found")
-                return
-
             # Extract cycle_id from original event if available
             cycle_id = getattr(event, 'cycle_id', self._current_cycle)
 
-            # Create failed event instance
-            failed_event = failed_event_class(
-                cycle_id=cycle_id,
-                error_message=action.error_message,
-                timestamp=datetime.now(timezone.utc).isoformat()
-            )
+            # Build event data with defaults
+            event_data = {
+                'cycle_id': cycle_id,
+                'error_message': action.error_message,
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            }
+
+            # Merge with user-provided event_data
+            if action.event_data:
+                event_data.update(action.event_data)
+
+            # Create failed event using registry, factory, or simple namespace
+            failed_event = self._create_event(action.event, event_data)
 
             # Publish the failure
             self._original_publish(action.event, failed_event, "ChaosInjector")
             self.stats["failures_injected"] += 1
 
         except Exception as e:
-            logger.error(f"Failed to inject failure event: {e}")
+            logger.error(f"Failed to inject failure event {action.event}: {e}", exc_info=True)
+
+    def _create_event(self, event_name: str, event_data: Dict[str, Any]) -> Any:
+        """
+        Create event instance using registry or simple namespace
+
+        Args:
+            event_name: Name of the event to create
+            event_data: Event properties
+
+        Returns:
+            Event instance (class instance, SimpleNamespace, or dict)
+        """
+        # If registry is a callable factory
+        if callable(self.event_registry):
+            return self.event_registry(event_name, event_data)
+
+        # If registry is a dict mapping
+        if isinstance(self.event_registry, dict):
+            event_class = self.event_registry.get(event_name)
+            if event_class:
+                # Try to instantiate with event_data as kwargs
+                try:
+                    return event_class(**event_data)
+                except TypeError:
+                    # If class doesn't accept kwargs, try positional or fallback
+                    logger.warning(
+                        f"Event class {event_name} doesn't accept kwargs, "
+                        f"creating SimpleNamespace instead"
+                    )
+
+        # Default: create SimpleNamespace (zero coupling)
+        logger.debug(f"Creating SimpleNamespace for event {event_name}")
+        return SimpleNamespace(**event_data)
 
     def _apply_drop(self, action: DropEventChaos, event_name: str) -> bool:
         """Drop event based on probability"""
