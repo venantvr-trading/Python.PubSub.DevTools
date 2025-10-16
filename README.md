@@ -1,34 +1,44 @@
-# PubSub Dev Tools
+# PubSub DevTools
 
-A comprehensive suite of development and debugging tools for PubSub-based event-driven architectures.
+**Une suite complète d'outils de développement et de débogage pour architectures événementielles basées sur PubSub.**
 
-## Features
+Cette bibliothèque est conçue comme un **outil d'aide au développement** avec une API programmatique prioritaire. Les développeurs peuvent facilement instancier et lancer
+les serveurs directement depuis leur propre code (scripts de test, sessions de débogage, IDE) tout en bénéficiant d'une CLI pratique pour une utilisation autonome.
 
-### 🎯 Event Flow Visualization
+## 🎯 Fonctionnalités
 
-- Interactive web-based event flow diagrams
-- Hierarchical tree and complete graph views
-- Namespace filtering and color coding
-- Failed/rejected event filtering
-- Dark mode support
-- GraphViz-powered layout
+### 📊 Event Flow Visualization
+
+- Diagrammes interactifs de flux d'événements
+- Vues hiérarchiques et graphes complets
+- Filtrage par namespace avec codage couleur
+- Filtrage des événements échoués/rejetés
+- Support du mode sombre
+- Rendu professionnel avec GraphViz
 
 ### 🎬 Event Recorder & Replayer
 
-- Record event streams with timestamps
-- Browse recorded sessions via web dashboard
-- Filter and analyze event sequences
-- Detailed statistics per recording
-- Event frequency analysis
+- Enregistrement de flux d'événements avec timestamps
+- Tableau de bord web pour parcourir les sessions
+- Filtrage et analyse des séquences d'événements
+- Statistiques détaillées par enregistrement
+- Analyse de fréquence des événements
 
-### 🧪 Generic Scenario Testing Framework
+### 🎰 Mock Exchange Simulator
 
-- Domain-agnostic scenario engine
-- Data generation with pluggable profiles
-- Chaos injection (delays, failures, data corruption)
-- Automated assertion checking
-- Multi-phase scenario support
-- Comprehensive reporting
+- Simulation de marché en temps réel
+- Scénarios multiples (tendance, volatilité, crash)
+- Configuration de prix initial, volatilité et spread
+- Visualisation interactive des prix
+
+### 🎯 Scenario Testing Framework
+
+- Moteur de scénarios agnostique au domaine
+- Génération de données avec profils configurables
+- Ingénierie du chaos (délais, échecs, corruption)
+- Vérification automatique d'assertions
+- Support multi-phases
+- Rapports de tests complets
 
 ## Installation
 
@@ -44,56 +54,107 @@ cd Python.PubSub.DevTools
 pip install -e .
 ```
 
-## Quick Start
+## 🚀 Démarrage Rapide
 
-### Command Line Usage
+### 1. Configuration
 
-The CLI provides commands to launch various DevTools services:
+Créez un fichier `devtools_config.yaml` à la racine de votre projet :
 
 ```bash
-# View available commands
-pubsub-devtools --help
-
-# Launch Event Flow Visualization (port 5555)
-pubsub-devtools event-flow \
-    --agents-dir ./agents \
-    --events-dir ./events \
-    --port 5555
-
-# Launch Event Recorder Dashboard (port 5556)
-pubsub-devtools event-recorder \
-    --recordings-dir ./recordings \
-    --port 5556
-
-# Launch all services simultaneously
-pubsub-devtools serve-all \
-    --agents-dir ./agents \
-    --events-dir ./events \
-    --recordings-dir ./recordings \
-    --event-flow-port 5555 \
-    --event-recorder-port 5556
-
-# View example configuration
-pubsub-devtools config-example
+# Générer un fichier de configuration exemple
+pubsub-tools config-example -o devtools_config.yaml
 ```
 
-**Available Services:**
+Puis éditez le fichier pour ajuster les chemins :
 
-- **Event Flow** (port 5555): Visualize event flows between agents
-- **Event Recorder** (port 5556): Browse and replay recorded event sessions
+```yaml
+# Configuration PubSub DevTools
+agents_dir: "./agents"
+events_dir: "./events"
+recordings_dir: "./recordings"
+scenarios_dir: "./scenarios"
+reports_dir: "./reports"
 
-### Programmatic Usage
+event_flow:
+  port: 5555
+
+event_recorder:
+  port: 5556
+
+mock_exchange:
+  port: 5557
+
+scenario_testing:
+  port: 5558
+```
+
+### 2. Utilisation CLI
+
+```bash
+# Lancer un service spécifique
+pubsub-tools event-flow --config devtools_config.yaml
+pubsub-tools event-recorder --config devtools_config.yaml
+pubsub-tools mock-exchange --config devtools_config.yaml
+pubsub-tools scenario-testing --config devtools_config.yaml
+
+# Lancer tous les services simultanément
+pubsub-tools serve-all --config devtools_config.yaml
+```
+
+**Services disponibles :**
+
+| Service          | Port | Description                          |
+|------------------|------|--------------------------------------|
+| Event Flow       | 5555 | Visualisation des flux d'événements  |
+| Event Recorder   | 5556 | Enregistrement et rejeu d'événements |
+| Mock Exchange    | 5557 | Simulateur de marché                 |
+| Scenario Testing | 5558 | Tests de scénarios avec chaos        |
+
+### 3. Utilisation Programmatique (Recommandé)
+
+L'API programmatique est l'interface principale pour intégrer les outils dans vos scripts, tests ou IDE :
 
 ```python
-from python_pubsub_devtools import DevToolsConfig, EventFlowServer
+from python_pubsub_devtools.config import DevToolsConfig
+from python_pubsub_devtools.event_flow.server import EventFlowServer
 
-# Load configuration
+# Charger la configuration depuis un fichier YAML
 config = DevToolsConfig.from_yaml("devtools_config.yaml")
 
-# Launch event flow server
+# Instancier et lancer un serveur (bloquant)
 server = EventFlowServer(config.event_flow)
 server.run()
 ```
+
+**Lancer plusieurs serveurs en parallèle :**
+
+```python
+import multiprocessing
+from python_pubsub_devtools.config import DevToolsConfig
+from python_pubsub_devtools.event_flow.server import EventFlowServer
+from python_pubsub_devtools.event_recorder.server import EventRecorderServer
+
+config = DevToolsConfig.from_yaml("devtools_config.yaml")
+
+def run_event_flow():
+    server = EventFlowServer(config.event_flow)
+    server.run(host='0.0.0.0', debug=False)
+
+def run_event_recorder():
+    server = EventRecorderServer(config.event_recorder)
+    server.run(host='0.0.0.0', debug=False)
+
+# Lancer dans des processus séparés
+processes = [
+    multiprocessing.Process(target=run_event_flow),
+    multiprocessing.Process(target=run_event_recorder),
+]
+
+for p in processes:
+    p.start()
+```
+
+Voir `examples/basic_usage.py` pour plus d'exemples.
 
 ## Features Overview
 
@@ -129,29 +190,49 @@ Build domain-agnostic scenario tests:
 - **Multi-Phase**: Complex scenarios with multiple phases
 - **Reporting**: Comprehensive test reports with statistics
 
-## Architecture
+## 🏗️ Architecture
 
-The library is designed with dependency injection for maximum flexibility:
+La bibliothèque suit une architecture modulaire avec configuration centralisée :
 
 ```
 python_pubsub_devtools/
-├── config.py              # Configuration management
-├── event_flow/            # Event flow analysis and visualization
-│   ├── analyzer.py        # Event flow analyzer
-│   └── server.py          # Flask web server
-├── event_recorder/        # Recording and replaying events
-│   └── server.py          # Dashboard for recordings
-├── scenario_engine/       # Generic scenario testing framework
-│   ├── interfaces.py      # Abstract base classes
-│   ├── scenario_engine.py # Core engine
-│   ├── assertion_checker.py # Assertion system
-│   └── chaos_injector.py  # Chaos engineering
-├── web/                   # Shared web assets
-│   ├── templates/         # HTML templates
-│   └── static/           # CSS, JavaScript, images
-└── cli/                   # Command-line interface
-    └── main.py           # CLI commands
+├── config.py                    # Configuration Pydantic centralisée avec support YAML
+├── cli/                         # Interface en ligne de commande unifiée
+│   └── main.py                  # Commandes CLI avec Click
+├── event_flow/                  # Visualisation des flux d'événements
+│   ├── __init__.py             # API publique (EventFlowAnalyzer, EventFlowServer)
+│   ├── server.py               # Serveur Flask (Application Factory)
+│   ├── views.py                # Routes Flask
+│   └── analyze_event_flow.py  # Logique métier d'analyse
+├── event_recorder/              # Enregistrement et rejeu d'événements
+│   ├── __init__.py             # API publique (EventRecorder, EventRecorderServer)
+│   ├── server.py               # Serveur Flask (Application Factory)
+│   ├── views.py                # Routes Flask
+│   └── event_recorder.py       # Logique métier d'enregistrement
+├── mock_exchange/               # Simulateur de marché
+│   ├── __init__.py             # API publique (MockExchangeServer)
+│   ├── server.py               # Serveur Flask (Application Factory)
+│   ├── views.py                # Routes Flask
+│   └── scenario_exchange.py    # Moteur de simulation
+├── scenario_testing/            # Tests de scénarios avec chaos
+│   ├── __init__.py             # API publique (ScenarioTestingServer)
+│   ├── server.py               # Serveur Flask (Application Factory)
+│   ├── views.py                # Routes Flask
+│   ├── scenario_runner.py      # Moteur de scénarios
+│   ├── assertion_checker.py    # Système d'assertions
+│   └── chaos_injector.py       # Ingénierie du chaos
+└── web/                         # Assets web partagés
+    ├── templates/              # Templates HTML Jinja2
+    └── static/                 # CSS, JavaScript, images
 ```
+
+### Principes de conception
+
+1. **API programmatique prioritaire** : Classes `...Server` stables pour intégration facile
+2. **Application Factory Pattern** : Chaque service expose une fonction `create_app(config)`
+3. **Configuration centralisée** : Fichier YAML unique avec validation Pydantic
+4. **Séparation des préoccupations** : Logique métier, routes Flask et serveurs séparés
+5. **Chemins relatifs intelligents** : Résolution automatique par rapport au fichier de config
 
 ## Dependencies
 

@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-# Quick Start Script for PubSub Dev Tools
+# Quick Start Script for PubSub DevTools
 #
-# This script installs the library and provides test commands
+# This script installs the library and sets up the configuration
 
 set -e  # Exit on error
 
-echo "======================================================================"
-echo "  PubSub Dev Tools - Quick Start"
-echo "======================================================================"
+echo "╔══════════════════════════════════════════════════════════════════════════╗"
+echo "║                  PubSub DevTools - Quick Start                           ║"
+echo "╚══════════════════════════════════════════════════════════════════════════╝"
 echo ""
 
 # Check if we're in the right directory
@@ -18,47 +18,58 @@ if [ ! -f "pyproject.toml" ]; then
 fi
 
 # 1. Install the library
-echo "📦 Installing PubSub Dev Tools..."
+echo "📦 Installing PubSub DevTools..."
 pip install -e .
 
-if [ $? -eq 0 ]; then
-    echo "✅ Library installed successfully!"
-else
+if [ $? -ne 0 ]; then
     echo "❌ Installation failed"
     exit 1
 fi
 
+echo "✅ Library installed successfully!"
 echo ""
-echo "======================================================================"
-echo "  Installation Complete!"
-echo "======================================================================"
+
+# 2. Generate configuration file
+echo "📝 Generating configuration file..."
+if [ -f "devtools_config.yaml" ]; then
+    echo "⚠️  devtools_config.yaml already exists, skipping..."
+else
+    pubsub-tools config-example -o devtools_config.yaml
+    echo "✅ Configuration file created: devtools_config.yaml"
+fi
+
 echo ""
-echo "You can now use the 'pubsub-tools' command:"
+echo "╔══════════════════════════════════════════════════════════════════════════╗"
+echo "║                        Installation Complete!                            ║"
+echo "╚══════════════════════════════════════════════════════════════════════════╝"
 echo ""
-echo "  pubsub-tools --help"
-echo "  pubsub-tools event-flow --config PATH_TO_CONFIG"
-echo "  pubsub-tools event-recorder --config PATH_TO_CONFIG"
-echo "  pubsub-tools mock-exchange --config PATH_TO_CONFIG"
-echo "  pubsub-tools test-scenarios --config PATH_TO_CONFIG"
+echo "🎯 Available Commands:"
 echo ""
-echo "======================================================================"
-echo "  Next Steps"
-echo "======================================================================"
+echo "  pubsub-tools --help                    # Show all commands"
+echo "  pubsub-tools event-flow                # Launch Event Flow (port 5555)"
+echo "  pubsub-tools event-recorder            # Launch Event Recorder (port 5556)"
+echo "  pubsub-tools mock-exchange             # Launch Mock Exchange (port 5557)"
+echo "  pubsub-tools scenario-testing          # Launch Scenario Testing (port 5558)"
+echo "  pubsub-tools serve-all                 # Launch all services"
 echo ""
-echo "1. Create your configuration file:"
-echo "   cp examples/config.example.yaml /path/to/your/project/devtools_config.yaml"
+echo "📋 Next Steps:"
 echo ""
-echo "2. Edit the configuration to match your project paths"
+echo "  1. Edit devtools_config.yaml to configure your project paths:"
+echo "     vim devtools_config.yaml"
 echo ""
-echo "3. Launch a tool:"
-echo "   cd /path/to/your/project"
-echo "   pubsub-tools event-flow"
+echo "  2. Adjust agents_dir and events_dir to point to your project"
 echo ""
-echo "For Python.PubSub.Risk project:"
-echo "   cd ../Python.PubSub.Risk"
-echo "   pubsub-tools event-flow --config devtools_config.yaml"
+echo "  3. Launch a service:"
+echo "     pubsub-tools event-flow"
 echo ""
-echo "Or use the provided launch script:"
-echo "   python tools/launch_event_flow.py"
+echo "  Or launch all services at once:"
+echo "     pubsub-tools serve-all"
 echo ""
-echo "======================================================================"
+echo "💡 Makefile shortcuts:"
+echo ""
+echo "  make install-dev          # Install with dev dependencies"
+echo "  make run-servers          # Run all services with example config"
+echo ""
+echo "🔗 For programmatic usage, see: examples/basic_usage.py"
+echo ""
+echo "╚══════════════════════════════════════════════════════════════════════════╝"

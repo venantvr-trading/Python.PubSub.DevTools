@@ -46,7 +46,8 @@ dev = [
 ]
 
 [project.scripts]
-pubsub-devtools = "python_pubsub_devtools.cli.main:cli"
+pubsub-tools = "python_pubsub_devtools.cli.main:cli"
+pubsub-devtools = "python_pubsub_devtools.cli.main:cli"  # Alias pour compatibilité
 
 [project.urls]
 Homepage = "https://github.com/venantvr-trading/Python.PubSub.DevTools"

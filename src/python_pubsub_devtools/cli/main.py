@@ -1,79 +1,89 @@
 """
-CLI for launching PubSub DevTools web services
+CLI unifié pour le lancement des services web PubSub DevTools.
+
+Ce CLI simplifié utilise un fichier de configuration YAML unique pour tous les services.
 """
 import sys
 from pathlib import Path
 
 import click
 
-from ..event_flow.server import EventFlowServer
-from ..event_recorder.server import EventRecorderServer
+from ..config import DevToolsConfig
 
 
 @click.group()
 @click.version_option()
 def cli():
     """
-    PubSub DevTools CLI
+    PubSub DevTools CLI - Outils de développement pour architectures événementielles.
 
-    Launch web services for event flow visualization, event recording, and more.
+    Lance les services web pour la visualisation des flux d'événements,
+    l'enregistrement/rejeu, la simulation de marché et les tests de scénarios.
+
+    Configuration:
+        Utilisez un fichier YAML unique (par défaut: devtools_config.yaml)
+        pour configurer tous les services. Exemple:
+
+        \b
+        agents_dir: "./agents"
+        events_dir: "./events"
+        recordings_dir: "./recordings"
+        scenarios_dir: "./scenarios"
+        reports_dir: "./reports"
+
+        \b
+        event_flow:
+          port: 5555
+
+        \b
+        event_recorder:
+          port: 5556
+
+        \b
+        mock_exchange:
+          port: 5557
+
+        \b
+        scenario_testing:
+          port: 5558
     """
     pass
 
 
 @cli.command()
 @click.option(
-    '--agents-dir',
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
-    required=True,
-    help='Path to directory containing agent Python files'
-)
-@click.option(
-    '--events-dir',
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
-    required=True,
-    help='Path to directory containing event JSON files'
-)
-@click.option(
-    '--port',
-    type=int,
-    default=5555,
-    help='Port to run the server on (default: 5555)'
+    '--config',
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default='devtools_config.yaml',
+    help='Chemin vers le fichier de configuration YAML (défaut: devtools_config.yaml)'
 )
 @click.option(
     '--host',
     type=str,
     default='0.0.0.0',
-    help='Host to bind to (default: 0.0.0.0)'
+    help='Adresse d\'écoute (défaut: 0.0.0.0)'
 )
 @click.option(
     '--debug/--no-debug',
     default=True,
-    help='Enable debug mode (default: enabled)'
+    help='Activer le mode debug (défaut: activé)'
 )
-def event_flow(
-        agents_dir: Path,
-        events_dir: Path,
-        port: int,
-        host: str,
-        debug: bool
-):
+def event_flow(config: Path, host: str, debug: bool):
     """
-    Launch the Event Flow Visualization service.
+    Lance le service Event Flow Visualization.
 
-    Visualizes the flow of events between agents in your system.
+    Visualise les flux d'événements entre les agents de votre système.
     """
-    from ..config import EventFlowConfig
+    from ..event_flow.server import EventFlowServer
 
-    config = EventFlowConfig(
-        agents_dir=agents_dir,
-        events_dir=events_dir,
-        port=port
-    )
-
-    server = EventFlowServer(config)
     try:
+        cfg = DevToolsConfig.from_yaml(config)
+        server = EventFlowServer(cfg.event_flow)
         server.run(host=host, debug=debug)
+    except FileNotFoundError as e:
+        click.echo(f"❌ Erreur: {e}", err=True)
+        click.echo(f"\n💡 Créez un fichier de configuration avec: pubsub-tools config-example", err=True)
+        sys.exit(1)
     except KeyboardInterrupt:
         click.echo("\n👋 Event Flow server stopped")
         sys.exit(0)
@@ -81,49 +91,38 @@ def event_flow(
 
 @cli.command()
 @click.option(
-    '--recordings-dir',
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
-    required=True,
-    help='Path to directory containing event recording JSON files'
-)
-@click.option(
-    '--port',
-    type=int,
-    default=5556,
-    help='Port to run the server on (default: 5556)'
+    '--config',
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default='devtools_config.yaml',
+    help='Chemin vers le fichier de configuration YAML (défaut: devtools_config.yaml)'
 )
 @click.option(
     '--host',
     type=str,
     default='0.0.0.0',
-    help='Host to bind to (default: 0.0.0.0)'
+    help='Adresse d\'écoute (défaut: 0.0.0.0)'
 )
 @click.option(
     '--debug/--no-debug',
     default=True,
-    help='Enable debug mode (default: enabled)'
+    help='Activer le mode debug (défaut: activé)'
 )
-def event_recorder(
-        recordings_dir: Path,
-        port: int,
-        host: str,
-        debug: bool
-):
+def event_recorder(config: Path, host: str, debug: bool):
     """
-    Launch the Event Recorder Dashboard service.
+    Lance le service Event Recorder Dashboard.
 
-    Browse and replay recorded event sessions.
+    Parcourt et rejoue les sessions d'événements enregistrées.
     """
-    from ..config import EventRecorderConfig
+    from ..event_recorder.server import EventRecorderServer
 
-    config = EventRecorderConfig(
-        recordings_dir=recordings_dir,
-        port=port
-    )
-
-    server = EventRecorderServer(config)
     try:
+        cfg = DevToolsConfig.from_yaml(config)
+        server = EventRecorderServer(cfg.event_recorder)
         server.run(host=host, debug=debug)
+    except FileNotFoundError as e:
+        click.echo(f"❌ Erreur: {e}", err=True)
+        click.echo(f"\n💡 Créez un fichier de configuration avec: pubsub-tools config-example", err=True)
+        sys.exit(1)
     except KeyboardInterrupt:
         click.echo("\n👋 Event Recorder server stopped")
         sys.exit(0)
@@ -131,174 +130,264 @@ def event_recorder(
 
 @cli.command()
 @click.option(
-    '--agents-dir',
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
-    required=True,
-    help='Path to directory containing agent Python files'
+    '--config',
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default='devtools_config.yaml',
+    help='Chemin vers le fichier de configuration YAML (défaut: devtools_config.yaml)'
 )
 @click.option(
-    '--events-dir',
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
-    required=True,
-    help='Path to directory containing event JSON files'
+    '--host',
+    type=str,
+    default='0.0.0.0',
+    help='Adresse d\'écoute (défaut: 0.0.0.0)'
 )
-@click.option(
-    '--recordings-dir',
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
-    required=True,
-    help='Path to directory containing event recording JSON files'
-)
-@click.option(
-    '--event-flow-port',
-    type=int,
-    default=5555,
-    help='Port for Event Flow service (default: 5555)'
-)
-@click.option(
-    '--event-recorder-port',
-    type=int,
-    default=5556,
-    help='Port for Event Recorder service (default: 5556)'
-)
-def serve_all(
-        agents_dir: Path,
-        events_dir: Path,
-        recordings_dir: Path,
-        event_flow_port: int,
-        event_recorder_port: int
-):
+def mock_exchange(config: Path, host: str):
     """
-    Launch all DevTools services simultaneously.
+    Lance le service Mock Exchange Simulator.
 
-    Starts Event Flow (5555) and Event Recorder (5556) in parallel.
-    Note: This requires running each service in a separate terminal or process.
+    Simule un marché avec différents scénarios (tendance, volatilité, etc.).
     """
-    import multiprocessing
-
-    def run_event_flow():
-        from ..config import EventFlowConfig
-
-        config = EventFlowConfig(
-            agents_dir=agents_dir,
-            events_dir=events_dir,
-            port=event_flow_port
-        )
-        server = EventFlowServer(config)
-        server.run(host='0.0.0.0', debug=False)
-
-    def run_event_recorder():
-        from ..config import EventRecorderConfig
-
-        config = EventRecorderConfig(
-            recordings_dir=recordings_dir,
-            port=event_recorder_port
-        )
-        server = EventRecorderServer(config)
-        server.run(host='0.0.0.0', debug=False)
-
-    click.echo("=" * 80)
-    click.echo("🚀 Starting all PubSub DevTools services...")
-    click.echo("=" * 80)
-    click.echo(f"📊 Event Flow:     http://localhost:{event_flow_port}")
-    click.echo(f"🎬 Event Recorder: http://localhost:{event_recorder_port}")
-    click.echo()
-    click.echo("Press Ctrl+C to stop all services")
-    click.echo("=" * 80)
-    click.echo()
-
-    # Create processes for each service
-    processes = []
-
-    event_flow_process = multiprocessing.Process(target=run_event_flow)
-    event_recorder_process = multiprocessing.Process(target=run_event_recorder)
-
-    processes.append(event_flow_process)
-    processes.append(event_recorder_process)
+    from ..mock_exchange.server import MockExchangeServer
 
     try:
-        # Start all processes
-        for p in processes:
-            p.start()
-
-        # Wait for all processes
-        for p in processes:
-            p.join()
-
+        cfg = DevToolsConfig.from_yaml(config)
+        server = MockExchangeServer(cfg.mock_exchange)
+        server.run(host=host, debug=False)
+    except FileNotFoundError as e:
+        click.echo(f"❌ Erreur: {e}", err=True)
+        click.echo(f"\n💡 Créez un fichier de configuration avec: pubsub-tools config-example", err=True)
+        sys.exit(1)
     except KeyboardInterrupt:
-        click.echo("\n👋 Stopping all services...")
-        for p in processes:
-            if p.is_alive():
-                p.terminate()
-                p.join(timeout=5)
-        click.echo("✅ All services stopped")
+        click.echo("\n👋 Mock Exchange server stopped")
         sys.exit(0)
 
 
 @cli.command()
-def config_example():
-    """
-    Print an example configuration for DevTools services.
-
-    Shows how to structure directories and configuration.
-    """
-    example = """
-Example DevTools Configuration
-================================
-
-Directory Structure:
--------------------
-project/
-├── agents/              # Agent Python files
-│   ├── market_agent.py
-│   ├── risk_agent.py
-│   └── execution_agent.py
-├── events/              # Event JSON files
-│   ├── MarketDataReceived.json
-│   ├── RiskAssessed.json
-│   └── OrderExecuted.json
-└── recordings/          # Event recording sessions
-    ├── session_2024-01-01.json
-    └── session_2024-01-02.json
-
-Launch Commands:
-----------------
-# Event Flow Visualization (port 5555)
-pubsub-devtools event-flow \\
-    --agents-dir ./agents \\
-    --events-dir ./events \\
-    --port 5555
-
-# Event Recorder Dashboard (port 5556)
-pubsub-devtools event-recorder \\
-    --recordings-dir ./recordings \\
-    --port 5556
-
-# All services at once
-pubsub-devtools serve-all \\
-    --agents-dir ./agents \\
-    --events-dir ./events \\
-    --recordings-dir ./recordings \\
-    --event-flow-port 5555 \\
-    --event-recorder-port 5556
-
-Configuration in Python:
-------------------------
-from pathlib import Path
-from python_pubsub_devtools.config import DevToolsConfig
-
-config = DevToolsConfig(
-    agents_dir=Path("./agents"),
-    events_dir=Path("./events"),
-    recordings_dir=Path("./recordings"),
-    event_flow_port=5555,
-    event_recorder_port=5556
+@click.option(
+    '--config',
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default='devtools_config.yaml',
+    help='Chemin vers le fichier de configuration YAML (défaut: devtools_config.yaml)'
 )
+@click.option(
+    '--host',
+    type=str,
+    default='0.0.0.0',
+    help='Adresse d\'écoute (défaut: 0.0.0.0)'
+)
+def scenario_testing(config: Path, host: str):
+    """
+    Lance le service Scenario Testing Dashboard.
 
-# Get service-specific configs
-event_flow_config = config.get_event_flow_config()
-event_recorder_config = config.get_event_recorder_config()
+    Exécute et surveille des tests de scénarios avec chaos engineering.
+    """
+    from ..scenario_testing.server import ScenarioTestingServer
+
+    try:
+        cfg = DevToolsConfig.from_yaml(config)
+        if not cfg.scenario_testing:
+            click.echo("❌ Erreur: scenario_testing non configuré dans le fichier YAML", err=True)
+            sys.exit(1)
+        server = ScenarioTestingServer(cfg.scenario_testing)
+        server.run(host=host, debug=False)
+    except FileNotFoundError as e:
+        click.echo(f"❌ Erreur: {e}", err=True)
+        click.echo(f"\n💡 Créez un fichier de configuration avec: pubsub-tools config-example", err=True)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        click.echo("\n👋 Scenario Testing server stopped")
+        sys.exit(0)
+
+
+@cli.command()
+@click.option(
+    '--config',
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default='devtools_config.yaml',
+    help='Chemin vers le fichier de configuration YAML (défaut: devtools_config.yaml)'
+)
+def serve_all(config: Path):
+    """
+    Lance tous les services DevTools simultanément.
+
+    Démarre Event Flow, Event Recorder, Mock Exchange et Scenario Testing en parallèle.
+    """
+    import multiprocessing
+    from ..event_flow.server import EventFlowServer
+    from ..event_recorder.server import EventRecorderServer
+    from ..mock_exchange.server import MockExchangeServer
+    from ..scenario_testing.server import ScenarioTestingServer
+
+    try:
+        cfg = DevToolsConfig.from_yaml(config)
+    except FileNotFoundError as e:
+        click.echo(f"❌ Erreur: {e}", err=True)
+        click.echo(f"\n💡 Créez un fichier de configuration avec: pubsub-tools config-example", err=True)
+        sys.exit(1)
+
+    def run_event_flow():
+        server = EventFlowServer(cfg.event_flow)
+        server.run(host='0.0.0.0', debug=False)
+
+    def run_event_recorder():
+        server = EventRecorderServer(cfg.event_recorder)
+        server.run(host='0.0.0.0', debug=False)
+
+    def run_mock_exchange():
+        server = MockExchangeServer(cfg.mock_exchange)
+        server.run(host='0.0.0.0', debug=False)
+
+    def run_scenario_testing():
+        if cfg.scenario_testing:
+            server = ScenarioTestingServer(cfg.scenario_testing)
+            server.run(host='0.0.0.0', debug=False)
+
+    click.echo("=" * 80)
+    click.echo("🚀 Démarrage de tous les services PubSub DevTools...")
+    click.echo("=" * 80)
+    click.echo(f"📊 Event Flow:        http://localhost:{cfg.event_flow.port}")
+    click.echo(f"🎬 Event Recorder:    http://localhost:{cfg.event_recorder.port}")
+    click.echo(f"🎰 Mock Exchange:     http://localhost:{cfg.mock_exchange.port}")
+    if cfg.scenario_testing:
+        click.echo(f"🎯 Scenario Testing:  http://localhost:{cfg.scenario_testing.port}")
+    click.echo()
+    click.echo("Appuyez sur Ctrl+C pour arrêter tous les services")
+    click.echo("=" * 80)
+    click.echo()
+
+    # Créer les processus pour chaque service
+    processes = []
+
+    processes.append(multiprocessing.Process(target=run_event_flow))
+    processes.append(multiprocessing.Process(target=run_event_recorder))
+    processes.append(multiprocessing.Process(target=run_mock_exchange))
+    if cfg.scenario_testing:
+        processes.append(multiprocessing.Process(target=run_scenario_testing))
+
+    try:
+        # Démarrer tous les processus
+        for p in processes:
+            p.start()
+
+        # Attendre tous les processus
+        for p in processes:
+            p.join()
+
+    except KeyboardInterrupt:
+        click.echo("\n👋 Arrêt de tous les services...")
+        for p in processes:
+            if p.is_alive():
+                p.terminate()
+                p.join(timeout=5)
+        click.echo("✅ Tous les services sont arrêtés")
+        sys.exit(0)
+
+
+@cli.command()
+@click.option(
+    '--output',
+    '-o',
+    type=click.Path(dir_okay=False, path_type=Path),
+    help='Chemin pour sauvegarder la configuration (optionnel)'
+)
+def config_example(output: Path | None):
+    """
+    Affiche un exemple de fichier de configuration YAML.
+
+    Crée un fichier devtools_config.yaml prêt à l'emploi avec tous les services.
+    """
+    example = """# Configuration PubSub DevTools
+# Fichier de configuration centralisé pour tous les services
+
+# === Répertoires Communs ===
+# Chemins relatifs (par rapport à ce fichier) ou absolus
+agents_dir: "./agents"
+events_dir: "./events"
+recordings_dir: "./recordings"
+scenarios_dir: "./scenarios"
+reports_dir: "./reports"
+
+# === Event Flow Visualization ===
+event_flow:
+  port: 5555
+
+  # Agents à exclure de la visualisation (agents de test/utilitaires)
+  test_agents:
+    - "token_balance_refresh"
+
+  # Couleurs par namespace pour la catégorisation
+  namespace_colors:
+    bot_lifecycle: "#81c784"    # vert
+    market_data: "#64b5f6"      # bleu
+    indicator: "#9575cd"        # violet
+    internal: "#ba68c8"         # violet clair
+    capital: "#ffd54f"          # jaune
+    pool: "#ffb74d"             # orange
+    position: "#ff8a65"         # orange foncé
+    exchange: "#4dd0e1"         # cyan
+    command: "#a1887f"          # marron
+    database: "#90a4ae"         # gris bleu
+    exit_strategy: "#aed581"    # vert clair
+    query: "#81d4fa"            # bleu clair
+    unknown: "#e0e0e0"          # gris
+
+# === Event Recorder ===
+event_recorder:
+  port: 5556
+
+# === Mock Exchange Simulator ===
+mock_exchange:
+  port: 5557
+  default_initial_price: 50000.0
+  default_volatility: 0.02
+  default_spread_bps: 10.0
+
+# === Scenario Testing ===
+scenario_testing:
+  port: 5558
+
+# === Structure de Répertoires Recommandée ===
+# project/
+# ├── devtools_config.yaml  # Ce fichier
+# ├── agents/               # Fichiers Python des agents
+# │   ├── market_agent.py
+# │   ├── risk_agent.py
+# │   └── execution_agent.py
+# ├── events/               # Fichiers JSON des événements
+# │   ├── MarketDataReceived.json
+# │   ├── RiskAssessed.json
+# │   └── OrderExecuted.json
+# ├── recordings/           # Sessions d'enregistrement
+# ├── scenarios/            # Scénarios de test YAML
+# └── reports/              # Rapports de tests
+
+# === Utilisation ===
+# CLI:
+#   pubsub-tools event-flow --config devtools_config.yaml
+#   pubsub-tools event-recorder --config devtools_config.yaml
+#   pubsub-tools mock-exchange --config devtools_config.yaml
+#   pubsub-tools scenario-testing --config devtools_config.yaml
+#   pubsub-tools serve-all --config devtools_config.yaml
+#
+# Python:
+#   from python_pubsub_devtools.config import DevToolsConfig
+#   config = DevToolsConfig.from_yaml("devtools_config.yaml")
+#
+#   # Utilisation programmatique
+#   from python_pubsub_devtools.event_flow.server import EventFlowServer
+#   server = EventFlowServer(config.event_flow)
+#   server.run()
 """
-    click.echo(example)
+
+    if output:
+        try:
+            output.write_text(example)
+            click.echo(f"✅ Configuration sauvegardée dans: {output}")
+        except Exception as e:
+            click.echo(f"❌ Erreur lors de la sauvegarde: {e}", err=True)
+            sys.exit(1)
+    else:
+        click.echo(example)
 
 
 if __name__ == '__main__':

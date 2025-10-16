@@ -19,7 +19,8 @@ help:
 	@echo "  make format         - Format code with black"
 	@echo "  make format-check   - Check code formatting without modifying files"
 	@echo "  make check          - Run all checks (format-check, lint, test)"
-	@echo "  make run            - Run the CLI tool"
+	@echo "  make run            - Show CLI help"
+	@echo "  make run-servers    - Run all DevTools services with example config"
 	@echo "  make build          - Build distribution packages"
 	@echo "  make venv           - Create a virtual environment"
 	@echo "  make setup-dev      - Complete dev setup (venv + install-dev)"
@@ -93,6 +94,15 @@ check: format-check lint test
 # Run the CLI tool
 run:
 	pubsub-tools --help
+
+# Run all servers with example config
+run-servers:
+	@echo "Starting all DevTools services..."
+	@if [ ! -f examples/devtools_config.yaml ]; then \
+		echo "Error: examples/devtools_config.yaml not found"; \
+		exit 1; \
+	fi
+	pubsub-tools serve-all --config examples/devtools_config.yaml
 
 # Build distribution packages
 build: clean
