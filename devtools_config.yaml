@@ -1,0 +1,34 @@
+# Configuration PubSub DevTools
+# Fichier de configuration centralisé pour tous les services
+
+# === Répertoires Communs ===
+# Chemins relatifs (par rapport à ce fichier) ou absolus
+agents_dir: "./python_pubsub_risk/agents"
+events_dir: "./python_pubsub_risk/events"
+recordings_dir: "./recordings"
+scenarios_dir: "./python_pubsub_risk/scenario_testing/scenarios"
+reports_dir: "./reports"
+
+# === Configurations par service ===
+
+event_flow:
+  agents_dir: "./python_pubsub_risk/agents"
+  events_dir: "./python_pubsub_risk/events"
+  port: 5555
+  test_agents:
+    - "token_balance_refresh"
+
+event_recorder:
+  recordings_dir: "./recordings"
+  port: 5556
+
+mock_exchange:
+  port: 5557
+  default_initial_price: 50000.0
+  default_volatility: 0.02
+  default_spread_bps: 10.0
+
+scenario_testing:
+  scenarios_dir: "./python_pubsub_risk/scenario_testing/scenarios"
+  reports_dir: "./reports"
+  port: 5558

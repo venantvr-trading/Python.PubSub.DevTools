@@ -14,90 +14,452 @@
         <p>Recorded on {{ recording.created_at }}</p>
     </div>
 
-    <div class="content">
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="info-label">Duration</div>
-                <div class="info-value">{{ recording.duration }}</div>
-            </div>
-            <div class="info-card">
-                <div class="info-label">Total Events</div>
-                <div class="info-value">{{ recording.event_count }}</div>
-            </div>
-            <div class="info-card">
-                <div class="info-label">Event Types</div>
-                <div class="info-value">{{ recording.unique_events }}</div>
-            </div>
-            <div class="info-card">
-                <div class="info-label">Events/Second</div>
-                <div class="info-value">{{ recording.events_per_second }}</div>
-            </div>
+    <!-- Barre d'outils -->
+    <div class="toolbar">
+        <div class="toolbar-section">
+            <button class="btn btn-primary" onclick="selectAll()" title="Select all events">
+                ☑️ Select All
+            </button>
+            <button class="btn btn-secondary" onclick="deselectAll()" title="Deselect all events">
+                ☐ Deselect All
+            </button>
+            <button class="btn btn-info" onclick="invertSelection()" title="Invert selection">
+                🔄 Invert
+            </button>
         </div>
 
-        <div class="controls">
-            <div class="controls-header">🎮 Replay Controls</div>
-            <div class="controls-buttons">
-                <button class="control-btn" disabled title="Skip to start">⏮️</button>
-                <button class="control-btn" disabled title="Previous">⏪</button>
-                <button class="control-btn play-btn" disabled title="Play">▶️</button>
-                <button class="control-btn" disabled title="Pause">⏭️</button>
-                <button class="control-btn" disabled title="Next">⏩</button>
-                <button class="control-btn" disabled title="Skip to end">⏭️</button>
-
-                <div class="speed-control">
-                    <span class="speed-label">Speed:</span>
-                    <select class="speed-select" disabled>
-                        <option>0.1x</option>
-                        <option>0.5x</option>
-                        <option selected>1x</option>
-                        <option>2x</option>
-                        <option>5x</option>
-                        <option>10x</option>
-                    </select>
-                </div>
-                <span style="margin-left: auto; color: #999; font-size: 0.9em;">
-                        (Replay functionality coming soon)
-                    </span>
-            </div>
+        <div class="toolbar-section">
+            <span class="selection-count">Selected: <strong id="selection-count">0</strong> events</span>
         </div>
 
-        <div class="timeline-container">
-            <div class="timeline-header">
-                <div class="timeline-title">📊 Event Timeline ({{ recording.event_count }} events)</div>
-                <input class="filter-input" id="event-filter" onkeyup="filterEvents()" placeholder="Filter events..." type="text">
+        <div class="toolbar-section">
+            <button class="btn btn-success" onclick="createNewRecording()" title="Create new recording from selected events">
+                ➕ Create New Recording
+            </button>
+        </div>
+    </div>
+
+    <!-- Contrôles de replay -->
+    <div class="replay-controls">
+        <div class="replay-header">
+            <div class="replay-title">🎬 Replay Controls</div>
+            <div class="replay-info" id="replay-info">Ready</div>
+        </div>
+        <div class="replay-buttons">
+            <button class="btn btn-success" id="play-btn" onclick="startReplay()">▶️ Play</button>
+            <button class="btn btn-secondary" disabled id="pause-btn" onclick="pauseReplay()">⏸️ Pause</button>
+            <button class="btn btn-secondary" disabled id="stop-btn" onclick="stopReplay()">⏹️ Stop</button>
+
+            <div class="replay-mode">
+                <label>
+                    <input checked id="simulation-mode" type="checkbox">
+                    Simulation Mode (no ServiceBus)
+                </label>
             </div>
-            <div class="timeline-events" id="timeline-events">
+
+            <div class="speed-control">
+                <label>Speed:</label>
+                <select id="speed-select" onchange="changeSpeed(this.value)">
+                    <option value="0.1">0.1x</option>
+                    <option value="0.5">0.5x</option>
+                    <option selected value="1.0">1.0x</option>
+                    <option value="2.0">2.0x</option>
+                    <option value="5.0">5.0x</option>
+                    <option value="10.0">10.0x</option>
+                </select>
+            </div>
+        </div>
+        <div class="replay-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text" id="progress-text">0 / {{ recording.event_count }} events</div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="info-grid">
+        <div class="info-card">
+            <div class="info-label">Duration</div>
+            <div class="info-value">{{ recording.duration }}</div>
+        </div>
+        <div class="info-card">
+            <div class="info-label">Total Events</div>
+            <div class="info-value">{{ recording.event_count }}</div>
+        </div>
+        <div class="info-card">
+            <div class="info-label">Event Types</div>
+            <div class="info-value">{{ recording.unique_events }}</div>
+        </div>
+        <div class="info-card">
+            <div class="info-label">Events/Second</div>
+            <div class="info-value">{{ recording.events_per_second }}</div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-container">
+        <div class="filters-header">
+            <div class="filters-title">🔍 Filters</div>
+            <button class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear Filters</button>
+        </div>
+        <div class="filters-grid">
+            <div class="filter-item">
+                <label>Event Type:</label>
+                <select id="filter-event-type" onchange="applyFilters()">
+                    <option value="">All</option>
+                    {% for event_name in event_counts.keys() %}
+                    <option value="{{ event_name }}">{{ event_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>Search:</label>
+                <input id="filter-search" onkeyup="applyFilters()" placeholder="Search in event name or data..." type="text">
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des événements -->
+    <div class="events-table-container">
+        <div class="events-table-header">
+            <div class="events-table-title">📊 Events ({{ recording.event_count }} total)</div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="events-table" id="events-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;">
+                        <input id="select-all-checkbox" onchange="toggleSelectAll(this)" type="checkbox">
+                    </th>
+                    <th style="width: 80px;">#</th>
+                    <th style="width: 120px;">Timestamp</th>
+                    <th style="width: 250px;">Event Name</th>
+                    <th style="width: 200px;">Source</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="events-table-body">
                 {% for event in events %}
-                <div class="timeline-event" data-event-name="{{ event.event_name }}">
-                    <div class="event-header">
-                        <div class="event-name">{{ event.event_name }}</div>
-                        <div class="event-time">+{{ event.timestamp_offset_ms }}ms</div>
-                    </div>
-                    <div class="event-details">
-                        <span class="event-source">Source: {{ event.source }}</span>
-                    </div>
-                </div>
+                <tr class="event-row"
+                    data-event-name="{{ event.event_name }}"
+                    data-index="{{ loop.index0 }}"
+                    data-source="{{ event.source }}"
+                    data-timestamp="{{ event.timestamp_offset_ms }}">
+                    <td>
+                        <input class="event-checkbox" onchange="updateSelectionCount()" type="checkbox">
+                    </td>
+                    <td class="event-index">{{ loop.index }}</td>
+                    <td class="event-time">+{{ event.timestamp_offset_ms }}ms</td>
+                    <td class="event-name">{{ event.event_name }}</td>
+                    <td class="event-source">{{ event.source }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick='showPayload({{ event.event_data | tojson }}, "{{ event.event_name }}")'>
+                            View Payload
+                        </button>
+                    </td>
+                </tr>
                 {% endfor %}
-            </div>
+                </tbody>
+            </table>
         </div>
 
-        <div class="chart-container">
-            <div class="chart-title">📈 Event Distribution</div>
-            <div class="bar-chart">
-                {% for event_name, count in event_counts.items() %}
-                <div class="bar-item">
-                    <div class="bar-label" title="{{ event_name }}">{{ event_name }}</div>
-                    <div class="bar-fill-container">
-                        <div class="bar-fill" style="width: {{ (count / max_count * 100)|int }}%"></div>
-                    </div>
-                    <div class="bar-value">{{ count }}</div>
+        <div class="pagination-info">
+            <span id="visible-count">Showing {{ events|length }} of {{ recording.event_count }} events</span>
+        </div>
+    </div>
+
+    <!-- Distribution des événements -->
+    <div class="chart-container">
+        <div class="chart-title">📈 Event Distribution</div>
+        <div class="bar-chart">
+            {% for event_name, count in event_counts.items() %}
+            <div class="bar-item">
+                <div class="bar-label" title="{{ event_name }}">{{ event_name }}</div>
+                <div class="bar-fill-container">
+                    <div class="bar-fill" style="width: {{ (count / max_count * 100)|int }}%"></div>
                 </div>
-                {% endfor %}
+                <div class="bar-value">{{ count }}</div>
             </div>
+            {% endfor %}
         </div>
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/recording_detail.js') }}"></script>
+<!-- Modal pour afficher le payload -->
+<div class="modal" id="payload-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Event Payload</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <pre id="payload-content"></pre>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            <button class="btn btn-primary" onclick="copyPayload()">Copy to Clipboard</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Stocker le nom du fichier actuel
+    const currentFilename = "{{ recording.filename }}";
+
+    // Gestion de la sélection
+    function updateSelectionCount() {
+        const checkboxes = document.querySelectorAll('.event-checkbox:checked');
+        document.getElementById('selection-count').textContent = checkboxes.length;
+    }
+
+    function toggleSelectAll(checkbox) {
+        const checkboxes = document.querySelectorAll('.event-checkbox');
+        checkboxes.forEach(cb => {
+            if (!cb.closest('.event-row').style.display || cb.closest('.event-row').style.display !== 'none') {
+                cb.checked = checkbox.checked;
+            }
+        });
+        updateSelectionCount();
+    }
+
+    function selectAll() {
+        const checkboxes = document.querySelectorAll('.event-checkbox');
+        checkboxes.forEach(cb => {
+            if (!cb.closest('.event-row').style.display || cb.closest('.event-row').style.display !== 'none') {
+                cb.checked = true;
+            }
+        });
+        updateSelectionCount();
+    }
+
+    function deselectAll() {
+        document.querySelectorAll('.event-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('select-all-checkbox').checked = false;
+        updateSelectionCount();
+    }
+
+    function invertSelection() {
+        const checkboxes = document.querySelectorAll('.event-checkbox');
+        checkboxes.forEach(cb => {
+            if (!cb.closest('.event-row').style.display || cb.closest('.event-row').style.display !== 'none') {
+                cb.checked = !cb.checked;
+            }
+        });
+        updateSelectionCount();
+    }
+
+    // Filtrage
+    function applyFilters() {
+        const eventTypeFilter = document.getElementById('filter-event-type').value.toLowerCase();
+        const searchFilter = document.getElementById('filter-search').value.toLowerCase();
+
+        const rows = document.querySelectorAll('.event-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const eventName = row.dataset.eventName.toLowerCase();
+            const source = row.dataset.source.toLowerCase();
+
+            let showRow = true;
+
+            // Filtrer par type d'événement
+            if (eventTypeFilter && eventName !== eventTypeFilter) {
+                showRow = false;
+            }
+
+            // Filtrer par recherche
+            if (searchFilter && !eventName.includes(searchFilter) && !source.includes(searchFilter)) {
+                showRow = false;
+            }
+
+            row.style.display = showRow ? '' : 'none';
+            if (showRow) visibleCount++;
+        });
+
+        document.getElementById('visible-count').textContent = `Showing ${visibleCount} of {{ recording.event_count }} events`;
+    }
+
+    function clearFilters() {
+        document.getElementById('filter-event-type').value = '';
+        document.getElementById('filter-search').value = '';
+        applyFilters();
+    }
+
+    // Modal pour payload
+    function showPayload(payload, eventName) {
+        document.getElementById('modal-title').textContent = `Event Payload: ${eventName}`;
+        document.getElementById('payload-content').textContent = JSON.stringify(payload, null, 2);
+        document.getElementById('payload-modal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('payload-modal').style.display = 'none';
+    }
+
+    function copyPayload() {
+        const content = document.getElementById('payload-content').textContent;
+        navigator.clipboard.writeText(content).then(() => {
+            alert('Payload copied to clipboard!');
+        });
+    }
+
+    // Fermer le modal en cliquant en dehors
+    window.onclick = function(event) {
+        const modal = document.getElementById('payload-modal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+
+    // Créer un nouvel enregistrement
+    function createNewRecording() {
+        const checkboxes = document.querySelectorAll('.event-checkbox:checked');
+
+        if (checkboxes.length === 0) {
+            alert('Please select at least one event to create a new recording.');
+            return;
+        }
+
+        const sessionName = prompt('Enter a name for the new recording:', 'filtered_recording');
+        if (!sessionName) return;
+
+        // Collecter les indices des événements sélectionnés
+        const eventIndices = Array.from(checkboxes).map(cb => {
+            return parseInt(cb.closest('.event-row').dataset.index);
+        });
+
+        // Appeler l'API
+        fetch('/api/recording/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                source_filename: currentFilename,
+                event_indices: eventIndices,
+                new_session_name: sessionName
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`New recording created: ${data.filename}\n${data.event_count} events included.`);
+                window.location.href = '/';
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            alert(`Error creating recording: ${error}`);
+        });
+    }
+
+    // ===== REPLAY CONTROLS =====
+    let replayStatusInterval = null;
+
+    function startReplay() {
+        const speed = document.getElementById('speed-select').value;
+        const simulationMode = document.getElementById('simulation-mode').checked;
+
+        fetch(`/api/replay/start/${currentFilename}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                speed: parseFloat(speed),
+                simulation_mode: simulationMode
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('play-btn').disabled = true;
+                document.getElementById('pause-btn').disabled = false;
+                document.getElementById('stop-btn').disabled = false;
+                document.getElementById('simulation-mode').disabled = true;
+
+                const mode = data.simulation_mode ? 'Simulation' : 'REAL (Publishing to ServiceBus)';
+                document.getElementById('replay-info').textContent = `Playing (${mode})`;
+
+                // Démarrer le polling du statut
+                if (replayStatusInterval) clearInterval(replayStatusInterval);
+                replayStatusInterval = setInterval(updateReplayStatus, 500);
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        });
+    }
+
+    function pauseReplay() {
+        fetch('/api/replay/pause', {method: 'POST'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const status = data.status === 'paused' ? 'Paused' : 'Playing...';
+                document.getElementById('replay-info').textContent = status;
+                document.getElementById('pause-btn').textContent = data.status === 'paused' ? '▶️ Resume' : '⏸️ Pause';
+            }
+        });
+    }
+
+    function stopReplay() {
+        fetch('/api/replay/stop', {method: 'POST'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('play-btn').disabled = false;
+                document.getElementById('pause-btn').disabled = true;
+                document.getElementById('stop-btn').disabled = true;
+                document.getElementById('simulation-mode').disabled = false;
+                document.getElementById('replay-info').textContent = 'Ready';
+                document.getElementById('pause-btn').textContent = '⏸️ Pause';
+                document.getElementById('progress-fill').style.width = '0%';
+                document.getElementById('progress-text').textContent = `0 / {{ recording.event_count }} events`;
+
+                if (replayStatusInterval) {
+                    clearInterval(replayStatusInterval);
+                    replayStatusInterval = null;
+                }
+            }
+        });
+    }
+
+    function changeSpeed(speed) {
+        fetch('/api/replay/speed', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({speed: parseFloat(speed)})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success && data.error) {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+
+    function updateReplayStatus() {
+        fetch('/api/replay/status')
+        .then(response => response.json())
+        .then(data => {
+            const progressPercent = data.progress || 0;
+            document.getElementById('progress-fill').style.width = progressPercent + '%';
+            document.getElementById('progress-text').textContent = `${data.current_event} / ${data.total_events} events`;
+
+            if (!data.active && replayStatusInterval) {
+                // Replay terminé
+                clearInterval(replayStatusInterval);
+                replayStatusInterval = null;
+                document.getElementById('play-btn').disabled = false;
+                document.getElementById('pause-btn').disabled = true;
+                document.getElementById('stop-btn').disabled = true;
+                document.getElementById('simulation-mode').disabled = false;
+                document.getElementById('replay-info').textContent = 'Completed';
+            }
+        });
+    }
+</script>
+
 </body>
 </html>

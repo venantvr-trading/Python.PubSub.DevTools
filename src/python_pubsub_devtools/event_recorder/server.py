@@ -4,13 +4,14 @@ Event Recorder Server - Serveur web pour la visualisation des enregistrements d'
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional, Any
 
 from flask import Flask
 
 from ..config import EventRecorderConfig
 
 
-def create_app(config: EventRecorderConfig) -> Flask:
+def create_app(config: EventRecorderConfig, service_bus: Optional[Any] = None) -> Flask:
     """Crée l'application Flask pour Event Recorder.
 
     Application Factory pattern pour permettre l'initialisation avec configuration.
@@ -32,6 +33,7 @@ def create_app(config: EventRecorderConfig) -> Flask:
     # Stocker la configuration dans l'app
     app.config['RECORDINGS_DIR'] = config.recordings_dir
     app.config['PORT'] = config.port
+    app.config['SERVICE_BUS'] = service_bus  # Peut être None
 
     # S'assurer que le répertoire existe
     config.recordings_dir.mkdir(parents=True, exist_ok=True)
@@ -49,7 +51,7 @@ class EventRecorderServer:
     Ce serveur fournit une interface web pour parcourir et visualiser
     les enregistrements d'événements capturés.
 
-    Example:
+    Example (mode simulation):
         >>> from python_pubsub_devtools.config import EventRecorderConfig
         >>> from pathlib import Path
         >>>
@@ -58,19 +60,57 @@ class EventRecorderServer:
         ...     port=5556
         ... )
         >>> server = EventRecorderServer(config)
-        >>> server.run()  # Bloquant
+        >>> server.run()  # Mode simulation uniquement
+
+    Example (avec ServiceBus pour replay réel):
+        >>> from your_app.service_bus import ServiceBus
+        >>> service_bus = ServiceBus()
+        >>>
+        >>> server = EventRecorderServer(config, service_bus=service_bus)
+        >>> server.run()  # Décocher "Simulation Mode" dans le dashboard pour replay réel
     """
 
-    def __init__(self, config: EventRecorderConfig):
+    def __init__(self, config: EventRecorderConfig, service_bus: Optional[Any] = None):
         """Initialise le serveur avec la configuration.
 
         Args:
             config: Configuration EventRecorderConfig avec recordings_dir et port
+            service_bus: Instance ServiceBus optionnelle pour replay réel.
+                        Si None, tente auto-discovery depuis le registry PubSub (si disponible).
         """
         self.config = config
         self.recordings_dir = config.recordings_dir
         self.port = config.port
-        self.app = create_app(config)
+
+        # Auto-discovery du ServiceBus si pas fourni explicitement
+        if service_bus is None:
+            service_bus = self._try_discover_service_bus()
+
+        self.service_bus = service_bus
+        self.app = create_app(config, service_bus)
+
+    def _try_discover_service_bus(self) -> Optional[Any]:
+        """Tente de découvrir automatiquement le ServiceBus.
+
+        1. Cherche fichier discovery ~/.servicebus_endpoint.json
+        2. Retourne un ServiceBusHttpProxy si trouvé
+        """
+        try:
+            import json
+            discovery_file = Path.home() / '.servicebus_endpoint.json'
+            if discovery_file.exists():
+                endpoint = json.loads(discovery_file.read_text())
+                from .servicebus_proxy import ServiceBusHttpProxy
+                proxy = ServiceBusHttpProxy(
+                    host=endpoint['host'],
+                    port=endpoint['port']
+                )
+                print(f"✓ ServiceBus discovered at {endpoint['host']}:{endpoint['port']}")
+                return proxy
+        except Exception as e:
+            print(f"ServiceBus auto-discovery failed: {e}")
+
+        return None
 
     def run(self, host: str = '0.0.0.0', debug: bool = True) -> None:
         """Lance le serveur Flask (bloquant).

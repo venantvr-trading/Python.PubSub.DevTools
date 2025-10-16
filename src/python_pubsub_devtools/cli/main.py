@@ -10,7 +10,15 @@ from pathlib import Path
 
 import click
 
-from ..config import DevToolsConfig
+# Support pour exécution directe (développement PyCharm)
+if __name__ == '__main__' and not __package__:
+    # __package__ peut être None ou '' lors d'exécution directe
+    # Ajouter le répertoire src au path pour permettre les imports
+    import os
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+    from python_pubsub_devtools.config import DevToolsConfig
+else:
+    from ..config import DevToolsConfig
 
 
 @click.group()
@@ -76,7 +84,7 @@ def event_flow(config: Path, host: str, debug: bool):
 
     Visualise les flux d'événements entre les agents de votre système.
     """
-    from ..event_flow.server import EventFlowServer
+    from python_pubsub_devtools.event_flow.server import EventFlowServer
 
     try:
         cfg = DevToolsConfig.from_yaml(config)
@@ -115,7 +123,7 @@ def event_recorder(config: Path, host: str, debug: bool):
 
     Parcourt et rejoue les sessions d'événements enregistrées.
     """
-    from ..event_recorder.server import EventRecorderServer
+    from python_pubsub_devtools.event_recorder.server import EventRecorderServer
 
     try:
         cfg = DevToolsConfig.from_yaml(config)
@@ -149,7 +157,7 @@ def mock_exchange(config: Path, host: str):
 
     Simule un marché avec différents scénarios (tendance, volatilité, etc.).
     """
-    from ..mock_exchange.server import MockExchangeServer
+    from python_pubsub_devtools.mock_exchange.server import MockExchangeServer
 
     try:
         cfg = DevToolsConfig.from_yaml(config)
@@ -183,7 +191,7 @@ def scenario_testing(config: Path, host: str):
 
     Exécute et surveille des tests de scénarios avec chaos engineering.
     """
-    from ..scenario_testing.server import ScenarioTestingServer
+    from python_pubsub_devtools.scenario_testing.server import ScenarioTestingServer
 
     try:
         cfg = DevToolsConfig.from_yaml(config)
@@ -215,10 +223,10 @@ def serve_all(config: Path):
     Démarre Event Flow, Event Recorder, Mock Exchange et Scenario Testing en parallèle.
     """
     import multiprocessing
-    from ..event_flow.server import EventFlowServer
-    from ..event_recorder.server import EventRecorderServer
-    from ..mock_exchange.server import MockExchangeServer
-    from ..scenario_testing.server import ScenarioTestingServer
+    from python_pubsub_devtools.event_flow.server import EventFlowServer
+    from python_pubsub_devtools.event_recorder.server import EventRecorderServer
+    from python_pubsub_devtools.mock_exchange.server import MockExchangeServer
+    from python_pubsub_devtools.scenario_testing.server import ScenarioTestingServer
 
     try:
         cfg = DevToolsConfig.from_yaml(config)

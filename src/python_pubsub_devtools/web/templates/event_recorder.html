@@ -8,8 +8,14 @@
 </head>
 <body>
 <div class="control-buttons">
+    <button class="control-btn record-btn" id="record-btn" onclick="showRecordInfo()" title="Start Recording (requires ServiceBus connection)">
+        ⏺️
+    </button>
     <button class="control-btn" id="dark-mode-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode (D)">
         🌙
+    </button>
+    <button class="control-btn" id="info-btn" onclick="showInfo()" title="Info & Help">
+        ℹ️
     </button>
 </div>
 
@@ -90,6 +96,42 @@
 <button class="refresh-btn" onclick="location.reload()" title="Refresh">
     ↻
 </button>
+
+<!-- Recording Modal -->
+<div class="modal" id="recording-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>⏺️ Start Recording</h2>
+            <span class="close-btn" onclick="closeRecordingModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Start a new recording session to capture events from your application.</p>
+            <div class="form-group">
+                <label for="session-name">Session Name:</label>
+                <input type="text" id="session-name" placeholder="e.g., trading_session_001"
+                       value="session_{{ now.strftime('%Y%m%d_%H%M%S') if now else '' }}">
+            </div>
+            <div class="modal-info">
+                <p><strong>📝 Note:</strong> Make sure your application ServiceBus is running with <code>enable_recording=True</code></p>
+                <p><strong>🔗 Or</strong> the application will send events manually to this endpoint</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeRecordingModal()">Cancel</button>
+            <button class="btn-primary" onclick="startRecording()">Start Recording</button>
+        </div>
+    </div>
+</div>
+
+<!-- Recording Status Bar (hidden by default) -->
+<div class="recording-status-bar" id="recording-status-bar" style="display: none;">
+    <div class="recording-status-content">
+        <span class="recording-pulse">⏺️</span>
+        <span class="recording-session-name" id="recording-session-name">Recording...</span>
+        <span class="recording-event-count" id="recording-event-count">0 events</span>
+    </div>
+    <button class="stop-recording-btn" onclick="stopRecording()">⏹ Stop</button>
+</div>
 
 <script src="{{ url_for('static', filename='js/event_recorder.js') }}"></script>
 </body>

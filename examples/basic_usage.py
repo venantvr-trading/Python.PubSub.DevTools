@@ -127,6 +127,38 @@ def example_launch_multiple_servers():
     return processes
 
 
+def example_launch_recorder_with_servicebus():
+    """Exemple: Lancer Event Recorder avec ServiceBus pour replay réel."""
+    from python_pubsub_devtools.event_recorder.server import EventRecorderServer
+
+    # IMPORTANT: Créer votre instance ServiceBus
+    # Remplacez cette ligne par votre propre ServiceBus
+    # from your_app.service_bus import ServiceBus
+    # service_bus = ServiceBus()
+
+    # Pour cet exemple, on simule sans ServiceBus
+    service_bus = None  # Remplacez par votre ServiceBus réel
+
+    def run_recorder():
+        # Passer le ServiceBus au serveur
+        server = EventRecorderServer(config.event_recorder, service_bus=service_bus)
+        server.run(host='0.0.0.0', debug=False)
+
+    process = multiprocessing.Process(target=run_recorder)
+    process.start()
+
+    print("✅ Event Recorder démarré avec support ServiceBus:")
+    print(f"   🎬 Dashboard: http://localhost:{config.event_recorder.port}")
+    if service_bus:
+        print("   ✓ Mode REAL: Replay publiera les événements sur le ServiceBus")
+    else:
+        print("   ⚠ Mode SIMULATION seulement (pas de ServiceBus fourni)")
+    print()
+    print("   Dans le dashboard, décochez 'Simulation Mode' pour activer le replay réel")
+
+    return process
+
+
 # ============================================================================
 # 4. UTILISATION DE L'ANALYSEUR D'ÉVÉNEMENTS (sans serveur web)
 # ============================================================================

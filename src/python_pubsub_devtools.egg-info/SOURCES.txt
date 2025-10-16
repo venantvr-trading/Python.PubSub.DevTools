@@ -23,10 +23,15 @@ src/python_pubsub_devtools/event_recorder/__init__.py
 src/python_pubsub_devtools/event_recorder/event_recorder.py
 src/python_pubsub_devtools/event_recorder/example_recorder_usage.py
 src/python_pubsub_devtools/event_recorder/serve_recorder.py
+src/python_pubsub_devtools/event_recorder/server.py
+src/python_pubsub_devtools/event_recorder/servicebus_proxy.py
+src/python_pubsub_devtools/event_recorder/views.py
 src/python_pubsub_devtools/mock_exchange/__init__.py
 src/python_pubsub_devtools/mock_exchange/example_scenarios.py
 src/python_pubsub_devtools/mock_exchange/scenario_exchange.py
 src/python_pubsub_devtools/mock_exchange/serve_exchange.py
+src/python_pubsub_devtools/mock_exchange/server.py
+src/python_pubsub_devtools/mock_exchange/views.py
 src/python_pubsub_devtools/scenario_testing/__init__.py
 src/python_pubsub_devtools/scenario_testing/assertion_checker.py
 src/python_pubsub_devtools/scenario_testing/chaos_injector.py
@@ -34,6 +39,8 @@ src/python_pubsub_devtools/scenario_testing/example_usage.py
 src/python_pubsub_devtools/scenario_testing/scenario_runner.py
 src/python_pubsub_devtools/scenario_testing/scenario_schema.py
 src/python_pubsub_devtools/scenario_testing/serve_testing.py
+src/python_pubsub_devtools/scenario_testing/server.py
+src/python_pubsub_devtools/scenario_testing/views.py
 src/python_pubsub_devtools/web/static/css/event_flow.css
 src/python_pubsub_devtools/web/static/css/event_recorder.css
 src/python_pubsub_devtools/web/static/css/mock_exchange.css
@@ -49,3 +56,7 @@ src/python_pubsub_devtools/web/templates/event_recorder.html
 src/python_pubsub_devtools/web/templates/mock_exchange.html
 src/python_pubsub_devtools/web/templates/recording_detail.html
 src/python_pubsub_devtools/web/templates/scenario_testing.html
+tests/test_candle_patterns.py
+tests/test_indicators.py
+tests/test_market_scenarios.py
+tests/test_metrics_collector.py
