@@ -9,13 +9,11 @@ Comprehensive development and debugging tools for PubSub-based event-driven arch
 Understanding the system design and use cases.
 
 - [**Architecture Technique**](architecture/01_ARCHITECTURE.md) - System architecture and components
-- [**Use Cases**](architecture/02_USE_CASES.md) - Real-world usage scenarios
 
 ### 📋 Planning & Roadmap
 
 Strategic planning and feature development.
 
-- [**Event Metrics Collector**](planning/03_METRICS.md) - Metrics collection and monitoring
 - [**Roadmap**](planning/04_ROADMAP.md) - Product vision and future features
 - [**Quick Wins**](planning/05_QUICK_WINS.md) - Immediate improvements and priorities
 
@@ -32,15 +30,6 @@ Technical implementation summaries and migration reports.
 
 - [**Event Metrics Implementation**](implementation/07_IMPLEMENTATION_SUMMARY.md) - Metrics collector implementation
 - [**Scenario Engine Migration**](implementation/08_MIGRATION_SUMMARY.md) - Generic scenario testing framework migration
-- [**Package Setup**](implementation/09_PACKAGE_SETUP_SUMMARY.md) - Package configuration and export setup
-
-### ✅ Status & Completion Reports
-
-Historical setup and installation status.
-
-- [**Setup Complete**](status/99_SETUP_COMPLETE.md) - Initial library setup
-- [**Renaming Complete**](status/99_RENAMING_COMPLETE.md) - Package renaming status
-- [**Installation Success**](status/99_INSTALLATION_SUCCESS.md) - Installation verification
 
 ---
 

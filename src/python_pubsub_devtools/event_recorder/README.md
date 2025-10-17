@@ -414,8 +414,8 @@ event_recorder:
 ## Best Practices
 
 1. **Session Naming**: Use descriptive names with context
-   - ✅ `production_bug_position_stuck_20251017`
-   - ❌ `session1`
+    - ✅ `production_bug_position_stuck_20251017`
+    - ❌ `session1`
 
 2. **Storage Management**: Recordings can be large - implement rotation
    ```python
@@ -432,9 +432,9 @@ event_recorder:
    ```
 
 3. **Sensitive Data**: Recordings may contain sensitive information
-   - Store recordings securely
-   - Sanitize before sharing
-   - Add to `.gitignore`
+    - Store recordings securely
+    - Sanitize before sharing
+    - Add to `.gitignore`
 
 4. **Event Reconstruction**: Provide events module for proper replay
    ```python

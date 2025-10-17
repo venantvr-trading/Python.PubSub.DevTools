@@ -74,19 +74,19 @@ Le serveur expose une API REST simple pour une intégration programmatique.
 ### Endpoints Principaux
 
 - `GET /api/replay/files`
-  - **Description** : Liste tous les fichiers de rejeu disponibles.
-  - **Réponse** : `[{ "filename": "...", "size_kb": ..., "created_at": ... }]`
+    - **Description** : Liste tous les fichiers de rejeu disponibles.
+    - **Réponse** : `[{ "filename": "...", "size_kb": ..., "created_at": ... }]`
 
 - `POST /api/replay/upload`
-  - **Description** : Uploade un nouveau fichier de rejeu.
-  - **Body** : `multipart/form-data` avec un champ `file`.
+    - **Description** : Uploade un nouveau fichier de rejeu.
+    - **Body** : `multipart/form-data` avec un champ `file`.
 
 - `DELETE /api/replay/files/<filename>`
-  - **Description** : Supprime un fichier de rejeu.
+    - **Description** : Supprime un fichier de rejeu.
 
 - `POST /api/replay/start`
-  - **Description** : Démarre le rejeu d'un fichier.
-  - **Body** : `{"filename": "market_data.csv"}`
+    - **Description** : Démarre le rejeu d'un fichier.
+    - **Body** : `{"filename": "market_data.csv"}`
 
 ### Exemple avec `curl`
 

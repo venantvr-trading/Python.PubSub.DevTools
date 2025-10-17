@@ -125,10 +125,10 @@ class EventBus:
     """Central event bus with plugin architecture"""
 
     def __init__(
-        self,
-        backend: Backend = InMemoryBackend(),
-        middleware: List[Middleware] = None,
-        config: Config = None,
+            self,
+            backend: Backend = InMemoryBackend(),
+            middleware: List[Middleware] = None,
+            config: Config = None,
     ):
         self.backend = backend
         self.handlers = HandlerRegistry()
@@ -161,6 +161,7 @@ class EventBus:
 
     def _wrap_handler(self, handler: Callable) -> Callable:
         """Wrap handler with observability & error handling"""
+
         @wraps(handler)
         async def wrapped(event: Event):
             with self.tracer.span(f"handler.{handler.__name__}"):

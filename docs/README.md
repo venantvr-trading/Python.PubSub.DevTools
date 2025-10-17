@@ -6,20 +6,18 @@ Documentation complète du framework PubSub DevTools pour architectures événem
 
 ## 📂 Structure de la Documentation
 
-La documentation est organisée en 5 catégories principales :
+La documentation est organisée en 4 catégories principales :
 
 ### 🏗️ [Architecture](./architecture/01_ARCHITECTURE.md)
 
-Documentation de l'architecture système et cas d'usage.
+Documentation de l'architecture système.
 
 - [01_ARCHITECTURE.md](./architecture/01_ARCHITECTURE.md) - Principes, structure modulaire, composants
-- [02_USE_CASES.md](./architecture/02_USE_CASES.md) - Cas d'usage concrets (e-commerce, banking, etc.)
 
 ### 📋 [Planning](./planning/04_ROADMAP.md)
 
 Vision produit, roadmap et priorités.
 
-- [03_METRICS.md](./planning/03_METRICS.md) - Event Metrics Collector (feature principale)
 - [04_ROADMAP.md](./planning/04_ROADMAP.md) - Roadmap 2025-2026 (8 phases)
 - [05_QUICK_WINS.md](./planning/05_QUICK_WINS.md) - Améliorations rapides à fort impact
 
@@ -27,7 +25,7 @@ Vision produit, roadmap et priorités.
 
 Guides pratiques d'utilisation et migration.
 
-- [CLI_USAGE.md](guides/10_CLI_USAGE.md) - Guide complet du CLI
+- [10_CLI_USAGE.md](./guides/10_CLI_USAGE.md) - Guide complet du CLI
 - [06_MIGRATION_GUIDE.md](./guides/06_MIGRATION_GUIDE.md) - Migration depuis versions précédentes
 
 ### 🔧 [Implementation](./implementation/07_IMPLEMENTATION_SUMMARY.md)
@@ -36,15 +34,6 @@ Résumés techniques d'implémentation.
 
 - [07_IMPLEMENTATION_SUMMARY.md](./implementation/07_IMPLEMENTATION_SUMMARY.md) - Metrics Collector
 - [08_MIGRATION_SUMMARY.md](./implementation/08_MIGRATION_SUMMARY.md) - Scenario Engine Migration
-- [09_PACKAGE_SETUP_SUMMARY.md](./implementation/09_PACKAGE_SETUP_SUMMARY.md) - Configuration package
-
-### ✅ [Status](./status/99_INSTALLATION_SUCCESS.md)
-
-Historique et statut du projet (référence).
-
-- [99_SETUP_COMPLETE.md](./status/99_SETUP_COMPLETE.md) - Setup initial
-- [99_RENAMING_COMPLETE.md](./status/99_RENAMING_COMPLETE.md) - Renommages
-- [99_INSTALLATION_SUCCESS.md](./status/99_INSTALLATION_SUCCESS.md) - Vérification installation
 
 ---
 
@@ -53,18 +42,16 @@ Historique et statut du projet (référence).
 ### Si vous découvrez le projet :
 
 1. [**Architecture**](./architecture/01_ARCHITECTURE.md) - Comprendre la vision globale
-2. [**Use Cases**](./architecture/02_USE_CASES.md) - Voir des exemples concrets
-3. [**Metrics**](./planning/03_METRICS.md) - Commencer à utiliser les métriques
+2. [**Roadmap**](./planning/04_ROADMAP.md) - Voir la vision long terme
 
 ### Si vous voulez utiliser le CLI :
 
-👉 [**CLI Usage Guide**](guides/10_CLI_USAGE.md) - Guide complet avec exemples
+👉 [**CLI Usage Guide**](./guides/10_CLI_USAGE.md) - Guide complet avec exemples
 
 ### Si vous voulez contribuer :
 
 1. [**Quick Wins**](./planning/05_QUICK_WINS.md) - Améliorations prioritaires
-2. [**Roadmap**](./planning/04_ROADMAP.md) - Vision long terme
-3. [**Architecture**](./architecture/01_ARCHITECTURE.md) - Structure technique
+2. [**Architecture**](./architecture/01_ARCHITECTURE.md) - Structure technique
 
 ### Si vous migrez depuis une ancienne version :
 
