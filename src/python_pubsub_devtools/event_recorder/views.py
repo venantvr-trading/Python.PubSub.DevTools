@@ -381,7 +381,6 @@ def register_routes(app: Flask) -> None:
 
         Request JSON:
             speed: Vitesse de replay (0.1 à 10.0, défaut 1.0)
-            simulation_mode: true=simulation visuelle, false=publication réelle (défaut: true)
         """
         global replay_state
         from flask import request
@@ -392,9 +391,6 @@ def register_routes(app: Flask) -> None:
 
         data = request.json or {}
         speed = data.get('speed', 1.0)
-        simulation_mode = data.get('simulation_mode', True)
-
-        service_bus = current_app.config.get('SERVICE_BUS')
 
         with replay_lock:
             if replay_state['active']:
@@ -406,63 +402,18 @@ def register_routes(app: Flask) -> None:
             replay_state['total_events'] = len(recording.get('events', []))
             replay_state['speed'] = speed
             replay_state['paused'] = False
-            replay_state['simulation_mode'] = simulation_mode
+            replay_state['simulation_mode'] = True  # Le serveur ne supporte que le mode simulation
             replay_state['events'] = recording.get('events', [])
             replay_state['replayer'] = None
             replay_state['replay_thread'] = None
 
-            message = 'Replay started (simulation mode - no events published)'
-
-            # Mode réel avec ServiceBus
-            if not simulation_mode:
-                if not service_bus:
-                    replay_state['active'] = False
-                    return jsonify({'error': 'ServiceBus not available. Initialize EventRecorderServer with service_bus parameter.'}), 400
-
-                # Créer EventReplayer
-                from .event_recorder import EventReplayer
-
-                recordings_dir = Path(current_app.config['RECORDINGS_DIR'])
-                filepath = recordings_dir / filename
-
-                try:
-                    replayer = EventReplayer(str(filepath))
-                    replay_state['replayer'] = replayer
-
-                    # Lancer replay dans un thread
-                    def replay_thread():
-                        global replay_state
-                        try:
-                            # Callback pour suivre la progression
-                            def progress_callback(current, total):
-                                with replay_lock:
-                                    replay_state['current_event_index'] = current
-
-                            replayer.replay(
-                                service_bus,
-                                speed_multiplier=speed,
-                                progress_callback=progress_callback
-                            )
-                        except Exception as e:
-                            print(f"Replay error: {e}")
-                        finally:
-                            with replay_lock:
-                                replay_state['active'] = False
-
-                    thread = threading.Thread(target=replay_thread, daemon=True)
-                    thread.start()
-                    replay_state['replay_thread'] = thread
-
-                    message = f'Replay started (REAL MODE - publishing {replay_state["total_events"]} events to ServiceBus)'
-                except Exception as e:
-                    replay_state['active'] = False
-                    return jsonify({'error': f'Failed to start replay: {str(e)}'}), 500
+            message = 'Replay started (simulation mode)'
 
         return jsonify({
             'success': True,
             'message': message,
             'total_events': replay_state['total_events'],
-            'simulation_mode': simulation_mode
+            'simulation_mode': True
         })
 
     @app.route('/api/replay/pause', methods=['POST'])

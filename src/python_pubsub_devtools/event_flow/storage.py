@@ -156,7 +156,7 @@ _storage_instance: Optional[GraphStorage] = None
 _storage_lock = threading.Lock()
 
 
-def initialize_storage(config: "EventFlowConfig") -> GraphStorage:
+def initialize_storage(config) -> GraphStorage:
     """
     Initialize the global storage instance using the application config.
     This should be called once at application startup.
@@ -164,7 +164,7 @@ def initialize_storage(config: "EventFlowConfig") -> GraphStorage:
     global _storage_instance
     with _storage_lock:
         if _storage_instance is None:
-            persist_path = getattr(config, 'cache_persist_path', None)
+            persist_path = getattr(config, 'cache_persist_path', None)  # config is of type EventFlowConfig
             _storage_instance = GraphStorage(persist_path=persist_path)
             logger.info(f"GraphStorage initialized. Persistence: {persist_path or 'Disabled'}")
     return _storage_instance

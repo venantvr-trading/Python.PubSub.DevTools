@@ -157,7 +157,7 @@ class DevToolsConfig(BaseModel):
         return v
 
     @model_validator(mode='after')
-    def build_service_configs(self) -> 'DevToolsConfig':
+    def build_service_configs(self) -> DevToolsConfig:
         """Construit les configurations par service si elles ne sont pas fournies."""
         # Event Flow
         if self.event_flow is None:
@@ -199,7 +199,7 @@ class DevToolsConfig(BaseModel):
         return self
 
     @classmethod
-    def from_yaml(cls, filepath: str | Path) -> 'DevToolsConfig':
+    def from_yaml(cls, filepath: str | Path) -> DevToolsConfig:
         """Charge la configuration depuis un fichier YAML.
 
         Les chemins relatifs dans le YAML sont résolus par rapport au répertoire
@@ -262,7 +262,7 @@ class DevToolsConfig(BaseModel):
         return cls(**data)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'DevToolsConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> DevToolsConfig:
         """Crée une configuration depuis un dictionnaire.
 
         Args:

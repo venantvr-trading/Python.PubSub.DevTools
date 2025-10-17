@@ -30,23 +30,3 @@ from .config import (
     MockExchangeConfig,
     ScenarioTestingConfig,
 )
-
-# Event Recorder - Enregistrement et rejeu
-from .event_recorder import EventRecorder, EventReplayer
-
-__all__ = [
-    # Version et métadonnées
-    "__version__",
-    "__author__",
-    # Configuration
-    "DevToolsConfig",
-    "EventFlowConfig",
-    "EventRecorderConfig",
-    "MockExchangeConfig",
-    "ScenarioTestingConfig",
-    # Event Flow
-    # "EventFlowAnalyzer",
-    # Event Recorder
-    "EventRecorder",
-    "EventReplayer",
-]

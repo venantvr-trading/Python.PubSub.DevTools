@@ -15,16 +15,7 @@ from pathlib import Path
 
 from flask import Flask, render_template, request, jsonify, Response
 
-# Configure Flask to find templates and static files in web directory
-WEB_DIR = Path(__file__).parent.parent / 'web'
-app = Flask(__name__,
-            template_folder=str(WEB_DIR / 'templates'),
-            static_folder=str(WEB_DIR / 'static'))
-
-# Import storage after app creation
-from .storage import get_storage, GraphData
-
-# Namespace colors (used for UI display)
+# Namespace colors (used for UI display) - could be moved to config
 NAMESPACE_COLORS = {
     'bot_lifecycle': '#81c784',  # green
     'market_data': '#64b5f6',  # blue
@@ -40,6 +31,9 @@ NAMESPACE_COLORS = {
     'query': '#81d4fa',  # light blue
     'unknown': '#e0e0e0',  # grey
 }
+
+# Import storage
+from .storage import get_storage, initialize_storage, GraphData
 
 
 def get_namespace_color(namespace: str) -> str:
@@ -98,257 +92,156 @@ def _convert_dot_to_svg(dot_content: str, graph_type: str) -> bytes:
             svg_file.unlink()
 
 
-@app.route('/api/graph', methods=['POST'])
-def api_store_graph():
-    """
-    API endpoint to receive and store graph data from scanner
+def create_app(config) -> Flask:
+    """Crée et configure l'application Flask (Application Factory)."""
+    # Configure Flask to find templates and static files in web directory
+    web_dir = Path(__file__).parent.parent / 'web'
+    app = Flask(__name__,
+                template_folder=str(web_dir / 'templates'),
+                static_folder=str(web_dir / 'static'))
 
-    Expected JSON payload:
-    {
-        "graph_type": "complete|full-tree",
-        "dot_content": "digraph {...}",
-        "svg_content": "<svg>...</svg>",  // optional
-        "namespaces": ["market_data", "position"],  // optional
-        "stats": {"events": 10, "agents": 5}  // optional
-    }
-    """
-    try:
-        data = request.get_json()
+    # Initialize storage with the app context
+    with app.app_context():
+        initialize_storage(config)
 
-        if not data:
-            return jsonify({'error': 'No JSON payload provided'}), 400
+    @app.route('/api/graph', methods=['POST'])
+    def api_store_graph():
+        """
+        API endpoint to receive and store graph data from scanner
+        """
+        try:
+            data = request.get_json()
 
-        # Validate required fields
-        if 'graph_type' not in data:
-            return jsonify({'error': 'Missing required field: graph_type'}), 400
+            if not data:
+                return jsonify({'error': 'No JSON payload provided'}), 400
 
-        if 'dot_content' not in data:
-            return jsonify({'error': 'Missing required field: dot_content'}), 400
+            if 'graph_type' not in data or 'dot_content' not in data:
+                return jsonify({'error': 'Missing required fields: graph_type, dot_content'}), 400
 
-        # Valid graph types
-        valid_types = {'complete', 'full-tree'}
-        if data['graph_type'] not in valid_types:
+            valid_types = {'complete', 'full-tree'}
+            if data['graph_type'] not in valid_types:
+                return jsonify({'error': f'Invalid graph_type. Must be one of: {", ".join(valid_types)}'}), 400
+
+            graph_data = GraphData(
+                graph_type=data['graph_type'],
+                dot_content=data['dot_content'],
+                svg_content=data.get('svg_content'),
+                namespaces=set(data.get('namespaces', [])),
+                stats=data.get('stats', {})
+            )
+
+            storage = get_storage()
+            storage.store(graph_data)
+
             return jsonify({
-                'error': f'Invalid graph_type. Must be one of: {", ".join(valid_types)}'
-            }), 400
+                'status': 'success',
+                'graph_type': data['graph_type'],
+                'timestamp': graph_data.timestamp
+            }), 201
 
-        # Convert namespaces list to set if provided
-        namespaces = None
-        if 'namespaces' in data and data['namespaces']:
-            namespaces = set(data['namespaces'])
+        except Exception as e:
+            return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
-        # Create GraphData object
-        graph_data = GraphData(
-            graph_type=data['graph_type'],
-            dot_content=data['dot_content'],
-            svg_content=data.get('svg_content'),
-            namespaces=namespaces,
-            stats=data.get('stats')
-        )
-
-        # Store in cache
+    @app.route('/api/graph/status', methods=['GET'])
+    def api_graph_status():
+        """Get cache status"""
         storage = get_storage()
-        storage.store(graph_data)
+        return jsonify(storage.get_status())
 
-        return jsonify({
-            'status': 'success',
-            'graph_type': data['graph_type'],
-            'timestamp': graph_data.timestamp
-        }), 201
-
-    except Exception as e:
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
-
-
-@app.route('/api/graph/status', methods=['GET'])
-def api_graph_status():
-    """Get cache status"""
-    try:
-        storage = get_storage()
-        status = storage.get_status()
-        return jsonify(status), 200
-    except Exception as e:
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
-
-
-@app.route('/api/graph/<graph_type>', methods=['GET'])
-def api_get_graph(graph_type):
-    """
-    Retrieve graph data from cache
-
-    Query parameters:
-    - format: dot|svg (default: dot)
-    """
-    try:
+    @app.route('/api/graph/<graph_type>', methods=['GET'])
+    def api_get_graph(graph_type):
+        """Retrieve graph data from cache"""
         storage = get_storage()
         graph_data = storage.get(graph_type)
-
         if not graph_data:
             return jsonify({'error': f'Graph type "{graph_type}" not found in cache'}), 404
 
-        # Determine format
         format_type = request.args.get('format', 'dot')
-
         if format_type == 'svg':
             if not graph_data.svg_content:
                 return jsonify({'error': 'SVG content not available for this graph'}), 404
             return Response(graph_data.svg_content, mimetype='image/svg+xml')
-
         elif format_type == 'dot':
             return Response(graph_data.dot_content, mimetype='text/plain')
-
         elif format_type == 'json':
-            # Return full metadata
-            return jsonify(graph_data.to_dict()), 200
-
+            return jsonify(graph_data.to_dict())
         else:
             return jsonify({'error': f'Invalid format: {format_type}. Use dot, svg, or json'}), 400
 
-    except Exception as e:
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
-
-
-@app.route('/api/graph/<graph_type>', methods=['DELETE'])
-def api_delete_graph(graph_type):
-    """Clear specific graph from cache"""
-    try:
+    @app.route('/api/graph/<graph_type>', methods=['DELETE'])
+    def api_delete_graph(graph_type):
+        """Clear specific graph from cache"""
         storage = get_storage()
-
-        if not storage.has_graph(graph_type):
+        if not storage.get(graph_type):
             return jsonify({'error': f'Graph type "{graph_type}" not found in cache'}), 404
-
         storage.clear(graph_type)
+        return jsonify({'status': 'success', 'message': f'Graph "{graph_type}" cleared from cache'})
 
-        return jsonify({
-            'status': 'success',
-            'message': f'Graph "{graph_type}" cleared from cache'
-        }), 200
-
-    except Exception as e:
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
-
-
-@app.route('/api/graph', methods=['DELETE'])
-def api_clear_all_graphs():
-    """Clear all graphs from cache"""
-    try:
+    @app.route('/api/graph', methods=['DELETE'])
+    def api_clear_all_graphs():
+        """Clear all graphs from cache"""
         storage = get_storage()
         storage.clear()
+        return jsonify({'status': 'success', 'message': 'All graphs cleared from cache'})
 
-        return jsonify({
-            'status': 'success',
-            'message': 'All graphs cleared from cache'
-        }), 200
+    @app.route('/')
+    def index():
+        """Main page with tabs and filters"""
+        storage = get_storage()
+        status = storage.get_status()
+        namespaces = set()
+        stats = {'events': 0, 'agents': 0, 'connections': 0}
 
-    except Exception as e:
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+        if status['total_graphs'] > 0:
+            for graph_info in status['graphs'].values():
+                if graph_info.get('stats'):
+                    stats['events'] = max(stats['events'], graph_info['stats'].get('events', 0))
+                    stats['agents'] = max(stats['agents'], graph_info['stats'].get('agents', 0))
+                    stats['connections'] = max(stats['connections'], graph_info['stats'].get('connections', 0))
+                if graph_info.get('namespaces'):
+                    namespaces.update(graph_info['namespaces'])
 
+        return render_template(
+            'event_flow.html',
+            total_events=stats['events'],
+            total_agents=stats['agents'],
+            total_connections=stats['connections'],
+            total_namespaces=len(namespaces),
+            namespaces=sorted(list(namespaces)),
+            namespace_colors=NAMESPACE_COLORS,
+            cache_empty=(status['total_graphs'] == 0)
+        )
 
-@app.route('/')
-def index():
-    """
-    Main page with tabs and filters
+    @app.route('/graph/<graph_type>')
+    def graph(graph_type):
+        """Serve graph SVG from cache only"""
+        storage = get_storage()
+        cached_graph = storage.get(graph_type)
 
-    Gets stats from cache (populated by scanner).
-    If cache is empty, shows a message to run the scanner.
-    """
-    storage = get_storage()
-    status = storage.get_status()
+        if not cached_graph:
+            error_svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400">
+                <rect width="800" height="400" fill="#f5f5f5"/>
+                <text x="400" y="180" font-family="Arial" font-size="18" fill="#d32f2f" text-anchor="middle" font-weight="bold">Graph Not Available</text>
+                <text x="400" y="220" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">The '{graph_type}' graph has not been generated yet.</text>
+                <text x="400" y="250" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">Please run the scanner to populate the cache.</text>
+            </svg>'''
+            return Response(error_svg, mimetype='image/svg+xml'), 404
 
-    # Aggregate stats from all cached graphs
-    total_events = 0
-    total_agents = 0
-    total_connections = 0
-    namespaces = set()
+        if cached_graph.svg_content:
+            return Response(cached_graph.svg_content, mimetype='image/svg+xml')
 
-    if status['total_graphs'] > 0:
-        # Get stats from any cached graph (they should all have similar overall stats)
-        for graph_type, graph_info in status['graphs'].items():
-            if graph_info.get('stats'):
-                stats = graph_info['stats']
-                total_events = max(total_events, stats.get('events', 0))
-                total_agents = max(total_agents, stats.get('agents', 0))
-                total_connections = max(total_connections, stats.get('connections', 0))
+        svg_content = _convert_dot_to_svg(cached_graph.dot_content, graph_type)
+        if svg_content:
+            return Response(svg_content, mimetype='image/svg+xml')
+        else:
+            error_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400">
+                <rect width="800" height="400" fill="#f5f5f5"/>
+                <text x="400" y="180" font-family="Arial" font-size="18" fill="#d32f2f" text-anchor="middle" font-weight="bold">SVG Conversion Failed</text>
+                <text x="400" y="220" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">Graphviz is not installed or encountered an error.</text>
+            </svg>'''
+            return Response(error_svg, mimetype='image/svg+xml'), 500
 
-        # Get namespaces from cached graphs
-        for graph_type in status['graphs']:
-            cached_graph = storage.get(graph_type)
-            if cached_graph and cached_graph.namespaces:
-                namespaces.update(cached_graph.namespaces)
-
-    namespaces = sorted(namespaces) if namespaces else []
-    total_namespaces = len(namespaces)
-
-    return render_template(
-        'event_flow.html',
-        total_events=total_events,
-        total_agents=total_agents,
-        total_connections=total_connections,
-        total_namespaces=total_namespaces,
-        namespaces=namespaces,
-        namespace_colors=NAMESPACE_COLORS,
-        cache_empty=(status['total_graphs'] == 0)
-    )
-
-
-@app.route('/graph/<graph_type>')
-def graph(graph_type):
-    """
-    Serve graph SVG from cache only
-
-    The scanner is responsible for generating and pushing graphs.
-    This endpoint only serves what's in the cache.
-    """
-    storage = get_storage()
-    cached_graph = storage.get(graph_type)
-
-    if not cached_graph:
-        # Cache miss - return error SVG
-        print(f"[CACHE MISS] Graph '{graph_type}' not found in cache")
-        error_svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400">
-    <rect width="800" height="400" fill="#f5f5f5"/>
-    <text x="400" y="150" font-family="Arial" font-size="18" fill="#d32f2f" text-anchor="middle" font-weight="bold">
-        Graph Not Available
-    </text>
-    <text x="400" y="190" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">
-        The '{graph_type}' graph has not been generated yet.
-    </text>
-    <text x="400" y="220" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">
-        Please run the scanner to generate graphs:
-    </text>
-    <text x="400" y="260" font-family="Courier" font-size="12" fill="#1976d2" text-anchor="middle">
-        python -m python_pubsub_devtools.event_flow.scanner --agents-dir &lt;path&gt; --one-shot
-    </text>
-</svg>'''
-        return Response(error_svg, mimetype='image/svg+xml'), 404
-
-    print(f"[CACHE HIT] Serving '{graph_type}' from cache")
-
-    # If SVG is cached, return it directly
-    if cached_graph.svg_content:
-        return Response(cached_graph.svg_content, mimetype='image/svg+xml')
-
-    # Otherwise, convert DOT to SVG on the fly
-    print(f"[CACHE] Converting cached DOT to SVG for '{graph_type}'")
-    svg_content = _convert_dot_to_svg(cached_graph.dot_content, graph_type)
-
-    if svg_content:
-        return Response(svg_content, mimetype='image/svg+xml')
-    else:
-        # Conversion failed - return error SVG
-        error_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400">
-    <rect width="800" height="400" fill="#f5f5f5"/>
-    <text x="400" y="180" font-family="Arial" font-size="18" fill="#d32f2f" text-anchor="middle" font-weight="bold">
-        SVG Conversion Failed
-    </text>
-    <text x="400" y="220" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">
-        Graphviz is not installed or encountered an error.
-    </text>
-    <text x="400" y="250" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">
-        Install Graphviz: sudo apt-get install graphviz
-    </text>
-</svg>'''
-        return Response(error_svg, mimetype='image/svg+xml'), 500
+    return app
 
 
 def main():
@@ -423,7 +316,8 @@ def main():
     print("=" * 80)
     print()
 
-    app.run(host=args.host, port=args.port, debug=True)
+    app_instance = create_app(None)  # Config is not used in standalone mode
+    app_instance.run(host=args.host, port=args.port, debug=True)
 
 
 if __name__ == '__main__':

@@ -1,53 +1,42 @@
 """
-Event Flow Server - Wrapper for serve_event_flow Flask app
+Event Flow Server - Serveur web pour la visualisation des flux d'événements.
 """
 from __future__ import annotations
 
-from pathlib import Path
-
-from .serve_event_flow import app
+from .serve_event_flow import create_app
 
 
 class EventFlowServer:
-    """Server for Event Flow Visualization"""
+    """Serveur pour la visualisation des flux d'événements."""
 
     def __init__(self, config):
-        """Initialize server with configuration
+        """Initialise le serveur avec la configuration.
 
         Args:
-            config: EventFlowConfig object with agents_dir, events_dir, and port
+            config: Objet EventFlowConfig.
         """
         self.config = config
-        self.agents_dir = config.agents_dir
-        self.events_dir = config.events_dir
         self.port = config.port
 
-        # Store Flask app reference for testing
-        self.app = app
-
-        # Update global paths in serve_event_flow
-        import python_pubsub_devtools.event_flow.serve_event_flow as serve_module
-        serve_module.AGENTS_DIR = Path(self.agents_dir)
-        serve_module.EVENTS_DIR = Path(self.events_dir)
+        # Créer l'application Flask en utilisant la factory
+        self.app = create_app(config)
 
     def run(self, host='0.0.0.0', debug=True):
-        """Run the Flask server
+        """Lance le serveur Flask (bloquant).
 
         Args:
-            host: Host to bind to (default: 0.0.0.0)
-            debug: Enable debug mode (default: True)
+            host: Adresse d'écoute (défaut: 0.0.0.0)
+            debug: Activer le mode debug (défaut: True)
         """
         print("=" * 80)
         print("🚀 Event Flow Visualization Server")
         print("=" * 80)
         print()
-        print(f"📊 Agents directory: {self.agents_dir}")
-        print(f"📝 Events directory: {self.events_dir}")
-        print()
         print(f"🌐 Server running at: http://{host}:{self.port}")
+        print("   Le serveur attend que le 'scanner' lui envoie les données du graphe.")
         print()
         print("   Press Ctrl+C to stop")
         print("=" * 80)
         print()
 
-        app.run(host=host, port=self.port, debug=debug)
+        self.app.run(host=host, port=self.port, debug=debug)
