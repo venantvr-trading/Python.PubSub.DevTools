@@ -316,7 +316,12 @@ def main():
     print("=" * 80)
     print()
 
-    app_instance = create_app(None)  # Config is not used in standalone mode
+    # En mode autonome, on crée une configuration par défaut pour que le cache fonctionne
+    from ..config import EventFlowConfig
+
+    default_config = EventFlowConfig()
+
+    app_instance = create_app(default_config)
     app_instance.run(host=args.host, port=args.port, debug=True)
 
 

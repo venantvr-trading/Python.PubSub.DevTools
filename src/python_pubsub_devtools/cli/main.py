@@ -158,11 +158,16 @@ def mock_exchange(config: Path, host: str):
 
     Simule un marché avec différents scénarios (tendance, volatilité, etc.).
     """
+    # Le mock_exchange a besoin du bus pour publier les événements de replay.
+    from python_pubsub_devtools.service_bus import ServiceBus
     from python_pubsub_devtools.mock_exchange.server import MockExchangeServer
 
     try:
         cfg = DevToolsConfig.from_yaml(config)
-        server = MockExchangeServer(cfg.mock_exchange)
+        # Créer et injecter le bus de services
+        service_bus = ServiceBus()
+        click.echo("🚌 ServiceBus instancié.")
+        server = MockExchangeServer(cfg.mock_exchange, service_bus=service_bus)
         server.run(host=host, debug=False)
     except FileNotFoundError as e:
         click.echo(f"❌ Erreur: {e}", err=True)
@@ -192,6 +197,8 @@ def scenario_testing(config: Path, host: str):
 
     Exécute et surveille des tests de scénarios avec chaos engineering.
     """
+    # Le testeur de scénarios a besoin du bus pour déclencher et écouter les événements.
+    from python_pubsub_devtools.service_bus import ServiceBus
     from python_pubsub_devtools.scenario_testing.server import ScenarioTestingServer
 
     try:
@@ -199,7 +206,8 @@ def scenario_testing(config: Path, host: str):
         if not cfg.scenario_testing:
             click.echo("❌ Erreur: scenario_testing non configuré dans le fichier YAML", err=True)
             sys.exit(1)
-        server = ScenarioTestingServer(cfg.scenario_testing)
+        service_bus = ServiceBus()
+        server = ScenarioTestingServer(cfg.scenario_testing, service_bus=service_bus)
         server.run(host=host, debug=False)
     except FileNotFoundError as e:
         click.echo(f"❌ Erreur: {e}", err=True)
@@ -224,6 +232,7 @@ def serve_all(config: Path):
     Démarre Event Flow, Event Recorder, Mock Exchange et Scenario Testing en parallèle.
     """
     import multiprocessing
+    from python_pubsub_devtools.service_bus import ServiceBus
     from python_pubsub_devtools.event_flow.server import EventFlowServer
     from python_pubsub_devtools.event_recorder.server import EventRecorderServer
     from python_pubsub_devtools.mock_exchange.server import MockExchangeServer
@@ -236,21 +245,25 @@ def serve_all(config: Path):
         click.echo(f"\n💡 Créez un fichier de configuration avec: pubsub-tools config-example", err=True)
         sys.exit(1)
 
+    # Créer une instance partagée du bus de services
+    service_bus = ServiceBus()
+
     def run_event_flow():
         server = EventFlowServer(cfg.event_flow)
         server.run(host='0.0.0.0', debug=False)
 
     def run_event_recorder():
+        # Event recorder n'a plus besoin du bus, il écoute via l'API
         server = EventRecorderServer(cfg.event_recorder)
         server.run(host='0.0.0.0', debug=False)
 
     def run_mock_exchange():
-        server = MockExchangeServer(cfg.mock_exchange)
+        server = MockExchangeServer(cfg.mock_exchange, service_bus=service_bus)
         server.run(host='0.0.0.0', debug=False)
 
     def run_scenario_testing():
         if cfg.scenario_testing:
-            server = ScenarioTestingServer(cfg.scenario_testing)
+            server = ScenarioTestingServer(cfg.scenario_testing, service_bus=service_bus)
             server.run(host='0.0.0.0', debug=False)
 
     click.echo("=" * 80)

@@ -1,39 +1,21 @@
-# Scenario-Based Mock Exchange 🎰
+# Mock Exchange - Backtesting Engine 🎰
 
-Un exchange simulé avec des scénarios de marché réalistes pour le testing et le debugging.
+Un exchange simulé qui permet de rejouer des données de marché historiques (chandeliers) pour le backtesting, le débogage et les tests d'intégration.
 
 ## 🎯 Concept
 
-Le Mock Exchange permet de simuler **10 scénarios de marché différents** avec des comportements prédéfinis :
+Le Mock Exchange fonctionne comme un moteur de backtesting. Vous lui fournissez un fichier de données de chandeliers (par exemple, un `.csv`), et il publiera les
+événements de marché correspondants sur le bus de services, en respectant le timing original.
 
-- Mouvements réalistes de prix
-- Génération de candles OHLCV
-- Configuration du spread bid-ask
-- Contrôle de la volatilité
-- Candles irréguliers (pour tester la gestion d'erreurs)
-
-## 📋 Scénarios Disponibles
-
-| Scénario              | Description                      | Retour typique             | Usage                       |
-|-----------------------|----------------------------------|----------------------------|-----------------------------|
-| **BULL_RUN**          | Tendance haussière constante     | +20% sur 100 candles       | Tester les achats           |
-| **BEAR_CRASH**        | Chute baissière                  | -30% sur 50 candles        | Tester les ventes           |
-| **SIDEWAYS**          | Oscillation latérale             | ±2% autour du prix initial | Tester l'inactivité         |
-| **FLASH_CRASH**       | Crash soudain puis récupération  | -15% puis retour           | Tester la résilience        |
-| **VOLATILE**          | Haute volatilité                 | ±5% par candle             | Tester les limites          |
-| **PUMP_AND_DUMP**     | Montée rapide puis crash         | +30% puis -40%             | Tester l'avidité            |
-| **DEAD_CAT_BOUNCE**   | Chute, rebond, rechute           | -20%, +10%, -15%           | Tester les faux signaux     |
-| **ACCUMULATION**      | Range serré puis breakout        | ±1% puis +15%              | Tester les breakouts        |
-| **DISTRIBUTION**      | Range serré puis breakdown       | ±1% puis -15%              | Tester les breakdowns       |
-| **IRREGULAR_CANDLES** | Intervalles de temps irréguliers | N/A                        | Tester la gestion d'erreurs |
+Cela permet de tester vos agents de trading et de risque contre des données de marché réelles de manière reproductible.
 
 ## 🌐 Web Dashboard (Port 5557) ⭐
 
 Un dashboard web interactif pour visualiser les simulations de marché en temps réel.
 
 ```bash
-# Lancer le dashboard
-python tools/mock_exchange/serve_exchange.py
+# Lancer le dashboard via le CLI
+pubsub-tools mock-exchange --config devtools_config.yaml
 
 # Ouvrir dans le navigateur
 open http://localhost:5557
