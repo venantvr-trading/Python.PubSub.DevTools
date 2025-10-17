@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +15,22 @@ logger = logging.getLogger(__name__)
 class ScenarioBasedMockExchange:
     """
     Simule un exchange basé sur des scénarios algorithmiques ou des fichiers de replay.
+
+    Args:
+        replay_data_dir: Répertoire contenant les fichiers de replay (CSV, JSON)
+        service_bus: Instance du ServiceBus pour publier les événements de marché
     """
 
-    def __init__(self, replay_data_dir: Path | None = None):
+    def __init__(self, replay_data_dir: Path | None = None, service_bus: Any | None = None):
+        """
+        Initialise le moteur de simulation.
+
+        Args:
+            replay_data_dir: Répertoire des fichiers de replay
+            service_bus: Bus d'événements pour publier les données de marché
+        """
         self.replay_data_dir = replay_data_dir
+        self.service_bus = service_bus
         logger.info("ScenarioBasedMockExchange initialisé.")
 
     def start_replay_from_file(self, filename: str) -> bool:

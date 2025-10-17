@@ -15,10 +15,6 @@ src/python_pubsub_devtools.egg-info/top_level.txt
 src/python_pubsub_devtools/cli/__init__.py
 src/python_pubsub_devtools/cli/main.py
 src/python_pubsub_devtools/event_flow/__init__.py
-src/python_pubsub_devtools/event_flow/analyze_event_flow.py
-src/python_pubsub_devtools/event_flow/generate_event_flow_image.py
-src/python_pubsub_devtools/event_flow/generate_hierarchical_tree.py
-src/python_pubsub_devtools/event_flow/scanner.py
 src/python_pubsub_devtools/event_flow/serve_event_flow.py
 src/python_pubsub_devtools/event_flow/server.py
 src/python_pubsub_devtools/event_flow/storage.py

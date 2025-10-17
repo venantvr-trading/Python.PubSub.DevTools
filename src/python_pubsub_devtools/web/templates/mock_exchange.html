@@ -95,7 +95,7 @@
                 <tr data-filename="{{ file.filename }}">
                     <td>{{ file.filename }}</td>
                     <td>{{ file.size_kb }}</td>
-                    <td>{{ file.created_at | format_datetime }}</td>
+                    <td>{{ file.created_at }}</td>
                     <td>
                         <button class="btn-play" data-filename="{{ file.filename }}" title="Lancer le replay">▶️</button>
                         <button class="btn-delete" data-filename="{{ file.filename }}" title="Supprimer le fichier">🗑️</button>

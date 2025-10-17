@@ -1,287 +1,332 @@
-#!/usr/bin/env python3
 """
-Scenario Runner
+Scenario Runner - Orchestrates declarative scenario testing with chaos engineering.
+"""
+from __future__ import annotations
 
-Executes declarative test scenarios with chaos engineering and assertions.
-"""
-import json
 import logging
-import sys
 import time
-from datetime import datetime, timezone
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Callable, Dict, List, Optional
 
-import yaml
-
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-# Add tools directories to path for cross-module imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "mock_exchange"))
-sys.path.insert(0, str(Path(__file__).parent.parent / "event_recorder"))
-
-# Runtime imports - using relative imports for same-package modules
-from .scenario_schema import TestScenario
-from .chaos_injector import ChaosInjector
 from .assertion_checker import AssertionChecker, AssertionResult
+from .chaos_injector import ChaosInjector
+from .scenario_schema import TestScenario
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 
-class ScenarioRunner:
-    """Runs declarative test scenarios"""
+@dataclass
+class ScenarioResult:
+    """
+    Result of a scenario execution.
 
-    def __init__(self, service_bus: Any, event_registry=None):
-        """Initialize scenario runner
+    Attributes:
+        scenario: The test scenario that was executed
+        passed: Whether all assertions passed
+        duration_ms: Execution duration in milliseconds
+        assertion_results: List of assertion check results
+        error: Exception if scenario failed unexpectedly
+        events_recorded: Number of events recorded during execution
+    """
+    scenario: TestScenario
+    passed: bool
+    duration_ms: float
+    assertion_results: List[AssertionResult] = field(default_factory=list)
+    error: Optional[Exception] = None
+    events_recorded: int = 0
+
+    @property
+    def status(self) -> str:
+        """Get human-readable status"""
+        if self.error:
+            return "ERROR"
+        return "PASS" if self.passed else "FAIL"
+
+
+class ScenarioRunner:
+    """
+    Orchestrates scenario execution with chaos engineering and assertions.
+
+    Manages:
+    - Loading scenarios from YAML files
+    - Publishing initial events
+    - Injecting chaos actions
+    - Recording events for assertion checking
+    - Running assertions
+    - Generating test reports
+
+    Zero-coupling design: Works with any ServiceBus without requiring
+    application event classes.
+    """
+
+    def __init__(
+            self,
+            service_bus: Any,
+            event_registry: Optional[Dict[str, type]] = None,
+            on_event_callback: Optional[Callable[[str, Any], None]] = None
+    ):
+        """
+        Initialize scenario runner.
 
         Args:
-            service_bus: The service bus instance to use for chaos and assertions.
-            event_registry: Optional event registry for chaos injector. Can be:
-                - Dict[str, type]: Mapping of event names to classes
-                - Callable: Factory function (event_name, event_data) -> event
-                - None: Use SimpleNamespace (zero coupling, default)
+            service_bus: ServiceBus instance to use for publishing events
+            event_registry: Optional dict mapping event names to event classes
+            on_event_callback: Optional callback for event notifications
         """
         self.service_bus = service_bus
-        self.event_registry = event_registry
-        self.scenario: Optional[TestScenario] = None  # type: ignore
-        self.chaos_injector: Optional[ChaosInjector] = None
+        self.event_registry = event_registry or {}
+        self.on_event_callback = on_event_callback
 
-        # Results
-        self.start_time = None
-        self.end_time = None
-        self.assertion_results: List[AssertionResult] = []
-        self.events = []
+        self.assertion_checker = AssertionChecker()
+        self.chaos_injector = ChaosInjector(service_bus, event_registry)
 
-    def load_scenario(self, scenario_path: str | Path) -> TestScenario:
-        """Load scenario from YAML file"""
-        logger.info(f"📖 Loading scenario from {scenario_path}")
+        # Monkey-patch service_bus to record all published events
+        self._original_publish: Optional[Callable] = None
+        self._setup_event_recording()
 
-        with open(scenario_path, 'r') as f:
-            data = yaml.safe_load(f)
+    def _setup_event_recording(self) -> None:
+        """
+        Set up event recording by monkey-patching service_bus.publish.
 
-        self.scenario = TestScenario(**data)
-        logger.info(f"✅ Loaded scenario: {self.scenario.name}")  # type: ignore
-        logger.info(f"   {self.scenario.description}")  # type: ignore
+        This allows the AssertionChecker to observe all events without
+        requiring changes to the application code.
+        """
+        if self._original_publish:
+            return  # Already set up
 
-        return self.scenario
+        self._original_publish = self.service_bus.publish
 
-    def setup_chaos(self, service_bus) -> Optional[ChaosInjector]:
-        """Setup chaos engineering"""
-        if not self.scenario.chaos:
-            return None
+        def recording_publish(event_name: str, event: Any, source: str):
+            """Wrapped publish that records events"""
+            # Record for assertions
+            self.assertion_checker.record_event(event_name, event)
 
-        logger.info(f"🔥 Setting up chaos engineering with {len(self.scenario.chaos)} actions")
+            # Notify callback if provided
+            if self.on_event_callback:
+                try:
+                    self.on_event_callback(event_name, event)
+                except Exception as e:
+                    logger.warning(f"Event callback failed: {e}")
 
-        self.chaos_injector = ChaosInjector(
-            service_bus,
-            self.scenario.chaos,
-            event_registry=self.event_registry
-        )
-        self.chaos_injector.start()
+            # Call original publish (or chaos-wrapped version)
+            return self._original_publish(event_name, event, source)
 
-        return self.chaos_injector
+        self.service_bus.publish = recording_publish
 
-    def run_steps(self):
-        """Execute scenario steps"""
-        logger.info(f"🏃 Running {len(self.scenario.steps)} steps...")
+    def run_scenario(self, scenario: TestScenario) -> ScenarioResult:
+        """
+        Run a single test scenario.
 
-        for i, step in enumerate(self.scenario.steps, 1):
-            logger.info(f"📍 Step {i}/{len(self.scenario.steps)}: {step}")
-
-            if "wait_for_cycles" in step:
-                self._wait_for_cycles(step["wait_for_cycles"])
-
-            elif "wait_for_event" in step:
-                self._wait_for_event(step["wait_for_event"], step.get("timeout_seconds", 300))
-
-            elif "wait_for_time" in step:
-                self._wait_for_time(step["wait_for_time"])
-
-            elif "assert" in step:
-                self._check_assertions(step["assert"])
-
-            else:
-                logger.warning(f"Unknown step type: {step}")
-
-    def _wait_for_cycles(self, cycle_count: int):
-        """Wait for N monitoring cycles to complete"""
-        logger.info(f"⏳ Waiting for {cycle_count} cycles...")
-
-        # This is now a simple time-based wait, as cycles are driven by mock_exchange replay.
-        time.sleep(cycle_count * 0.1)  # Approximate wait
-
-        logger.info(f"✅ Completed {cycle_count} cycles")
-
-    def _wait_for_event(self, event_name: str, timeout_seconds: int):
-        """Wait for specific event to occur"""
-        logger.info(f"⏳ Waiting for event {event_name} (timeout: {timeout_seconds}s)...")
-
-        start_time = time.time()
-        while time.time() - start_time < timeout_seconds:
-            # Check if event has occurred
-            if self.recorder and any(e['event_name'] == event_name for e in self.recorder.events):
-                logger.info(f"✅ Event {event_name} received")
-                return
-            time.sleep(0.5)
-
-        logger.warning(f"⚠️  Timeout waiting for event {event_name}")
-
-    def _wait_for_time(self, seconds: int):
-        """Wait for specific duration"""
-        logger.info(f"⏳ Waiting for {seconds} seconds...")
-        time.sleep(seconds)
-        logger.info(f"✅ Wait complete")
-
-    def _check_assertions(self, assertions: Dict[str, Any]):
-        """Check assertions"""
-        logger.info(f"🔍 Checking assertions...")
-
-        # TODO: Collect events from the Event Recorder API instead of a direct object reference.
-        # For now, this part needs to be adapted to fetch events.
-        events = []  # Placeholder
-
-        # Create assertion checker
-        checker = AssertionChecker(events)
-        results = checker.check_assertions(assertions)
-
-        self.assertion_results.extend(results)
-
-        # Log results
-        for result in results:
-            logger.info(f"   {result}")
-
-    def teardown(self):
-        """Cleanup resources"""
-        logger.info("🧹 Cleaning up...")
-
-        if self.chaos_injector:
-            self.chaos_injector.stop()
-
-    def run(self, scenario_path: str | Path) -> Dict[str, Any]:
-        """Execute complete scenario
+        Args:
+            scenario: TestScenario to execute
 
         Returns:
-            Dict with test results
+            ScenarioResult with execution outcome
         """
-        self.start_time = datetime.now(timezone.utc)
+        logger.info(f"Starting scenario: {scenario.name}")
+        start_time = time.time()
+
         try:
-            self.load_scenario(scenario_path)
+            # Clear previous state
+            self.assertion_checker.clear()
 
-            # Setup components
-            self.setup_chaos(self.service_bus)
+            # Start chaos injection if any chaos actions defined
+            if scenario.chaos:
+                self.chaos_injector.start(scenario.chaos)
+                logger.info(f"Chaos injection started with {len(scenario.chaos)} action(s)")
 
-            # Run steps
-            self.run_steps()
+            # Publish initial events
+            self._publish_initial_events(scenario)
+
+            # Wait for scenario timeout
+            timeout_sec = scenario.timeout_ms / 1000.0
+            logger.info(f"Waiting {timeout_sec}s for scenario to complete...")
+            time.sleep(timeout_sec)
+
+            # Stop chaos injection
+            if scenario.chaos:
+                self.chaos_injector.stop()
+
+            # Check assertions
+            assertion_results = self.assertion_checker.check_all_assertions(scenario.assertions)
+
+            # Determine if scenario passed
+            passed = all(r.passed for r in assertion_results)
+
+            duration_ms = (time.time() - start_time) * 1000
+            events_recorded = len(self.assertion_checker.recorded_events)
+
+            result = ScenarioResult(
+                scenario=scenario,
+                passed=passed,
+                duration_ms=duration_ms,
+                assertion_results=assertion_results,
+                events_recorded=events_recorded
+            )
+
+            logger.info(
+                f"Scenario completed: {scenario.name} "
+                f"({result.status}, {duration_ms:.0f}ms, {events_recorded} events)"
+            )
+
+            return result
 
         except Exception as e:
-            logger.error(f"❌ Scenario failed with error: {e}", exc_info=True)
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            duration_ms = (time.time() - start_time) * 1000
+            logger.error(f"Scenario failed with error: {e}", exc_info=True)
 
-        finally:
-            self.teardown()
-            self.end_time = datetime.now(timezone.utc)
+            # Stop chaos injection if it was started
+            try:
+                self.chaos_injector.stop()
+            except Exception:
+                pass
 
-        # Generate results
-        return self._generate_results()
+            return ScenarioResult(
+                scenario=scenario,
+                passed=False,
+                duration_ms=duration_ms,
+                error=e,
+                events_recorded=len(self.assertion_checker.recorded_events)
+            )
 
-    def _generate_results(self) -> Dict[str, Any]:
-        """Generate test results summary"""
-        duration = (self.end_time - self.start_time).total_seconds()
+    def _publish_initial_events(self, scenario: TestScenario) -> None:
+        """
+        Publish initial events defined in scenario.
 
-        all_passed = all(r.passed for r in self.assertion_results)
+        Args:
+            scenario: TestScenario containing initial events
+        """
+        if not scenario.initial_events:
+            return
 
-        results = {
-            "scenario": {
-                "name": self.scenario.name,
-                "description": self.scenario.description
-            },
-            "status": "passed" if all_passed else "failed",
-            "duration_seconds": duration,
-            "start_time": self.start_time.isoformat(),
-            "end_time": self.end_time.isoformat(),
-            "assertions": {
-                "total": len(self.assertion_results),
-                "passed": sum(1 for r in self.assertion_results if r.passed),
-                "failed": sum(1 for r in self.assertion_results if not r.passed),
-                "results": [
-                    {
-                        "name": r.name,
-                        "passed": r.passed,
-                        "message": r.message,
-                        "expected": r.expected,
-                        "actual": r.actual
-                    }
-                    for r in self.assertion_results
-                ]
-            }
-        }
+        logger.info(f"Publishing {len(scenario.initial_events)} initial event(s)")
 
-        # Add chaos statistics if available
-        if self.chaos_injector:
-            results["chaos"] = self.chaos_injector.get_statistics()
+        for event_spec in scenario.initial_events:
+            event_name = event_spec.get('event_name')
+            event_data = event_spec.get('event_data', {})
+
+            if not event_name:
+                logger.warning("Skipping initial event with no event_name")
+                continue
+
+            # Create event instance
+            event = self.chaos_injector.create_event_from_data(event_name, event_data)
+
+            # Publish event
+            try:
+                self.service_bus.publish(event_name, event, source="scenario_runner")
+                logger.debug(f"Published: {event_name}")
+            except Exception as e:
+                logger.error(f"Failed to publish {event_name}: {e}")
+
+    def run_scenarios_from_directory(self, scenarios_dir: Path, tags: Optional[List[str]] = None) -> List[ScenarioResult]:
+        """
+        Run all scenarios from a directory.
+
+        Args:
+            scenarios_dir: Directory containing YAML scenario files
+            tags: Optional list of tags to filter scenarios
+
+        Returns:
+            List of ScenarioResults
+        """
+        scenarios_path = Path(scenarios_dir)
+
+        if not scenarios_path.exists():
+            raise FileNotFoundError(f"Scenarios directory not found: {scenarios_dir}")
+
+        # Load all scenario files
+        scenario_files = list(scenarios_path.glob("*.yaml")) + list(scenarios_path.glob("*.yml"))
+
+        if not scenario_files:
+            logger.warning(f"No scenario files found in {scenarios_dir}")
+            return []
+
+        logger.info(f"Found {len(scenario_files)} scenario file(s)")
+
+        # Load and filter scenarios
+        scenarios: List[TestScenario] = []
+        for file_path in scenario_files:
+            try:
+                scenario = TestScenario.from_yaml_file(str(file_path))
+
+                # Filter by tags if specified
+                if tags:
+                    if not any(tag in scenario.tags for tag in tags):
+                        logger.debug(f"Skipping {scenario.name} (tags don't match)")
+                        continue
+
+                scenarios.append(scenario)
+            except Exception as e:
+                logger.error(f"Failed to load scenario from {file_path}: {e}")
+
+        if not scenarios:
+            logger.warning("No scenarios to run after filtering")
+            return []
+
+        logger.info(f"Running {len(scenarios)} scenario(s)")
+
+        # Run all scenarios
+        results = []
+        for scenario in scenarios:
+            result = self.run_scenario(scenario)
+            results.append(result)
+
+        # Print summary
+        self._print_summary(results)
 
         return results
 
+    def _print_summary(self, results: List[ScenarioResult]) -> None:
+        """
+        Print execution summary.
 
-def main():
-    """CLI interface"""
-    import argparse
+        Args:
+            results: List of ScenarioResults
+        """
+        total = len(results)
+        passed = sum(1 for r in results if r.passed)
+        failed = total - passed
 
-    parser = argparse.ArgumentParser(description="Scenario Testing Framework")
-    parser.add_argument('scenario', type=str, help='Path to scenario YAML file')
-    parser.add_argument('--output', type=str, help='Output results to JSON file')
-    parser.add_argument('--verbose', action='store_true', help='Verbose logging')
+        logger.info("\n" + "=" * 60)
+        logger.info(f"SCENARIO SUMMARY")
+        logger.info("=" * 60)
+        logger.info(f"Total:  {total}")
+        logger.info(f"Passed: {passed}")
+        logger.info(f"Failed: {failed}")
+        logger.info("=" * 60)
 
-    args = parser.parse_args()
+        for result in results:
+            status_icon = "PASS" if result.passed else "FAIL"
+            logger.info(
+                f"{status_icon} {result.scenario.name}: {result.status} "
+                f"({result.duration_ms:.0f}ms, {result.events_recorded} events)"
+            )
 
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+            if not result.passed:
+                # Print failed assertions
+                for assertion_result in result.assertion_results:
+                    if not assertion_result.passed:
+                        logger.info(f"   FAIL: {assertion_result.message}")
 
-    # Run scenario
-    # This CLI is broken due to dependency injection needs.
-    # It should be run via the ScenarioTestingServer.
-    print("❌ This CLI entrypoint is deprecated. Please use the ScenarioTestingServer.")
-    sys.exit(1)
+        logger.info("=" * 60 + "\n")
 
-    # Print summary
-    print("\n" + "=" * 80)
-    print(f"  SCENARIO TEST RESULTS")
-    print("=" * 80)
-    print(f"  Name: {results['scenario']['name']}")
-    print(f"  Status: {'✅ PASSED' if results['status'] == 'passed' else '❌ FAILED'}")
-    print(f"  Duration: {results['duration_seconds']:.2f}s")
-    print(f"  Assertions: {results['assertions']['passed']}/{results['assertions']['total']} passed")
+    def cleanup(self) -> None:
+        """
+        Clean up and restore original service_bus.publish.
+        """
+        if self._original_publish:
+            self.service_bus.publish = self._original_publish
+            self._original_publish = None
 
-    if results['status'] == 'failed':
-        print("\n  Failed Assertions:")
-        for assertion in results['assertions']['results']:
-            if not assertion['passed']:
-                print(f"    ❌ {assertion['name']}: {assertion['message']}")
+        self.chaos_injector.stop()
+        self.assertion_checker.clear()
 
-    print("=" * 80 + "\n")
+    def __enter__(self):
+        """Context manager support"""
+        return self
 
-    # Save results if requested
-    if args.output:
-        output_path = Path(args.output)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(output_path, 'w') as f:
-            json.dump(results, f, indent=2)
-
-        print(f"📄 Results saved to {output_path}\n")
-
-    # Exit with appropriate code
-    sys.exit(0 if results['status'] == 'passed' else 1)
-
-
-if __name__ == '__main__':
-    main()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager cleanup"""
+        self.cleanup()

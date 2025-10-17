@@ -1,387 +1,516 @@
-# Event Recorder & Replayer - Time-Traveling Debugging 🎬
+# Event Recorder - Time-Traveling Debugging
 
-Un système d'enregistrement et de rejeu d'événements pour debug, test et reproduction de bugs.
+Record and replay event bus traffic for debugging, testing, and issue reproduction.
 
-## 🎯 Concept
+## Overview
 
-Le Event Recorder/Replayer permet de :
+Event Recorder captures all events flowing through your trading system's event bus and saves them with precise timing information. You can then replay these events at any
+speed to reproduce bugs, test edge cases, or understand system behavior.
 
-- **Enregistrer** tous les événements d'une session de trading
-- **Sauvegarder** les événements avec leur timing exact
-- **Rejouer** la session à n'importe quelle vitesse (0.1x à 100x)
-- **Filtrer** les événements lors du rejeu
-- **Analyser** les patterns d'événements
+## Components
 
-## 📦 Installation
+### 1. EventRecorder
 
-Aucune installation requise - les fichiers sont dans `tools/` :
+Records events in real-time by intercepting ServiceBus publish calls.
 
-- `event_recorder.py` - Classes principales
-- `example_recorder_usage.py` - Exemples d'utilisation
-- `recordings/` - Répertoire des enregistrements
+**Features:**
 
-## 🚀 Usage Rapide
+- Non-invasive event capture (monkey-patching)
+- Precise millisecond timing
+- Automatic event serialization
+- Session-based organization
+- Context manager support
 
-### Enregistrer une session
+**Usage:**
 
 ```python
-from event_recorder import EventRecorder
+from python_pubsub_devtools.event_recorder import EventRecorder
 
-# Créer un recorder
-recorder = EventRecorder("ma_session")
+# Create recorder
+recorder = EventRecorder(
+    session_name="bull_run_2025",
+    output_dir="recordings"
+)
 
-# Commencer l'enregistrement
+# Start recording
 recorder.start_recording(service_bus)
 
-# ... le bot tourne et publie des événements ...
+# ... your bot runs and publishes events ...
 
-# Arrêter et sauvegarder
+# Stop and save
 recorder.stop_recording()
-filepath = recorder.save()
+recording_path = recorder.save()
+print(f"Recording saved to: {recording_path}")
 ```
 
-### Rejouer une session
+**Context Manager:**
 
 ```python
-from event_recorder import EventReplayer
-
-# Charger l'enregistrement
-replayer = EventReplayer("recordings/ma_session_20251012_120000.json")
-
-# Rejouer à vitesse normale
-replayer.replay(service_bus, speed_multiplier=1.0)
-
-# Rejouer 10x plus rapide
-replayer.replay(service_bus, speed_multiplier=10.0)
-```
-
-## 📋 Exemples Complets
-
-### Exemple 1 : Enregistrer avec Context Manager
-
-```python
-with EventRecorder("debug_session") as recorder:
+with EventRecorder("my_session", "recordings") as recorder:
     recorder.start_recording(service_bus)
-
-    # Démarrer le bot
-    orchestrator.start_workflow()
-    time.sleep(60)  # Laisser tourner 1 minute
-    orchestrator.stop()
-
-    # Sauvegarder automatiquement
+    # ... bot runs ...
     recorder.save()
-# L'enregistrement s'arrête automatiquement en sortant du with
+# Automatically stops recording on exit
 ```
 
-### Exemple 2 : Rejouer avec Filtrage
+### 2. EventReplayer
+
+Replays recorded events with timing preservation.
+
+**Features:**
+
+- Exact timing reproduction
+- Speed control (0.1x to 10x)
+- Event filtering
+- Progress callbacks
+- Event reconstruction from JSON
+
+**Usage:**
 
 ```python
-replayer = EventReplayer("recordings/session.json")
+from python_pubsub_devtools.event_recorder import EventReplayer
 
-# Ne rejouer que les événements Failed
+# Load recording
+replayer = EventReplayer("recordings/bull_run_2025_20251017.json")
+
+# Replay at 10x speed
 replayer.replay(
     service_bus,
     speed_multiplier=10.0,
-    event_filter=lambda name: "Failed" in name
+    events_module_name="my_project.events"  # For event reconstruction
 )
 
-# Ne rejouer que les achats/ventes
+# Replay with filter (only market data events)
 replayer.replay(
     service_bus,
-    speed_multiplier=1.0,
-    event_filter=lambda name: name in ["PositionPurchased", "PositionSold"]
+    event_filter=lambda name: name.startswith("MarketData")
 )
+
+# Replay with progress callback
+def progress(current, total):
+    print(f"Progress: {current}/{total} ({current/total*100:.1f}%)")
+
+replayer.replay(service_bus, progress_callback=progress)
 ```
 
-### Exemple 3 : Analyser sans Rejouer
+**Analysis Methods:**
 
 ```python
-replayer = EventReplayer("recordings/session.json")
-
-# Obtenir le résumé des événements
+# Get event summary
 summary = replayer.get_event_summary()
 for event_name, count in summary.items():
     print(f"{event_name}: {count}x")
 
-# Afficher la timeline
+# Print timeline
 replayer.print_timeline(max_events=50)
-```
 
-### Exemple 4 : Progress Callback
-
-```python
-def show_progress(current, total):
-    percent = (current / total) * 100
-    print(f"\rReplay progress: {percent:.1f}%", end="", flush=True)
-
-replayer.replay(
-    service_bus,
-    speed_multiplier=10.0,
-    progress_callback=show_progress
+# Filter events
+filtered = replayer.filter_events(
+    lambda name: "Failed" in name or "Error" in name
 )
+filtered.replay(service_bus)
 ```
 
-## 🔧 CLI Interface
+### 3. EventRecorderServer
 
-Le recorder dispose d'une interface CLI pour analyser les enregistrements :
+Web dashboard for browsing and managing recordings.
+
+**Features:**
+
+- Browse all recorded sessions
+- View event timelines
+- Filter and search events
+- Replay control (simulation mode)
+- Create filtered recordings
+- REST API for automation
+
+**Launch Server:**
 
 ```bash
-# Afficher les informations d'un enregistrement
-python event_recorder.py info recordings/session.json
+# Via CLI (recommended)
+pubsub-tools event-recorder --config devtools_config.yaml
 
-# Afficher la timeline
-python event_recorder.py timeline recordings/session.json --max-events 100
+# Via Python module
+python -m python_pubsub_devtools.event_recorder.serve_recorder
 
-# Rejouer (nécessite du code Python)
-# Voir example_recorder_usage.py
+# With custom settings
+python -m python_pubsub_devtools.event_recorder.serve_recorder \
+    --recordings-dir ./recordings \
+    --port 5556
+
+# Programmatically
+from python_pubsub_devtools.event_recorder import EventRecorderServer
+from python_pubsub_devtools.config import EventRecorderConfig
+from pathlib import Path
+
+config = EventRecorderConfig(
+    recordings_dir=Path("recordings"),
+    port=5556
+)
+server = EventRecorderServer(config)
+server.run()
 ```
 
-## 📊 Format d'Enregistrement
+**Access:**
 
-Les enregistrements sont sauvegardés en JSON :
+- Web UI: http://localhost:5556
+- API: http://localhost:5556/api
+
+## Recording Format
+
+Recordings are stored as JSON files:
 
 ```json
 {
-  "session_name": "bull_run_scenario",
-  "start_time": "2025-10-12T10:00:00+00:00",
+  "session_name": "bull_run_2025",
+  "start_time": "2025-10-17T10:00:00Z",
   "duration_ms": 45000,
   "total_events": 127,
   "events": [
     {
       "timestamp_offset_ms": 0,
-      "event_name": "BotMonitoringCycleStarted",
+      "event_name": "MarketDataReceived",
       "event_data": {
-        "cycle_number": 1,
-        "timestamp": "2025-10-12T10:00:00+00:00"
+        "symbol": "BTC/USDT",
+        "price": 67500.0,
+        "volume": 1234.56
       },
-      "source": "Orchestrator"
+      "source": "MarketDataAgent"
     },
     {
-      "timestamp_offset_ms": 523,
-      "event_name": "MarketPriceFetched",
+      "timestamp_offset_ms": 1000,
+      "event_name": "PositionOpened",
       "event_data": {
-        "cycle_id": 1,
-        "current_price": "50000.0",
-        ...
+        "symbol": "BTC/USDT",
+        "side": "buy",
+        "size": 0.1
       },
-      "source": "MarketPriceFetcher"
+      "source": "TradingBot"
     }
   ]
 }
 ```
 
-## 🎯 Cas d'Usage
+## REST API
 
-### 1. Reproduire un Bug
+### Recordings Management
+
+```bash
+# List all recordings
+GET /api/recordings
+
+# Get recording details
+GET /api/recording/<filename>
+
+# Get recording events (with filters)
+GET /api/recording/<filename>/events?event_name=MarketDataReceived&limit=100
+
+# Get available fields for filtering
+GET /api/recording/<filename>/fields
+
+# Create filtered recording
+POST /api/recording/create
+{
+  "source_filename": "session.json",
+  "event_indices": [0, 5, 10, 15],
+  "new_session_name": "filtered_session"
+}
+```
+
+### Recording Control
+
+```bash
+# Start recording
+POST /api/record/start
+{
+  "session_name": "my_session"
+}
+
+# Record event
+POST /api/record/event
+{
+  "event_name": "TestEvent",
+  "event_data": {"key": "value"},
+  "source": "TestAgent"
+}
+
+# Stop recording
+POST /api/record/stop
+
+# Get recording status
+GET /api/record/status
+```
+
+### Replay Control (Simulation Mode)
+
+```bash
+# Start replay
+POST /api/replay/start/<filename>
+{
+  "speed": 2.0
+}
+
+# Pause/Resume
+POST /api/replay/pause
+
+# Stop replay
+POST /api/replay/stop
+
+# Change speed
+POST /api/replay/speed
+{
+  "speed": 5.0
+}
+
+# Get replay status
+GET /api/replay/status
+```
+
+## CLI Usage
+
+### Record Events
 
 ```python
-# 1. En production, détecter un bug
-if detect_bug():
-    recorder = EventRecorder("bug_reproduction")
-    recorder.start_recording(service_bus)
-    # Continuer l'exécution jusqu'à la fin du cycle
-    recorder.save()
+# In your bot code
+from python_pubsub_devtools.event_recorder import EventRecorder
 
-# 2. En dev, rejouer exactement le même scénario
-replayer = EventReplayer("recordings/bug_reproduction_xxx.json")
+recorder = EventRecorder("production_issue_123", "recordings")
+recorder.start_recording(service_bus)
+
+# ... bot runs ...
+
+recorder.stop_recording()
+recorder.save()
+```
+
+### Replay Events
+
+```python
+from python_pubsub_devtools.event_recorder import EventReplayer
+
+replayer = EventReplayer("recordings/production_issue_123.json")
 replayer.replay(service_bus, speed_multiplier=1.0)
-# Le bug se reproduit à l'identique !
 ```
 
-### 2. Tests de Régression
+### Analyze Recording
+
+```bash
+# Using the event_recorder module CLI
+python -m python_pubsub_devtools.event_recorder.event_recorder info recordings/session.json
+python -m python_pubsub_devtools.event_recorder.event_recorder timeline recordings/session.json
+```
+
+## Use Cases
+
+### 1. Bug Reproduction
+
+Record events when a bug occurs, then replay them repeatedly to understand and fix the issue.
 
 ```python
-# Enregistrer une session de référence
-recorder = EventRecorder("regression_baseline")
+# Record production issue
+recorder = EventRecorder("bug_position_not_closing", "recordings")
 recorder.start_recording(service_bus)
-run_trading_cycle()
-baseline_file = recorder.save()
+# ... issue occurs ...
+recorder.stop_recording()
+recorder.save()
 
-# Plus tard, après modifications du code
-replayer = EventReplayer(baseline_file)
-replayer.replay(service_bus, speed_multiplier=100.0)
-# Vérifier que le comportement est identique
+# Later, replay to reproduce
+replayer = EventReplayer("recordings/bug_position_not_closing_*.json")
+replayer.replay(service_bus)  # Bug should reproduce
 ```
 
-### 3. Tests de Performance
+### 2. Performance Testing
+
+Replay events at high speed to stress-test your system.
 
 ```python
-# Enregistrer une session
-recorder = EventRecorder("perf_test")
+replayer = EventReplayer("recordings/normal_trading_day.json")
+# Replay 24 hours of events in 2.4 hours (10x speed)
+replayer.replay(service_bus, speed_multiplier=10.0)
+```
+
+### 3. Edge Case Testing
+
+Filter and replay only specific event sequences.
+
+```python
+# Only replay failed trades
+replayer = EventReplayer("recordings/trading_session.json")
+filtered = replayer.filter_events(lambda name: "Failed" in name)
+filtered.replay(service_bus)
+```
+
+### 4. Integration Testing
+
+Record real market events and use them as test data.
+
+```python
+# Record real market behavior
+recorder = EventRecorder("btc_volatility_spike", "test_data")
 recorder.start_recording(service_bus)
-run_100_cycles()
-recording = recorder.save()
+# ... capture volatile market conditions ...
+recorder.save()
 
-# Rejouer à différentes vitesses pour tester les limites
-for speed in [1, 10, 50, 100]:
-    start = time.time()
-    replayer.replay(service_bus, speed_multiplier=speed)
-    duration = time.time() - start
-    print(f"Speed {speed}x: {duration:.2f}s")
+# Use in tests
+def test_volatility_handling():
+    replayer = EventReplayer("test_data/btc_volatility_spike.json")
+    replayer.replay(test_service_bus)
+    # Assert expected behavior
 ```
 
-### 4. Analyser un Échec
+### 5. Training Data Collection
+
+Record successful trading sessions to analyze strategy performance.
 
 ```python
-replayer = EventReplayer("recordings/failed_session.json")
+recorder = EventRecorder("profitable_session_2025_10_17", "recordings")
+recorder.start_recording(service_bus)
+# ... profitable trading session ...
+recorder.stop_recording()
+recorder.save()
 
-# Compter les échecs
+# Later, analyze what worked
+replayer = EventReplayer("recordings/profitable_session_2025_10_17.json")
 summary = replayer.get_event_summary()
-failed_count = sum(count for event, count in summary.items() if "Failed" in event)
-print(f"Total failures: {failed_count}")
-
-# Voir la timeline des échecs
-replayer_filtered = replayer.filter_events(lambda name: "Failed" in name)
-replayer_filtered.print_timeline()
+replayer.print_timeline()
 ```
 
-## 🔬 Fonctionnalités Avancées
+## Configuration
 
-### Créer un Enregistrement Filtré
+Add to your `devtools_config.yaml`:
+
+```yaml
+event_recorder:
+  recordings_dir: recordings
+  port: 5556
+```
+
+## Architecture
+
+```
+┌─────────────────────┐
+│   Your Trading Bot  │
+└──────────┬──────────┘
+           │ publishes events
+           ▼
+┌─────────────────────┐
+│   ServiceBus        │◄─── EventRecorder intercepts
+│   (event bus)       │     and records all events
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│  Recording Files    │
+│   (JSON on disk)    │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐     ┌──────────────────────┐
+│   EventReplayer     │────▶│ EventRecorderServer  │
+│   (replay engine)   │     │   (web dashboard)    │
+└─────────────────────┘     └──────────────────────┘
+```
+
+## Best Practices
+
+1. **Session Naming**: Use descriptive names with context
+   - ✅ `production_bug_position_stuck_20251017`
+   - ❌ `session1`
+
+2. **Storage Management**: Recordings can be large - implement rotation
+   ```python
+   # Keep only last 30 days
+   import time
+   from pathlib import Path
+   
+   recordings_dir = Path("recordings")
+   cutoff = time.time() - (30 * 24 * 3600)
+   
+   for file in recordings_dir.glob("*.json"):
+       if file.stat().st_mtime < cutoff:
+           file.unlink()
+   ```
+
+3. **Sensitive Data**: Recordings may contain sensitive information
+   - Store recordings securely
+   - Sanitize before sharing
+   - Add to `.gitignore`
+
+4. **Event Reconstruction**: Provide events module for proper replay
+   ```python
+   # With event classes
+   replayer.replay(
+       service_bus,
+       events_module_name="my_project.events"
+   )
+   
+   # Without - events are replayed as dicts
+   replayer.replay(service_bus)
+   ```
+
+5. **Testing**: Use recordings as regression test data
+   ```python
+   def test_market_crash_handling():
+       replayer = EventReplayer("test_data/market_crash_2020.json")
+       replayer.replay(test_service_bus)
+       assert bot.position_closed
+       assert bot.loss < max_acceptable_loss
+   ```
+
+## Limitations
+
+- **Simulation Mode Only**: The web server replay is simulation-only (no actual ServiceBus publishing)
+- **Memory Usage**: Large recordings (>100k events) may consume significant memory
+- **Timing Precision**: Replay timing is best-effort (affected by system load)
+- **Serialization**: Complex event types may not serialize perfectly
+
+## Troubleshooting
+
+### Events Not Recording
+
+Check that the recorder is started before events are published:
 
 ```python
-replayer = EventReplayer("recordings/full_session.json")
-
-# Créer un nouveau replayer avec seulement les événements de buy
-buy_replayer = replayer.filter_events(
-    lambda name: "Buy" in name or "Purchase" in name
-)
-
-# Rejouer seulement les achats
-buy_replayer.replay(service_bus, speed_multiplier=10.0)
+recorder = EventRecorder("session", "recordings")
+recorder.start_recording(service_bus)  # Must be before events
+# ... now events will be recorded ...
 ```
 
-### Inspecter les Données d'Événement
+### Replay Events Not Reconstructed
+
+Provide the events module for proper reconstruction:
 
 ```python
-replayer = EventReplayer("recordings/session.json")
+# Wrong - events are dicts
+replayer.replay(service_bus)
 
-for event_data in replayer.events:
-    event_name = event_data["event_name"]
-    timestamp = event_data["timestamp_offset_ms"]
-    data = event_data["event_data"]
-
-    if event_name == "PositionPurchased":
-        print(f"Purchase at {timestamp}ms: {data['purchase_price']} {data['pair']}")
+# Correct - events are proper objects
+replayer.replay(service_bus, events_module_name="my_project.events")
 ```
 
-## 📈 Statistiques
+### Web Server Not Starting
 
-```python
-replayer = EventReplayer("recordings/session.json")
-
-print(f"Session: {replayer.session_name}")
-print(f"Duration: {replayer.duration_ms / 1000:.2f}s")
-print(f"Total events: {len(replayer.events)}")
-
-summary = replayer.get_event_summary()
-print("\nTop 5 most frequent events:")
-for event_name, count in list(summary.items())[:5]:
-    print(f"  {event_name}: {count}x")
-```
-
-## ⚠️ Limitations
-
-1. **Taille des enregistrements** : Les sessions longues peuvent générer de gros fichiers JSON
-2. **Sérialisation** : Certains objets complexes peuvent ne pas se sérialiser correctement
-3. **Effets de bord** : Le rejeu publie des événements réels - attention aux effets de bord (DB, exchange)
-4. **Timestamps relatifs** : Les timestamps sont relatifs au début de l'enregistrement, pas absolus
-
-## 💡 Best Practices
-
-1. **Nommer les sessions** : Utilisez des noms descriptifs (`bug_234_flash_crash`, `perf_test_baseline`)
-2. **Nettoyer régulièrement** : Les enregistrements s'accumulent dans `recordings/`
-3. **Filtrer lors du rejeu** : Utilisez `event_filter` pour accélérer les tests ciblés
-4. **Vitesse élevée** : Utilisez `speed_multiplier=100.0` pour les tests rapides
-5. **Context manager** : Utilisez `with EventRecorder()` pour cleanup automatique
-
-## 🧪 Tests
-
-Les tests sont dans `tests/tools/test_event_recorder.py` :
+Check port availability:
 
 ```bash
-# Lancer les tests
-python -m pytest tests/tools/test_event_recorder.py -v
+# Find what's using port 5556
+lsof -i :5556
 
-# Tester seulement le recorder
-python -m pytest tests/tools/test_event_recorder.py::TestEventRecorder -v
-
-# Tester seulement le replayer
-python -m pytest tests/tools/test_event_recorder.py::TestEventReplayer -v
+# Use different port
+python -m python_pubsub_devtools.event_recorder.serve_recorder --port 5557
 ```
 
-## 📚 Exemples Complets
+## Related Tools
 
-Voir `example_recorder_usage.py` pour des exemples complets et exécutables :
+- **Event Flow**: Visualize event architecture
+- **Scenario Testing**: Automated scenario execution
+- **Mock Exchange**: Simulate exchange behavior
 
-```bash
-python tools/example_recorder_usage.py
-```
+## Examples
 
-## 🎓 Architecture
+See `examples/event_recorder/` for complete examples:
 
-### EventRecorder
-
-- Intercepte `service_bus.publish()`
-- Enregistre tous les événements avec timestamp relatif
-- Sérialise les données d'événement (Pydantic → dict)
-- Sauvegarde en JSON
-
-### EventReplayer
-
-- Charge un fichier JSON d'enregistrement
-- Désérialise les événements (dict → Pydantic)
-- Rejoue avec timing préservé (ajustable via `speed_multiplier`)
-- Supporte le filtrage et l'analyse
-
-## 🌐 Web Dashboard
-
-Un dashboard web interactif est disponible pour visualiser et analyser les recordings :
-
-```bash
-# Lancer le dashboard
-python tools/event_recorder/serve_recorder.py
-
-# Ouvrir dans le navigateur
-open http://localhost:5556
-```
-
-**Fonctionnalités du dashboard** :
-
-- 📋 **Liste des recordings** : Vue d'ensemble avec métadonnées (durée, événements, date)
-- 📊 **Statistiques globales** : Total events, durée totale, moyenne par recording
-- 🔍 **Vue détaillée** : Timeline complète des événements de chaque recording
-- 📝 **Sélection et Création** : Sélectionnez des événements dans la timeline pour créer un nouvel enregistrement filtré.
-- 📈 **Graphiques** : Distribution des événements par type (bar charts)
-- 🔎 **Filtrage** : Recherche en temps réel dans la timeline
-- 🎮 **Contrôles de replay (Simulation)** : Interface pour simuler un replay dans le navigateur (Play/Pause/Vitesse).
-- 🔗 **Navigation** : Liens vers les autres outils (Event Flow, Mock Exchange, Testing)
-
-**API REST** :
-
-- `GET /` : Page principale avec liste des recordings
-- `GET /recording/<filename>` : Vue détaillée d'un recording
-- `GET /api/recordings` : JSON avec metadata de tous les recordings
-- `GET /api/recording/<filename>` : JSON complet d'un recording
-- `POST /api/record/start` : Démarre une session d'enregistrement à distance.
-- `POST /api/record/event` : Enregistre un événement dans la session active.
-- `POST /api/record/stop` : Arrête et sauvegarde la session.
-- `POST /api/replay/start/<filename>` : Démarre une simulation de replay pour l'UI.
-
-**Intégration** :
-
-- Même charte graphique que Event Flow Visualization
-- Port 5556 (Event Flow: 5555, Mock Exchange: 5557, Testing: 5558)
-- Support des deux formats de recordings (ancien et nouveau)
-
-## 🚧 Future Enhancements
-
-Idées pour améliorer l'outil :
-
-- Compression des enregistrements (gzip)
-- Support SQLite pour gros enregistrements
-- ✅ ~~UI web pour visualiser les recordings~~ (Fait!)
-- Merge de plusieurs recordings
-- Export en différents formats (CSV, Parquet)
-- Replay controls dans le web UI (play/pause/speed)
-- Comparaison de 2 recordings côte à côte
+- `basic_recording.py` - Simple recording and replay
+- `filtered_replay.py` - Event filtering
+- `performance_test.py` - High-speed replay
+- `web_integration.py` - Using the web API

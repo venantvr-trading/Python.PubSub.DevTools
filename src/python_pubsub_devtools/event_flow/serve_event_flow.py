@@ -107,7 +107,7 @@ def create_app(config) -> Flask:
     @app.route('/api/graph', methods=['POST'])
     def api_store_graph():
         """
-        API endpoint to receive and store graph data from scanner
+        API endpoint to receive and store graph data from external scanners
         """
         try:
             data = request.get_json()
@@ -223,7 +223,7 @@ def create_app(config) -> Flask:
                 <rect width="800" height="400" fill="#f5f5f5"/>
                 <text x="400" y="180" font-family="Arial" font-size="18" fill="#d32f2f" text-anchor="middle" font-weight="bold">Graph Not Available</text>
                 <text x="400" y="220" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">The '{graph_type}' graph has not been generated yet.</text>
-                <text x="400" y="250" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">Please run the scanner to populate the cache.</text>
+                <text x="400" y="250" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">Use external scanners to populate the cache via API.</text>
             </svg>'''
             return Response(error_svg, mimetype='image/svg+xml'), 404
 
@@ -248,8 +248,8 @@ def main():
     """
     Start the Event Flow API server
 
-    The server serves graphs from cache only. Use the scanner to populate the cache:
-    python -m python_pubsub_devtools.event_flow.scanner --agents-dir <path> --one-shot
+    The server serves graphs from cache only. Use external scanners to populate
+    the cache via API POST requests to /api/graph.
     """
     import argparse
     import shutil
@@ -276,12 +276,7 @@ def main():
     print("=" * 80)
     print()
     print("This server serves graphs from cache only.")
-    print("Run the scanner to populate the cache:")
-    print()
-    print("  python -m python_pubsub_devtools.event_flow.scanner \\")
-    print("    --agents-dir <path> \\")
-    print("    --api-url http://localhost:5555 \\")
-    print("    --one-shot")
+    print("Use the external scanner to populate the cache via API POST requests.")
     print()
     print("=" * 80)
     print()
@@ -296,8 +291,13 @@ def main():
         print("     brew install graphviz  (macOS)")
         print()
 
+    # Initialize storage before using it
+    from ..config import EventFlowConfig
+
+    default_config = EventFlowConfig()
+    storage = initialize_storage(default_config)
+
     # Check cache status
-    storage = get_storage()
     status = storage.get_status()
 
     if status['total_graphs'] > 0:
@@ -305,7 +305,7 @@ def main():
         for graph_type in status['graphs']:
             print(f"   - {graph_type}")
     else:
-        print("📊 Cache status: Empty (run scanner to populate)")
+        print("📊 Cache status: Empty")
 
     print()
     print("🌐 Starting web server...")
@@ -315,11 +315,6 @@ def main():
     print("   Press Ctrl+C to stop")
     print("=" * 80)
     print()
-
-    # En mode autonome, on crée une configuration par défaut pour que le cache fonctionne
-    from ..config import EventFlowConfig
-
-    default_config = EventFlowConfig()
 
     app_instance = create_app(default_config)
     app_instance.run(host=args.host, port=args.port, debug=True)

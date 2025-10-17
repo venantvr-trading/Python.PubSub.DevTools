@@ -9,7 +9,7 @@ from .storage import GraphStorage, GraphData, get_storage
 
 __all__ = [
     # "EventFlowAnalyzer",
-    "generate_hierarchical_tree",
+    # "generate_hierarchical_tree",
     "GraphStorage",
     "GraphData",
     "get_storage",

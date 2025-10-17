@@ -1,283 +1,230 @@
 """
-Assertion Checker
-
-Validates test assertions against recorded events and system state.
+Assertion Checker - Validates scenario assertions against recorded events.
 """
-import logging
-from collections import Counter
-from typing import Dict, Any, List
+from __future__ import annotations
 
-logger = logging.getLogger(__name__)
+import operator
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
+from .scenario_schema import Assertion, AssertionType
 
 
+@dataclass
 class AssertionResult:
-    """Result of an assertion check"""
+    """
+    Result of an assertion check.
 
-    def __init__(self, name: str, passed: bool, message: str, expected: Any = None, actual: Any = None):
-        self.name = name
-        self.passed = passed
-        self.message = message
-        self.expected = expected
-        self.actual = actual
-
-    def __repr__(self):
-        status = "✅ PASS" if self.passed else "❌ FAIL"
-        return f"{status}: {self.name} - {self.message}"
+    Attributes:
+        assertion: The assertion that was checked
+        passed: Whether the assertion passed
+        actual_value: Actual value observed
+        expected_value: Expected value
+        message: Human-readable result message
+    """
+    assertion: Assertion
+    passed: bool
+    actual_value: Any
+    expected_value: Any
+    message: str
 
 
 class AssertionChecker:
-    """Checks assertions against events and state"""
+    """
+    Checks assertions against recorded events.
 
-    def __init__(self, events: List[Dict[str, Any]]):
-        """Initialize assertion checker
+    Validates event counts, field values, and absence of events based on
+    declarative assertions defined in test scenarios.
+    """
 
-        Args:
-            events: List of recorded events with metadata
+    OPERATORS = {
+        "==": operator.eq,
+        "!=": operator.ne,
+        ">": operator.gt,
+        "<": operator.lt,
+        ">=": operator.ge,
+        "<=": operator.le,
+        "contains": lambda a, b: b in a,
+        "not_contains": lambda a, b: b not in a,
+    }
+
+    def __init__(self):
+        """Initialize assertion checker"""
+        self.recorded_events: List[Dict[str, Any]] = []
+
+    def record_event(self, event_name: str, event_data: Any) -> None:
         """
-        self.events = events
-        self.event_counts = Counter(e['event_name'] for e in events)
-        self.results: List[AssertionResult] = []
-
-    def check_assertions(self, assertions: Dict[str, Any]) -> List[AssertionResult]:
-        """Check all assertions
+        Record an event for later assertion checking.
 
         Args:
-            assertions: Dictionary of assertions to check
+            event_name: Name of the event
+            event_data: Event data (dict or object)
+        """
+        # Convert event_data to dict if it's an object
+        if hasattr(event_data, '__dict__'):
+            data = event_data.__dict__
+        elif hasattr(event_data, 'model_dump'):
+            data = event_data.model_dump()
+        elif isinstance(event_data, dict):
+            data = event_data
+        else:
+            data = {'value': event_data}
+
+        self.recorded_events.append({
+            'event_name': event_name,
+            'event_data': data
+        })
+
+    def check_assertion(self, assertion: Assertion) -> AssertionResult:
+        """
+        Check a single assertion against recorded events.
+
+        Args:
+            assertion: Assertion to check
 
         Returns:
-            List of assertion results
+            AssertionResult with check outcome
         """
-        self.results = []
+        if assertion.type == AssertionType.EVENT_COUNT:
+            return self._check_event_count(assertion)
+        elif assertion.type == AssertionType.EVENT_VALUE:
+            return self._check_event_value(assertion)
+        elif assertion.type == AssertionType.NO_EVENT:
+            return self._check_no_event(assertion)
+        else:
+            return AssertionResult(
+                assertion=assertion,
+                passed=False,
+                actual_value=None,
+                expected_value=None,
+                message=f"Unknown assertion type: {assertion.type}"
+            )
 
-        for key, value in assertions.items():
-            if key == "event_count":
-                self._check_event_count(value)
-            elif key == "event_sequence":
-                self._check_event_sequence(value)
-            elif key == "no_panic_sell":
-                self._check_no_panic_sell(value)
-            elif key == "final_capital":
-                self._check_final_capital(value)
-            elif key == "position_count":
-                self._check_position_count(value)
-            elif key == "custom":
-                self._check_custom_assertion(value)
-            else:
-                logger.warning(f"Unknown assertion type: {key}")
+    def _check_event_count(self, assertion: Assertion) -> AssertionResult:
+        """Check event count assertion"""
+        matching_events = [
+            e for e in self.recorded_events
+            if e['event_name'] == assertion.event_name
+        ]
+        actual_count = len(matching_events)
+        expected_count = assertion.expected_count
 
-        return self.results
-
-    def _check_event_count(self, expected_counts: Dict[str, Dict[str, int]]):
-        """Check event counts match expectations
-
-        Args:
-            expected_counts: Dict like {"EventName": {"min": 3, "max": 10, "exact": 5}}
-        """
-        for event_name, constraints in expected_counts.items():
-            actual_count = self.event_counts.get(event_name, 0)
-
-            if "exact" in constraints:
-                expected = constraints["exact"]
-                passed = actual_count == expected
-                self.results.append(AssertionResult(
-                    name=f"event_count.{event_name}.exact",
-                    passed=passed,
-                    message=f"Expected exactly {expected} {event_name} events, got {actual_count}",
-                    expected=expected,
-                    actual=actual_count
-                ))
-
-            if "min" in constraints:
-                expected = constraints["min"]
-                passed = actual_count >= expected
-                self.results.append(AssertionResult(
-                    name=f"event_count.{event_name}.min",
-                    passed=passed,
-                    message=f"Expected at least {expected} {event_name} events, got {actual_count}",
-                    expected=f">= {expected}",
-                    actual=actual_count
-                ))
-
-            if "max" in constraints:
-                expected = constraints["max"]
-                passed = actual_count <= expected
-                self.results.append(AssertionResult(
-                    name=f"event_count.{event_name}.max",
-                    passed=passed,
-                    message=f"Expected at most {expected} {event_name} events, got {actual_count}",
-                    expected=f"<= {expected}",
-                    actual=actual_count
-                ))
-
-    def _check_event_sequence(self, expected_sequence: List[str]):
-        """Check events occurred in expected sequence
-
-        Args:
-            expected_sequence: List of event names in expected order
-        """
-        actual_sequence = [e['event_name'] for e in self.events]
-
-        # Find subsequence
-        seq_index = 0
-        for event_name in actual_sequence:
-            if seq_index < len(expected_sequence) and event_name == expected_sequence[seq_index]:
-                seq_index += 1
-
-        passed = seq_index == len(expected_sequence)
-        self.results.append(AssertionResult(
-            name="event_sequence",
-            passed=passed,
-            message=f"Expected sequence {expected_sequence}, found {seq_index}/{len(expected_sequence)} events in order",
-            expected=expected_sequence,
-            actual=f"{seq_index}/{len(expected_sequence)} matched"
-        ))
-
-    def _check_no_panic_sell(self, config: Dict[str, Any]):
-        """Check no panic selling during crash period
-
-        Args:
-            config: Dict like {"crash_start_cycle": 20, "crash_end_cycle": 30}
-        """
-        crash_start = config.get("crash_start_cycle", 20)
-        crash_end = config.get("crash_end_cycle", 30)
-
-        # Count PositionSold events during crash period
-        panic_sells = sum(
-            1 for e in self.events
-            if e['event_name'] == "PositionSold"
-            and crash_start <= e.get('cycle', 0) <= crash_end
+        passed = actual_count == expected_count
+        message = (
+            f"Event '{assertion.event_name}' count: {actual_count} "
+            f"(expected {expected_count})"
         )
 
-        passed = panic_sells == 0
-        self.results.append(AssertionResult(
-            name="no_panic_sell",
+        return AssertionResult(
+            assertion=assertion,
             passed=passed,
-            message=f"Expected no sells during crash (cycles {crash_start}-{crash_end}), found {panic_sells}",
-            expected=0,
-            actual=panic_sells
-        ))
+            actual_value=actual_count,
+            expected_value=expected_count,
+            message=message
+        )
 
-    def _check_final_capital(self, constraints: Dict[str, float]):
-        """Check final capital is within expected range
+    def _check_event_value(self, assertion: Assertion) -> AssertionResult:
+        """Check event value assertion"""
+        matching_events = [
+            e for e in self.recorded_events
+            if e['event_name'] == assertion.event_name
+        ]
 
-        Args:
-            constraints: Dict like {"min": 9000.0, "max": 12000.0}
-        """
-        # Find last CapitalRefreshed event
-        capital_events = [e for e in self.events if e['event_name'] == "CapitalRefreshed"]
-
-        if not capital_events:
-            self.results.append(AssertionResult(
-                name="final_capital",
+        if not matching_events:
+            return AssertionResult(
+                assertion=assertion,
                 passed=False,
-                message="No CapitalRefreshed events found",
-                expected=constraints,
-                actual=None
-            ))
-            return
+                actual_value=None,
+                expected_value=assertion.expected_value,
+                message=f"Event '{assertion.event_name}' not found"
+            )
 
-        last_capital_event = capital_events[-1]
-        final_capital = last_capital_event.get('event_data', {}).get('available_capital', 0)
+        # Get value from first matching event using field path
+        event_data = matching_events[0]['event_data']
+        actual_value = self._get_field_value(event_data, assertion.field_path)
 
-        passed = True
-        messages = []
+        # Compare using operator
+        op_func = self.OPERATORS.get(assertion.operator, operator.eq)
+        passed = op_func(actual_value, assertion.expected_value)
 
-        if "min" in constraints:
-            min_capital = constraints["min"]
-            if final_capital < min_capital:
-                passed = False
-                messages.append(f"below minimum {min_capital}")
+        message = (
+            f"Event '{assertion.event_name}'.{assertion.field_path}: "
+            f"{actual_value} {assertion.operator} {assertion.expected_value} "
+            f"({'PASS' if passed else 'FAIL'})"
+        )
 
-        if "max" in constraints:
-            max_capital = constraints["max"]
-            if final_capital > max_capital:
-                passed = False
-                messages.append(f"above maximum {max_capital}")
-
-        message = f"Final capital {final_capital:.2f}"
-        if messages:
-            message += f" ({', '.join(messages)})"
-
-        self.results.append(AssertionResult(
-            name="final_capital",
+        return AssertionResult(
+            assertion=assertion,
             passed=passed,
-            message=message,
-            expected=constraints,
-            actual=final_capital
-        ))
+            actual_value=actual_value,
+            expected_value=assertion.expected_value,
+            message=message
+        )
 
-    def _check_position_count(self, constraints: Dict[str, int]):
-        """Check number of open positions
+    def _check_no_event(self, assertion: Assertion) -> AssertionResult:
+        """Check that event did NOT occur"""
+        matching_events = [
+            e for e in self.recorded_events
+            if e['event_name'] == assertion.event_name
+        ]
+        actual_count = len(matching_events)
+        passed = actual_count == 0
+
+        message = (
+            f"Event '{assertion.event_name}' should not occur "
+            f"(found {actual_count} occurrences)"
+        )
+
+        return AssertionResult(
+            assertion=assertion,
+            passed=passed,
+            actual_value=actual_count,
+            expected_value=0,
+            message=message
+        )
+
+    def _get_field_value(self, data: Dict[str, Any], field_path: str) -> Any:
+        """
+        Get nested field value using dot-separated path.
 
         Args:
-            constraints: Dict like {"min": 3, "max": 10}
+            data: Dict containing event data
+            field_path: Dot-separated path (e.g., "price" or "order.quantity")
+
+        Returns:
+            Field value or None if not found
         """
-        # Count PositionPurchased - PositionSold
-        purchases = self.event_counts.get("PositionPurchased", 0)
-        sales = self.event_counts.get("PositionSold", 0)
-        open_positions = purchases - sales
+        if not field_path:
+            return data
 
-        if "min" in constraints:
-            min_pos = constraints["min"]
-            passed = open_positions >= min_pos
-            self.results.append(AssertionResult(
-                name="position_count.min",
-                passed=passed,
-                message=f"Expected at least {min_pos} open positions, got {open_positions}",
-                expected=f">= {min_pos}",
-                actual=open_positions
-            ))
+        parts = field_path.split('.')
+        value = data
 
-        if "max" in constraints:
-            max_pos = constraints["max"]
-            passed = open_positions <= max_pos
-            self.results.append(AssertionResult(
-                name="position_count.max",
-                passed=passed,
-                message=f"Expected at most {max_pos} open positions, got {open_positions}",
-                expected=f"<= {max_pos}",
-                actual=open_positions
-            ))
+        for part in parts:
+            if isinstance(value, dict):
+                value = value.get(part)
+            elif hasattr(value, part):
+                value = getattr(value, part)
+            else:
+                return None
 
-    def _check_custom_assertion(self, custom_func):
-        """Check custom assertion function
+            if value is None:
+                break
+
+        return value
+
+    def check_all_assertions(self, assertions: List[Assertion]) -> List[AssertionResult]:
+        """
+        Check all assertions and return results.
 
         Args:
-            custom_func: Callable that takes events and returns (passed, message)
+            assertions: List of assertions to check
+
+        Returns:
+            List of AssertionResults
         """
-        try:
-            passed, message = custom_func(self.events)
-            self.results.append(AssertionResult(
-                name="custom",
-                passed=passed,
-                message=message
-            ))
-        except Exception as e:
-            self.results.append(AssertionResult(
-                name="custom",
-                passed=False,
-                message=f"Custom assertion failed: {str(e)}"
-            ))
+        return [self.check_assertion(a) for a in assertions]
 
-    def all_passed(self) -> bool:
-        """Check if all assertions passed"""
-        return all(r.passed for r in self.results)
-
-    def get_summary(self) -> Dict[str, Any]:
-        """Get summary of assertion results"""
-        return {
-            "total": len(self.results),
-            "passed": sum(1 for r in self.results if r.passed),
-            "failed": sum(1 for r in self.results if not r.passed),
-            "pass_rate": sum(1 for r in self.results if r.passed) / len(self.results) if self.results else 0,
-            "results": [
-                {
-                    "name": r.name,
-                    "passed": r.passed,
-                    "message": r.message,
-                    "expected": r.expected,
-                    "actual": r.actual
-                }
-                for r in self.results
-            ]
-        }
+    def clear(self) -> None:
+        """Clear recorded events"""
+        self.recorded_events.clear()

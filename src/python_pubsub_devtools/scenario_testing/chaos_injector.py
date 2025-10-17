@@ -1,306 +1,195 @@
 """
-Chaos Engineering Injector
-
-Intercepts service bus to inject failures, delays, and modifications for testing resilience.
+Chaos Injector - Injects failures, delays, and drops into event bus for testing.
 """
+from __future__ import annotations
+
+import fnmatch
 import logging
 import random
 import time
-from datetime import datetime, timezone
 from types import SimpleNamespace
-from typing import Any, Optional, List, Dict, Callable, Union
+from typing import Any, Callable, Dict, Optional
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .scenario_schema import ChaosAction
-else:
-    # Support both relative and absolute imports
-    try:
-        from .scenario_schema import (
-            ChaosAction,
-            DelayEventChaos,
-            InjectFailureChaos,
-            DropEventChaos,
-            ModifyEventChaos,
-            NetworkLatencyChaos
-        )
-    except ImportError:
-        from scenario_schema import (  # type: ignore
-            ChaosAction,
-            DelayEventChaos,
-            InjectFailureChaos,
-            DropEventChaos,
-            ModifyEventChaos,
-            NetworkLatencyChaos
-        )
+from .scenario_schema import ChaosAction, ChaosType
 
 logger = logging.getLogger(__name__)
 
 
 class ChaosInjector:
-    """Intercepts service bus to inject chaos actions"""
+    """
+    Injects chaos into ServiceBus for testing resilience.
 
-    def __init__(
-            self,
-            service_bus,
-            chaos_actions: List[ChaosAction],
-            event_registry: Optional[Union[Dict[str, type], Callable[[str, Dict[str, Any]], Any]]] = None
-    ):
-        """Initialize chaos injector
+    Supports:
+    - Failures: Raise exceptions
+    - Delays: Add delays before event publication
+    - Drops: Silently drop events
+    - Latency: Add random latency
+
+    Zero-coupling design: Works with any ServiceBus without requiring
+    application event classes.
+    """
+
+    def __init__(self, service_bus: Any, event_registry: Optional[Dict[str, type]] = None):
+        """
+        Initialize chaos injector.
 
         Args:
-            service_bus: The service bus to intercept
-            chaos_actions: List of chaos actions to apply
-            event_registry: Optional registry for creating failure events. Can be:
-                - Dict[str, type]: Mapping of event names to event classes
-                - Callable: Factory function (event_name, event_data) -> event_instance
-                - None: Create simple namespace objects (default, zero coupling)
+            service_bus: ServiceBus instance to inject chaos into
+            event_registry: Optional dict mapping event names to event classes
+                          (enables reconstruction of actual event objects)
         """
         self.service_bus = service_bus
-        self.chaos_actions = chaos_actions
-        self.event_registry = event_registry
-        self._original_publish = None
-        self._current_cycle = 0
-        self._event_history = []
-        self._active_latency = None
-        self._latency_end_cycle = None
+        self.event_registry = event_registry or {}
+        self._original_publish: Optional[Callable] = None
+        self._active_chaos: list[ChaosAction] = []
+        self._start_time: float = 0
 
-        # Statistics
-        self.stats = {
-            "events_delayed": 0,
-            "events_dropped": 0,
-            "events_modified": 0,
-            "failures_injected": 0,
-            "total_delay_ms": 0
-        }
+    def start(self, chaos_actions: list[ChaosAction]) -> None:
+        """
+        Start chaos injection by monkey-patching ServiceBus.publish.
 
-    def start(self):
-        """Start intercepting service bus"""
-        logger.info("🔥 Starting chaos injector...")
+        Args:
+            chaos_actions: List of chaos actions to inject
+        """
+        if self._original_publish:
+            logger.warning("Chaos injector already started")
+            return
+
+        self._active_chaos = chaos_actions
+        self._start_time = time.time()
         self._original_publish = self.service_bus.publish
 
         def chaos_publish(event_name: str, event: Any, source: str):
-            """Intercepted publish with chaos injection"""
+            """Wrapped publish with chaos injection"""
+            # Check if any chaos action applies
+            for chaos in self._active_chaos:
+                if self._should_apply_chaos(event_name, chaos):
+                    self._apply_chaos(event_name, event, source, chaos)
+                    return  # Chaos applied, don't call original
 
-            # Track event history
-            self._event_history.append({
-                "event_name": event_name,
-                "timestamp": datetime.now(timezone.utc),
-                "cycle": self._current_cycle
-            })
-
-            # Update cycle number if this is a cycle start event
-            if event_name == "BotMonitoringCycleStarted":
-                self._current_cycle = getattr(event, 'cycle_number', self._current_cycle)
-
-            # Apply chaos actions
-            should_publish, modified_event = self._apply_chaos(event_name, event, source)
-
-            if not should_publish:
-                logger.warning(f"🔥 CHAOS: Dropped event {event_name}")
-                self.stats["events_dropped"] += 1
-                return
-
-            # Apply network latency if active
-            if self._active_latency and self._current_cycle <= self._latency_end_cycle:
-                delay_ms = random.randint(
-                    self._active_latency.min_delay_ms,
-                    self._active_latency.max_delay_ms
-                )
-                logger.warning(f"🔥 CHAOS: Network latency {delay_ms}ms for {event_name}")
-                time.sleep(delay_ms / 1000.0)
-                self.stats["total_delay_ms"] += delay_ms
-
-            # Publish (possibly modified) event
-            return self._original_publish(event_name, modified_event or event, source)
+            # No chaos applied, call original
+            return self._original_publish(event_name, event, source)
 
         self.service_bus.publish = chaos_publish
+        logger.info(f"Chaos injector started with {len(chaos_actions)} action(s)")
 
-    def stop(self):
-        """Stop intercepting and restore original publish"""
+    def stop(self) -> None:
+        """Stop chaos injection and restore original publish"""
         if self._original_publish:
-            logger.info("🔥 Stopping chaos injector...")
             self.service_bus.publish = self._original_publish
             self._original_publish = None
+            logger.info("Chaos injector stopped")
 
-    def _apply_chaos(self, event_name: str, event: Any, source: str) -> tuple[bool, Optional[Any]]:
-        """Apply chaos actions to event
-
-        Returns:
-            (should_publish, modified_event)
+    def _should_apply_chaos(self, event_name: str, chaos: ChaosAction) -> bool:
         """
-        should_publish = True
-        modified_event = None
-
-        for action in self.chaos_actions:
-            # Check if action should be applied
-            if not self._should_apply_action(action, event_name):
-                continue
-
-            if isinstance(action, DelayEventChaos):
-                should_publish, modified_event = self._apply_delay(action, event_name, event)
-
-            elif isinstance(action, InjectFailureChaos):
-                self._apply_failure_injection(action, event_name, event, source)
-
-            elif isinstance(action, DropEventChaos):
-                should_publish = self._apply_drop(action, event_name)
-
-            elif isinstance(action, ModifyEventChaos):
-                modified_event = self._apply_modification(action, event_name, event)
-
-            elif isinstance(action, NetworkLatencyChaos):
-                self._apply_network_latency(action)
-
-        return should_publish, modified_event
-
-    def _should_apply_action(self, action: ChaosAction, event_name: str) -> bool:
-        """Check if chaos action should be applied"""
-
-        # Check event name match
-        if hasattr(action, 'event') and action.event != event_name:
-            return False
-
-        # Check cycle condition
-        if hasattr(action, 'at_cycle') and action.at_cycle is not None:
-            if self._current_cycle != action.at_cycle:
-                return False
-
-        # Check after_event condition
-        if hasattr(action, 'after_event') and action.after_event is not None:
-            # Check if after_event has occurred
-            recent_events = [e['event_name'] for e in self._event_history[-10:]]
-            if action.after_event not in recent_events:
-                return False
-
-        return True
-
-    def _apply_delay(self, action: DelayEventChaos, event_name: str, event: Any) -> tuple[bool, None]:
-        """Apply event delay"""
-        delay_seconds = action.delay_ms / 1000.0
-        logger.warning(f"🔥 CHAOS: Delaying {event_name} by {action.delay_ms}ms")
-        time.sleep(delay_seconds)
-        self.stats["events_delayed"] += 1
-        self.stats["total_delay_ms"] += action.delay_ms
-        return True, None
-
-    def _apply_failure_injection(self, action: InjectFailureChaos, event_name: str, event: Any, source: str):
-        """Inject a failure event"""
-        logger.warning(f"🔥 CHAOS: Injecting failure event {action.event}")
-
-        try:
-            # Extract cycle_id from original event if available
-            cycle_id = getattr(event, 'cycle_id', self._current_cycle)
-
-            # Build event data with defaults
-            event_data = {
-                'cycle_id': cycle_id,
-                'error_message': action.error_message,
-                'timestamp': datetime.now(timezone.utc).isoformat()
-            }
-
-            # Merge with user-provided event_data
-            if action.event_data:
-                event_data.update(action.event_data)
-
-            # Create failed event using registry, factory, or simple namespace
-            failed_event = self._create_event(action.event, event_data)
-
-            # Publish the failure
-            self._original_publish(action.event, failed_event, "ChaosInjector")
-            self.stats["failures_injected"] += 1
-
-        except Exception as e:
-            logger.error(f"Failed to inject failure event {action.event}: {e}", exc_info=True)
-
-    def _create_event(self, event_name: str, event_data: Dict[str, Any]) -> Any:
-        """
-        Create event instance using registry or simple namespace
+        Check if chaos should be applied to this event.
 
         Args:
-            event_name: Name of the event to create
-            event_data: Event properties
+            event_name: Name of the event
+            chaos: Chaos action
 
         Returns:
-            Event instance (class instance, SimpleNamespace, or dict)
+            True if chaos should be applied
         """
-        # If registry is a callable factory
-        if callable(self.event_registry):
-            return self.event_registry(event_name, event_data)
+        # Check duration (0 = entire scenario)
+        if chaos.duration_ms > 0:
+            elapsed_ms = (time.time() - self._start_time) * 1000
+            if elapsed_ms > chaos.duration_ms:
+                return False
 
-        # If registry is a dict mapping
-        if isinstance(self.event_registry, dict):
-            event_class = self.event_registry.get(event_name)
-            if event_class:
-                # Try to instantiate with event_data as kwargs
-                try:
-                    return event_class(**event_data)
-                except TypeError:
-                    # If class doesn't accept kwargs, try positional or fallback
-                    logger.warning(
-                        f"Event class {event_name} doesn't accept kwargs, "
-                        f"creating SimpleNamespace instead"
-                    )
-
-        # Default: create SimpleNamespace (zero coupling)
-        logger.debug(f"Creating SimpleNamespace for event {event_name}")
-        return SimpleNamespace(**event_data)
-
-    def _apply_drop(self, action: DropEventChaos, event_name: str) -> bool:
-        """Drop event based on probability"""
-        if random.random() < action.probability:
-            logger.warning(f"🔥 CHAOS: Dropping event {event_name}")
-            self.stats["events_dropped"] += 1
+        # Check event name match (supports wildcards)
+        if not fnmatch.fnmatch(event_name, chaos.target_event):
             return False
+
+        # Check probability
+        if random.random() > chaos.probability:
+            return False
+
         return True
 
-    def _apply_modification(self, action: ModifyEventChaos, event_name: str, event: Any) -> Any:
-        """Modify event data"""
-        if not hasattr(event, action.field):
-            logger.warning(f"Event {event_name} has no field {action.field}")
-            return event
+    def _apply_chaos(self, event_name: str, event: Any, source: str, chaos: ChaosAction) -> None:
+        """
+        Apply chaos action.
 
-        logger.warning(f"🔥 CHAOS: Modifying {event_name}.{action.field} to {action.value}")
+        Args:
+            event_name: Event name
+            event: Event data
+            source: Event source
+            chaos: Chaos action to apply
+        """
+        if chaos.type == ChaosType.FAILURE:
+            self._inject_failure(event_name, chaos)
+        elif chaos.type == ChaosType.DELAY:
+            self._inject_delay(event_name, event, source, chaos)
+        elif chaos.type == ChaosType.DROP:
+            self._inject_drop(event_name)
+        elif chaos.type == ChaosType.LATENCY:
+            self._inject_latency(event_name, event, source, chaos)
 
-        # Create a modified copy
-        if hasattr(event, 'model_copy'):
-            # Pydantic model
-            modified = event.model_copy(update={action.field: action.value})
+    def _inject_failure(self, event_name: str, chaos: ChaosAction) -> None:
+        """Inject failure (raise exception)"""
+        error_msg = chaos.error_message or f"Chaos: {event_name} failed"
+        logger.info(f"🔥 Chaos FAILURE: {event_name} - {error_msg}")
+        raise RuntimeError(error_msg)
+
+    def _inject_delay(self, event_name: str, event: Any, source: str, chaos: ChaosAction) -> None:
+        """Inject delay before publishing"""
+        delay_sec = (chaos.delay_ms or 1000) / 1000.0
+        logger.info(f"⏱️  Chaos DELAY: {event_name} delayed by {delay_sec}s")
+        time.sleep(delay_sec)
+        # Publish after delay
+        self._original_publish(event_name, event, source)
+
+    def _inject_drop(self, event_name: str) -> None:
+        """Drop event (don't publish)"""
+        logger.info(f"🗑️  Chaos DROP: {event_name} dropped")
+        # Do nothing - event is dropped
+
+    def _inject_latency(self, event_name: str, event: Any, source: str, chaos: ChaosAction) -> None:
+        """Inject random latency"""
+        max_delay_ms = chaos.delay_ms or 500
+        delay_sec = random.uniform(0, max_delay_ms) / 1000.0
+        logger.info(f"🐌 Chaos LATENCY: {event_name} delayed by {delay_sec:.3f}s")
+        time.sleep(delay_sec)
+        # Publish after latency
+        self._original_publish(event_name, event, source)
+
+    def create_event_from_data(self, event_name: str, event_data: Dict[str, Any]) -> Any:
+        """
+        Create event instance from data.
+
+        If event_registry contains the event class, use it.
+        Otherwise, create a SimpleNamespace (zero-coupling).
+
+        Args:
+            event_name: Event name
+            event_data: Event data as dict
+
+        Returns:
+            Event instance (class or SimpleNamespace)
+        """
+        event_class = self.event_registry.get(event_name)
+
+        if event_class:
+            # Use registered event class
+            try:
+                if hasattr(event_class, 'model_validate'):
+                    # Pydantic model
+                    return event_class.model_validate(event_data)
+                else:
+                    # Regular class
+                    return event_class(**event_data)
+            except Exception as e:
+                logger.warning(f"Failed to create {event_name} instance: {e}, using SimpleNamespace")
+                return SimpleNamespace(**event_data)
         else:
-            # Regular object - create shallow copy and modify
-            import copy
-
-            modified = copy.copy(event)
-            setattr(modified, action.field, action.value)
-
-        self.stats["events_modified"] += 1
-        return modified
-
-    def _apply_network_latency(self, action: NetworkLatencyChaos):
-        """Enable network latency for duration"""
-        if action.at_cycle is not None and self._current_cycle == action.at_cycle:
-            logger.warning(
-                f"🔥 CHAOS: Enabling network latency {action.min_delay_ms}-{action.max_delay_ms}ms "
-                f"for {action.duration_cycles} cycles"
-            )
-            self._active_latency = action
-            self._latency_end_cycle = self._current_cycle + action.duration_cycles
-
-    def get_statistics(self) -> dict:
-        """Get chaos injection statistics"""
-        return {
-            **self.stats,
-            "total_events": len(self._event_history),
-            "current_cycle": self._current_cycle
-        }
+            # Zero-coupling: use SimpleNamespace
+            return SimpleNamespace(**event_data)
 
     def __enter__(self):
         """Context manager support"""
-        self.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager support"""
+        """Context manager cleanup"""
         self.stop()
-        return False

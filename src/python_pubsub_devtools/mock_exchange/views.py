@@ -7,6 +7,7 @@ de fichiers de replay de chandeliers.
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -33,10 +34,14 @@ def get_replay_files() -> List[Dict[str, Any]]:
         if file_path.is_file() and _allowed_file(file_path.name):
             try:
                 stat = file_path.stat()
+                # Format timestamp as readable date
+                created_dt = datetime.fromtimestamp(stat.st_mtime)
+                created_at_str = created_dt.strftime('%Y-%m-%d %H:%M:%S')
+
                 files_metadata.append({
                     'filename': file_path.name,
                     'size_kb': round(stat.st_size / 1024, 2),
-                    'created_at': stat.st_mtime,
+                    'created_at': created_at_str,
                 })
             except OSError as e:
                 current_app.logger.error(f"Impossible de lire les métadonnées de {file_path}: {e}")
