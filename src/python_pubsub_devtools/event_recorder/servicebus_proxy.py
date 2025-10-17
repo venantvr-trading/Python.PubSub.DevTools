@@ -3,8 +3,9 @@ Proxy HTTP pour communiquer avec ServiceBus dans un autre processus.
 """
 from __future__ import annotations
 
-import requests
 from typing import Any
+
+import requests
 
 
 class ServiceBusHttpProxy:

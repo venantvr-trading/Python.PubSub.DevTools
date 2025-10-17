@@ -21,7 +21,7 @@ ALLOWED_EXTENSIONS = {'csv', 'json'}
 def _allowed_file(filename: str) -> bool:
     """Vérifie si l'extension du fichier est autorisée."""
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def _get_replay_files() -> List[Dict[str, Any]]:

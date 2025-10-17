@@ -108,7 +108,7 @@
             <p>Start a new recording session to capture events from your application.</p>
             <div class="form-group">
                 <label for="session-name">Session Name:</label>
-                <input type="text" id="session-name" placeholder="e.g., trading_session_001"
+                <input id="session-name" placeholder="e.g., trading_session_001" type="text"
                        value="session_{{ now.strftime('%Y%m%d_%H%M%S') if now else '' }}">
             </div>
             <div class="modal-info">

@@ -38,6 +38,7 @@ def create_app(config: EventRecorderConfig) -> Flask:
 
     # Importer et enregistrer les routes
     from . import views
+
     views.register_routes(app)
 
     return app

@@ -162,7 +162,7 @@ class DevToolsConfig(BaseModel):
         # Event Flow
         if self.event_flow is None:
             self.event_flow = EventFlowConfig()
-        
+
         if self.event_flow.cache_persist_path is None and self.cache_dir:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
             self.event_flow.cache_persist_path = self.cache_dir / "event_flow_cache.json"
@@ -179,7 +179,7 @@ class DevToolsConfig(BaseModel):
         # Mock Exchange
         if self.mock_exchange is None:
             self.mock_exchange = MockExchangeConfig()
-        
+
         if self.mock_exchange.replay_data_dir is None and self.replay_data_dir:
             self.replay_data_dir.mkdir(parents=True, exist_ok=True)
             self.mock_exchange.replay_data_dir = self.replay_data_dir

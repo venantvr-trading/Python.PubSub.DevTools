@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="dark">
+<html data-theme="dark" lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>🎰 Mock Exchange Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <style>
         .file-list {
             margin-top: 2rem;
@@ -52,68 +52,68 @@
     </style>
 </head>
 <body>
-    {% include 'header.html' %}
+{% include 'header.html' %}
 
-    <div class="container">
-        <header class="main-header">
-            <h1>🎰 Mock Exchange Dashboard</h1>
-            <p>Simulez des scénarios de marché ou rejouez des données historiques.</p>
-        </header>
+<div class="container">
+    <header class="main-header">
+        <h1>🎰 Mock Exchange Dashboard</h1>
+        <p>Simulez des scénarios de marché ou rejouez des données historiques.</p>
+    </header>
 
-        <div class="card">
-            <h2>Scénarios Générés</h2>
-            <p>Les contrôles pour lancer les scénarios algorithmiques (BULL_RUN, FLASH_CRASH, etc.) seront ajoutés ici.</p>
-            <!-- TODO: Intégrer la logique des scénarios générés -->
-        </div>
-
-        <div class="card file-list">
-            <h2>Rejouer des Données Historiques</h2>
-
-            <div class="card-content">
-                <h3>Uploader un fichier de données</h3>
-                <form id="upload-form">
-                    <input type="file" id="file-input" name="file" accept=".csv,.json" required>
-                    <button type="submit" class="btn btn-primary">Uploader</button>
-                </form>
-                <div id="upload-status"></div>
-            </div>
-
-            <div class="card-content">
-                <h3>Fichiers de Replay Disponibles</h3>
-                <table id="replay-files-table">
-                    <thead>
-                        <tr>
-                            <th>Nom du fichier</th>
-                            <th>Taille (KB)</th>
-                            <th>Date d'ajout</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if replay_files %}
-                            {% for file in replay_files %}
-                            <tr data-filename="{{ file.filename }}">
-                                <td>{{ file.filename }}</td>
-                                <td>{{ file.size_kb }}</td>
-                                <td>{{ file.created_at | format_datetime }}</td>
-                                <td>
-                                    <button class="btn-play" data-filename="{{ file.filename }}" title="Lancer le replay">▶️</button>
-                                    <button class="btn-delete" data-filename="{{ file.filename }}" title="Supprimer le fichier">🗑️</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="4" style="text-align: center; padding: 2rem;">Aucun fichier de replay trouvé. Uploadez-en un pour commencer.</td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="card">
+        <h2>Scénarios Générés</h2>
+        <p>Les contrôles pour lancer les scénarios algorithmiques (BULL_RUN, FLASH_CRASH, etc.) seront ajoutés ici.</p>
+        <!-- TODO: Intégrer la logique des scénarios générés -->
     </div>
 
-    {% include 'footer.html' %}
-    <script src="{{ url_for('static', filename='js/mock_exchange.js') }}"></script>
+    <div class="card file-list">
+        <h2>Rejouer des Données Historiques</h2>
+
+        <div class="card-content">
+            <h3>Uploader un fichier de données</h3>
+            <form id="upload-form">
+                <input accept=".csv,.json" id="file-input" name="file" required type="file">
+                <button class="btn btn-primary" type="submit">Uploader</button>
+            </form>
+            <div id="upload-status"></div>
+        </div>
+
+        <div class="card-content">
+            <h3>Fichiers de Replay Disponibles</h3>
+            <table id="replay-files-table">
+                <thead>
+                <tr>
+                    <th>Nom du fichier</th>
+                    <th>Taille (KB)</th>
+                    <th>Date d'ajout</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if replay_files %}
+                {% for file in replay_files %}
+                <tr data-filename="{{ file.filename }}">
+                    <td>{{ file.filename }}</td>
+                    <td>{{ file.size_kb }}</td>
+                    <td>{{ file.created_at | format_datetime }}</td>
+                    <td>
+                        <button class="btn-play" data-filename="{{ file.filename }}" title="Lancer le replay">▶️</button>
+                        <button class="btn-delete" data-filename="{{ file.filename }}" title="Supprimer le fichier">🗑️</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 2rem;">Aucun fichier de replay trouvé. Uploadez-en un pour commencer.</td>
+                </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include 'footer.html' %}
+<script src="{{ url_for('static', filename='js/mock_exchange.js') }}"></script>
 </body>
 </html>

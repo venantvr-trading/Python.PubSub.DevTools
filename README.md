@@ -136,13 +136,16 @@ from python_pubsub_devtools.event_recorder.server import EventRecorderServer
 
 config = DevToolsConfig.from_yaml("devtools_config.yaml")
 
+
 def run_event_flow():
     server = EventFlowServer(config.event_flow)
     server.run(host='0.0.0.0', debug=False)
 
+
 def run_event_recorder():
     server = EventRecorderServer(config.event_recorder)
     server.run(host='0.0.0.0', debug=False)
+
 
 # Lancer dans des processus séparés
 processes = [

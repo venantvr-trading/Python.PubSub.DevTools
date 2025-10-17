@@ -23,6 +23,7 @@ Architecture moderne pour event_flow avec séparation API/Scanner.
 ### 1. Event Flow API (Serveur Flask)
 
 Serveur web qui expose:
+
 - **Interface Web** : Visualisation interactive des graphes (port 5555)
 - **API REST** : Endpoints pour recevoir/servir les données des graphes
 
@@ -51,12 +52,14 @@ python -m python_pubsub_devtools.event_flow.serve_event_flow
 Service qui scanne le code et pousse les graphes vers l'API.
 
 **Modes:**
+
 - **One-shot** : Scanne une fois et sort
 - **Continu** : Scanne à intervalle régulier
 
 #### Utiliser le Scanner
 
 **One-shot (via CLI):**
+
 ```bash
 python -m python_pubsub_devtools.event_flow.scanner \
     --agents-dir ../python_pubsub_risk/agents \
@@ -66,6 +69,7 @@ python -m python_pubsub_devtools.event_flow.scanner \
 ```
 
 **Continu (via CLI):**
+
 ```bash
 python -m python_pubsub_devtools.event_flow.scanner \
     --agents-dir ../python_pubsub_risk/agents \
@@ -75,6 +79,7 @@ python -m python_pubsub_devtools.event_flow.scanner \
 ```
 
 **Programmatique:**
+
 ```python
 from pathlib import Path
 from python_pubsub_devtools.event_flow import EventFlowScanner
@@ -102,12 +107,14 @@ scanner.run_continuous()
 Système de cache thread-safe pour stocker les graphes en mémoire.
 
 **Features:**
+
 - Cache en mémoire avec verrous thread-safe
 - Persistance optionnelle sur disque (JSON)
 - Stockage de DOT + SVG + métadonnées
 - Timestamps et statistiques
 
 **Usage:**
+
 ```python
 from python_pubsub_devtools.event_flow import get_storage, GraphData
 
@@ -139,6 +146,7 @@ print(status)
 Recevoir et stocker les données d'un graphe.
 
 **Request:**
+
 ```json
 {
   "graph_type": "simplified|complete|full-tree",
@@ -153,6 +161,7 @@ Recevoir et stocker les données d'un graphe.
 ```
 
 **Response (201):**
+
 ```json
 {
   "status": "success",
@@ -166,6 +175,7 @@ Recevoir et stocker les données d'un graphe.
 Obtenir le statut du cache.
 
 **Response (200):**
+
 ```json
 {
   "total_graphs": 3,
@@ -187,14 +197,17 @@ Obtenir le statut du cache.
 Récupérer un graphe du cache.
 
 **Query Parameters:**
+
 - `format`: `dot` (défaut) | `svg` | `json`
 
 **Response:**
+
 - `format=dot`: Retourne le contenu DOT (text/plain)
 - `format=svg`: Retourne le SVG (image/svg+xml)
 - `format=json`: Retourne les métadonnées complètes (application/json)
 
 **Exemple:**
+
 ```bash
 # Récupérer DOT
 curl http://localhost:5555/api/graph/complete?format=dot
@@ -211,6 +224,7 @@ curl http://localhost:5555/api/graph/complete?format=json | jq .
 Supprimer un graphe du cache.
 
 **Response (200):**
+
 ```json
 {
   "status": "success",
@@ -223,6 +237,7 @@ Supprimer un graphe du cache.
 Vider tout le cache.
 
 **Response (200):**
+
 ```json
 {
   "status": "success",
@@ -237,14 +252,15 @@ Vider tout le cache.
 La route existante `/graph/<graph_type>` (utilisée par l'interface web) utilise maintenant le cache:
 
 1. **Si filtres par défaut** (pas de filtrage namespace/failed/rejected):
-   - Vérifie le cache
-   - Si trouvé: retourne le SVG du cache
-   - Sinon: génère à la volée (fallback)
+    - Vérifie le cache
+    - Si trouvé: retourne le SVG du cache
+    - Sinon: génère à la volée (fallback)
 
 2. **Si filtres appliqués**:
-   - Génère toujours à la volée (le cache ne gère pas encore les variantes filtrées)
+    - Génère toujours à la volée (le cache ne gère pas encore les variantes filtrées)
 
 **Avantages:**
+
 - Réponses rapides pour les vues par défaut
 - Les filtres fonctionnent toujours (génération à la volée)
 - Compatibilité ascendante complète
@@ -254,11 +270,13 @@ La route existante `/graph/<graph_type>` (utilisée par l'interface web) utilise
 ### Setup
 
 1. **Démarrer l'API:**
+
 ```bash
 pubsub-tools event-flow --config devtools_config.yaml
 ```
 
 2. **Lancer le scanner** (dans un autre terminal):
+
 ```bash
 python -m python_pubsub_devtools.event_flow.scanner \
     --agents-dir ../python_pubsub_risk/agents \
@@ -268,6 +286,7 @@ python -m python_pubsub_devtools.event_flow.scanner \
 ```
 
 3. **Ouvrir l'interface web:**
+
 ```
 http://localhost:5555
 ```
@@ -275,6 +294,7 @@ http://localhost:5555
 ### CI/CD Integration
 
 **Dans votre pipeline CI/CD:**
+
 ```bash
 # Scanner one-shot pour mettre à jour les graphes
 python -m python_pubsub_devtools.event_flow.scanner \
@@ -295,12 +315,14 @@ python -m python_pubsub_devtools.event_flow.scanner \
 L'ancienne version (génération à la volée) continue de fonctionner:
 
 **Ancien code:**
+
 ```python
 # Toujours valide - génère à la volée
 http://localhost:5555/graph/complete
 ```
 
 **Nouvelle architecture:**
+
 ```python
 # 1. Scanner pousse vers l'API
 scanner.scan_once()

@@ -40,6 +40,7 @@ def create_app(config: ScenarioTestingConfig) -> Flask:
 
     # Importer et enregistrer les routes
     from . import views
+
     views.register_routes(app)
 
     return app

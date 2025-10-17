@@ -15,6 +15,7 @@ if __name__ == '__main__' and not __package__:
     # __package__ peut être None ou '' lors d'exécution directe
     # Ajouter le répertoire src au path pour permettre les imports
     import os
+
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
     from python_pubsub_devtools.config import DevToolsConfig
 else:
