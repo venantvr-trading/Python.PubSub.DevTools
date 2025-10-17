@@ -1,174 +1,137 @@
 """
 Routes Flask pour le tableau de bord Mock Exchange.
+
+Gère l'interface web, la simulation de marché et l'API pour l'upload
+de fichiers de replay de chandeliers.
 """
 from __future__ import annotations
 
-import sys
-import threading
-import time
-from datetime import datetime
+import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, jsonify, request, current_app
+from werkzeug.utils import secure_filename
 
-# Import du moteur de simulation
-sys.path.insert(0, str(Path(__file__).parent))
-from scenario_exchange import ScenarioBasedMockExchange, MarketScenario
-
-# État global des simulations
-simulations: Dict[str, Dict[str, Any]] = {}
-simulation_lock = threading.Lock()
+ALLOWED_EXTENSIONS = {'csv', 'json'}
 
 
-def simulation_thread(sim_id: str, config: Dict[str, Any]) -> None:
-    """Thread d'exécution d'une simulation en arrière-plan.
+def _allowed_file(filename: str) -> bool:
+    """Vérifie si l'extension du fichier est autorisée."""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    Args:
-        sim_id: Identifiant unique de la simulation
-        config: Configuration de la simulation (scénario, prix, volatilité, etc.)
-    """
-    global simulations
 
-    exchange = ScenarioBasedMockExchange(
-        scenario=MarketScenario(config['scenario']),
-        initial_price=config['initial_price'],
-        volatility_multiplier=config['volatility_multiplier'],
-        spread_bps=config['spread_bps']
-    )
+def get_replay_files() -> List[Dict[str, Any]]:
+    """Liste tous les fichiers de replay disponibles avec leurs métadonnées."""
+    replay_dir = current_app.config.get('REPLAY_DATA_DIR')
+    if not replay_dir or not replay_dir.exists():
+        return []
 
-    with simulation_lock:
-        simulations[sim_id]['exchange'] = exchange
-        simulations[sim_id]['running'] = True
+    files_metadata = []
+    for file_path in replay_dir.iterdir():
+        if file_path.is_file() and _allowed_file(file_path.name):
+            try:
+                stat = file_path.stat()
+                files_metadata.append({
+                    'filename': file_path.name,
+                    'size_kb': round(stat.st_size / 1024, 2),
+                    'created_at': stat.st_mtime,
+                })
+            except OSError as e:
+                current_app.logger.error(f"Impossible de lire les métadonnées de {file_path}: {e}")
 
-    while True:
-        with simulation_lock:
-            if not simulations[sim_id]['running']:
-                break
-
-        # Récupérer le prix suivant
-        exchange.fetch_current_price()
-        time.sleep(0.5)  # Mise à jour toutes les 500ms
-
-    with simulation_lock:
-        simulations[sim_id]['stopped'] = True
+    # Trier par date de création, le plus récent en premier
+    files_metadata.sort(key=lambda x: x['created_at'], reverse=True)
+    return files_metadata
 
 
 def register_routes(app: Flask) -> None:
-    """Enregistre toutes les routes Flask dans l'application.
-
-    Args:
-        app: Instance Flask
-    """
+    """Enregistre toutes les routes Flask pour le service Mock Exchange."""
 
     @app.route('/')
     def index():
-        """Page principale du simulateur."""
-        return render_template('mock_exchange.html')
+        """Affiche le tableau de bord principal du Mock Exchange."""
+        # TODO: Ajouter la logique pour les scénarios générés
+        return render_template('mock_exchange.html', replay_files=get_replay_files())
 
-    @app.route('/api/start', methods=['POST'])
-    def api_start():
-        """Démarre une nouvelle simulation.
+    @app.route('/api/replay/files', methods=['GET'])
+    def api_get_replay_files():
+        """Endpoint API pour lister les fichiers de replay disponibles."""
+        return jsonify(get_replay_files())
 
-        Request JSON:
-            scenario: Type de scénario (ex: "uptrend", "downtrend", "sideways")
-            initial_price: Prix initial
-            volatility_multiplier: Multiplicateur de volatilité
-            spread_bps: Spread en points de base
+    @app.route('/api/replay/upload', methods=['POST'])
+    def api_upload_replay_file():
+        """Endpoint API pour uploader un fichier de replay (CSV ou JSON)."""
+        replay_dir = current_app.config.get('REPLAY_DATA_DIR')
+        if not replay_dir:
+            return jsonify({'error': 'Le répertoire de replay n\'est pas configuré.'}), 500
 
-        Returns:
-            JSON avec l'ID de la simulation créée
-        """
-        global simulations
+        if 'file' not in request.files:
+            return jsonify({'error': 'Aucun fichier n\'a été envoyé.'}), 400
 
-        config = request.json
-        sim_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'Le nom du fichier est vide.'}), 400
 
-        with simulation_lock:
-            simulations[sim_id] = {
-                'config': config,
-                'exchange': None,
-                'running': False,
-                'stopped': False
-            }
+        if file and _allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            save_path = Path(replay_dir) / filename
 
-        # Démarrer le thread de simulation
-        thread = threading.Thread(
-            target=simulation_thread,
-            args=(sim_id, config),
-            daemon=True
-        )
-        thread.start()
+            if save_path.exists():
+                return jsonify({'error': f'Le fichier "{filename}" existe déjà.'}), 409
 
-        return jsonify({'simulation_id': sim_id})
+            try:
+                file.save(save_path)
+                return jsonify({
+                    'success': True,
+                    'message': f'Fichier "{filename}" uploadé avec succès.',
+                    'filename': filename
+                }), 201
+            except Exception as e:
+                return jsonify({'error': f'Erreur lors de la sauvegarde du fichier: {e}'}), 500
 
-    @app.route('/api/pause/<sim_id>', methods=['POST'])
-    def api_pause(sim_id: str):
-        """Met en pause une simulation active.
+        return jsonify({'error': 'Type de fichier non autorisé.'}), 400
 
-        Args:
-            sim_id: Identifiant de la simulation
+    @app.route('/api/replay/files/<path:filename>', methods=['DELETE'])
+    def api_delete_replay_file(filename: str):
+        """Endpoint API pour supprimer un fichier de replay."""
+        replay_dir = current_app.config.get('REPLAY_DATA_DIR')
+        if not replay_dir:
+            return jsonify({'error': 'Le répertoire de replay n\'est pas configuré.'}), 500
 
-        Returns:
-            JSON avec le statut
-        """
-        global simulations
+        # Sécuriser le nom de fichier pour éviter les traversées de répertoire
+        safe_filename = secure_filename(filename)
+        if safe_filename != filename:
+            return jsonify({'error': 'Nom de fichier invalide.'}), 400
 
-        with simulation_lock:
-            if sim_id in simulations:
-                simulations[sim_id]['running'] = False
+        file_path = Path(replay_dir) / safe_filename
 
-        return jsonify({'status': 'paused'})
+        if not file_path.exists():
+            return jsonify({'error': 'Fichier non trouvé.'}), 404
 
-    @app.route('/api/stop/<sim_id>', methods=['POST'])
-    def api_stop(sim_id: str):
-        """Arrête une simulation active.
+        try:
+            os.remove(file_path)
+            return jsonify({'success': True, 'message': f'Fichier "{filename}" supprimé.'})
+        except OSError as e:
+            return jsonify({'error': f'Erreur lors de la suppression du fichier: {e}'}), 500
 
-        Args:
-            sim_id: Identifiant de la simulation
+    @app.route('/api/replay/start', methods=['POST'])
+    def api_start_replay():
+        """Endpoint API pour démarrer un replay depuis un fichier."""
+        data = request.get_json()
+        if not data or 'filename' not in data:
+            return jsonify({'error': 'Le nom du fichier est manquant.'}), 400
 
-        Returns:
-            JSON avec le statut
-        """
-        global simulations
+        filename = secure_filename(data['filename'])
+        engine = current_app.config.get('EXCHANGE_ENGINE')
 
-        with simulation_lock:
-            if sim_id in simulations:
-                simulations[sim_id]['running'] = False
-                # Gardé brièvement pour les dernières requêtes de stats
+        if not engine:
+            return jsonify({'error': 'Le moteur de simulation n\'est pas disponible.'}), 500
 
-        return jsonify({'status': 'stopped'})
+        success = engine.start_replay_from_file(filename)
 
-    @app.route('/api/stats/<sim_id>')
-    def api_stats(sim_id: str):
-        """Récupère les statistiques courantes d'une simulation.
-
-        Args:
-            sim_id: Identifiant de la simulation
-
-        Returns:
-            JSON avec les statistiques (prix, volatilité, retours, etc.)
-        """
-        global simulations
-
-        with simulation_lock:
-            if sim_id not in simulations:
-                return jsonify({'error': 'Simulation not found'}), 404
-
-            sim = simulations[sim_id]
-            exchange = sim.get('exchange')
-
-            if not exchange:
-                return jsonify({'running': False})
-
-            stats = exchange.get_price_statistics()
-
-            return jsonify({
-                'running': sim['running'],
-                'current_price': exchange.current_price,
-                'total_return_pct': stats['total_return_pct'],
-                'min_price': stats['min_price'],
-                'max_price': stats['max_price'],
-                'volatility': stats['volatility'],
-                'call_count': stats['call_count']
-            })
+        if success:
+            return jsonify({'success': True, 'message': f'Replay du fichier "{filename}" démarré.'})
+        else:
+            return jsonify({'error': f'Impossible de démarrer le replay pour "{filename}".'}), 500

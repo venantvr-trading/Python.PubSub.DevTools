@@ -54,8 +54,12 @@ dmypy.json
 .DS_Store
 Thumbs.db
 
+# Cache
+.cache/
+
 # Project specific
 recordings/
+replay_data/
 scenarios/
 reports/
 *.dot

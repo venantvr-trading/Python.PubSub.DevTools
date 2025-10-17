@@ -1,19 +1,22 @@
 # Configuration PubSub DevTools
 # Fichier de configuration centralisé pour tous les services
 
-# === Répertoires Communs ===
-# Chemins relatifs (par rapport à ce fichier) ou absolus
-agents_dir: "./python_pubsub_risk/agents"
-events_dir: "./python_pubsub_risk/events"
+# === Répertoires Communs (Exemples) ===
+# Ces chemins sont utilisés par les services si non surchargés ci-dessous.
+# Ils pointent vers des exemples internes au projet DevTools.
+agents_dir: "./examples/sample_project/agents"
+events_dir: "./examples/sample_project/events"
 recordings_dir: "./recordings"
-scenarios_dir: "./python_pubsub_risk/scenario_testing/scenarios"
+cache_dir: "./.cache"
+replay_data_dir: "./replay_data"
+scenarios_dir: "./examples/sample_project/scenarios"
 reports_dir: "./reports"
 
 # === Configurations par service ===
 
 event_flow:
-  agents_dir: "./python_pubsub_risk/agents"
-  events_dir: "./python_pubsub_risk/events"
+  # Les chemins agents_dir et events_dir ne sont plus nécessaires ici.
+  # Le scanner les fournira directement à l'API.
   port: 5555
   test_agents:
     - "token_balance_refresh"
@@ -29,6 +32,6 @@ mock_exchange:
   default_spread_bps: 10.0
 
 scenario_testing:
-  scenarios_dir: "./python_pubsub_risk/scenario_testing/scenarios"
+  # Le chemin scenarios_dir est hérité de la configuration globale.
   reports_dir: "./reports"
   port: 5558

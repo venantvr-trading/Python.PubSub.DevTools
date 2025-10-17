@@ -19,10 +19,12 @@ class EventFlowConfig(BaseModel):
         port: Port d'écoute du serveur web (défaut: 5555)
         test_agents: Liste des agents à exclure de la visualisation
         namespace_colors: Couleurs par namespace pour la visualisation
+        cache_persist_path: Chemin pour la persistance du cache sur disque.
     """
-    agents_dir: Path
-    events_dir: Path
+    agents_dir: Path | None = None
+    events_dir: Path | None = None
     port: int = 5555
+    cache_persist_path: Path | None = None
     test_agents: List[str] = Field(default_factory=list)
     namespace_colors: Dict[str, str] = Field(default_factory=lambda: {
         'trading': '#4caf50',
@@ -33,9 +35,11 @@ class EventFlowConfig(BaseModel):
         'unknown': '#e0e0e0'
     })
 
-    @field_validator('agents_dir', 'events_dir', mode='before')
+    @field_validator('agents_dir', 'events_dir', 'cache_persist_path', mode='before')
     @classmethod
-    def convert_to_path(cls, v: Any) -> Path:
+    def convert_to_path(cls, v: Any) -> Path | None:
+        if v is None:
+            return None
         """Convertit les chemins en objets Path."""
         if isinstance(v, str):
             return Path(v)
@@ -66,14 +70,26 @@ class MockExchangeConfig(BaseModel):
 
     Attributes:
         port: Port d'écoute du serveur web (défaut: 5557)
+        replay_data_dir: Répertoire pour stocker les fichiers de replay de chandeliers.
         default_initial_price: Prix initial par défaut pour les actifs
         default_volatility: Volatilité par défaut
         default_spread_bps: Spread par défaut en points de base
     """
     port: int = 5557
+    replay_data_dir: Path | None = None
     default_initial_price: float = 50000.0
     default_volatility: float = 0.02
     default_spread_bps: float = 10.0
+
+    @field_validator('replay_data_dir', mode='before')
+    @classmethod
+    def convert_to_path(cls, v: Any) -> Path | None:
+        """Convertit le chemin en objet Path."""
+        if v is None:
+            return None
+        if isinstance(v, str):
+            return Path(v)
+        return v
 
 
 class ScenarioTestingConfig(BaseModel):
@@ -119,7 +135,9 @@ class DevToolsConfig(BaseModel):
     agents_dir: Path
     events_dir: Path
     recordings_dir: Path
+    cache_dir: Path | None = None
     scenarios_dir: Path | None = None
+    replay_data_dir: Path | None = None
     reports_dir: Path | None = None
 
     # Configurations par service
@@ -128,7 +146,7 @@ class DevToolsConfig(BaseModel):
     mock_exchange: MockExchangeConfig | None = None
     scenario_testing: ScenarioTestingConfig | None = None
 
-    @field_validator('agents_dir', 'events_dir', 'recordings_dir', 'scenarios_dir', 'reports_dir', mode='before')
+    @field_validator('agents_dir', 'events_dir', 'recordings_dir', 'cache_dir', 'scenarios_dir', 'replay_data_dir', 'reports_dir', mode='before')
     @classmethod
     def convert_to_path(cls, v: Any) -> Path | None:
         """Convertit les chemins en objets Path."""
@@ -143,16 +161,11 @@ class DevToolsConfig(BaseModel):
         """Construit les configurations par service si elles ne sont pas fournies."""
         # Event Flow
         if self.event_flow is None:
-            self.event_flow = EventFlowConfig(
-                agents_dir=self.agents_dir,
-                events_dir=self.events_dir
-            )
-        else:
-            # Assurer que agents_dir et events_dir sont définis
-            if not hasattr(self.event_flow, 'agents_dir') or self.event_flow.agents_dir is None:
-                self.event_flow.agents_dir = self.agents_dir
-            if not hasattr(self.event_flow, 'events_dir') or self.event_flow.events_dir is None:
-                self.event_flow.events_dir = self.events_dir
+            self.event_flow = EventFlowConfig()
+        
+        if self.event_flow.cache_persist_path is None and self.cache_dir:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            self.event_flow.cache_persist_path = self.cache_dir / "event_flow_cache.json"
 
         # Event Recorder
         if self.event_recorder is None:
@@ -166,6 +179,10 @@ class DevToolsConfig(BaseModel):
         # Mock Exchange
         if self.mock_exchange is None:
             self.mock_exchange = MockExchangeConfig()
+        
+        if self.mock_exchange.replay_data_dir is None and self.replay_data_dir:
+            self.replay_data_dir.mkdir(parents=True, exist_ok=True)
+            self.mock_exchange.replay_data_dir = self.replay_data_dir
 
         # Scenario Testing
         if self.scenario_testing is None and self.scenarios_dir and self.reports_dir:
@@ -219,7 +236,7 @@ class DevToolsConfig(BaseModel):
             return path_value
 
         # Résoudre les chemins de premier niveau
-        for key in ['agents_dir', 'events_dir', 'recordings_dir', 'scenarios_dir', 'reports_dir']:
+        for key in ['agents_dir', 'events_dir', 'recordings_dir', 'cache_dir', 'scenarios_dir', 'replay_data_dir', 'reports_dir']:
             if key in data:
                 data[key] = resolve_path(data[key])
 
@@ -232,6 +249,10 @@ class DevToolsConfig(BaseModel):
         if 'event_recorder' in data:
             if 'recordings_dir' in data['event_recorder']:
                 data['event_recorder']['recordings_dir'] = resolve_path(data['event_recorder']['recordings_dir'])
+
+        if 'mock_exchange' in data:
+            if 'replay_data_dir' in data['mock_exchange']:
+                data['mock_exchange']['replay_data_dir'] = resolve_path(data['mock_exchange']['replay_data_dir'])
 
         if 'scenario_testing' in data:
             for key in ['scenarios_dir', 'reports_dir']:

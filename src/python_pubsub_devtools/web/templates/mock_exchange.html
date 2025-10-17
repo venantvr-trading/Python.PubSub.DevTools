@@ -1,120 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Mock Exchange Simulator</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link href="{{ url_for('static', filename='css/mock_exchange.css') }}" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 Mock Exchange Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .file-list {
+            margin-top: 2rem;
+        }
+        #replay-files-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #replay-files-table th, #replay-files-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #replay-files-table th {
+            background-color: var(--card-header-bg);
+        }
+        .btn-delete, .btn-play {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+        }
+        .btn-delete:hover {
+            color: var(--color-danger);
+        }
+        .btn-play:hover {
+            color: var(--color-success);
+        }
+        #upload-form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        #upload-status {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+        .status-success {
+            color: var(--color-success);
+        }
+        .status-error {
+            color: var(--color-danger);
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>🎰 Mock Exchange Simulator</h1>
-        <p>Real-time market scenario visualization</p>
-    </div>
+    {% include 'header.html' %}
 
-    <div class="navbar">
-        <a class="nav-link" href="http://localhost:5555">Event Flow</a>
-        <a class="nav-link" href="http://localhost:5556">Recorder</a>
-        <a class="nav-link active" href="http://localhost:5557">Exchange</a>
-        <a class="nav-link" href="http://localhost:5558">Testing</a>
-    </div>
+    <div class="container">
+        <header class="main-header">
+            <h1>🎰 Mock Exchange Dashboard</h1>
+            <p>Simulez des scénarios de marché ou rejouez des données historiques.</p>
+        </header>
 
-    <div class="content">
-        <div class="info-box">
-            💡 Configure a market scenario below and click "Start Simulation" to see real-time price movements
+        <div class="card">
+            <h2>Scénarios Générés</h2>
+            <p>Les contrôles pour lancer les scénarios algorithmiques (BULL_RUN, FLASH_CRASH, etc.) seront ajoutés ici.</p>
+            <!-- TODO: Intégrer la logique des scénarios générés -->
         </div>
 
-        <div class="controls-panel">
-            <h3 style="margin-bottom: 15px; color: #333;">⚙️ Simulation Configuration</h3>
+        <div class="card file-list">
+            <h2>Rejouer des Données Historiques</h2>
 
-            <div class="controls-grid">
-                <div class="control-group">
-                    <label class="control-label">Market Scenario</label>
-                    <select class="control-input" id="scenario">
-                        <option value="bull_run">🐂 Bull Run (+20%)</option>
-                        <option value="bear_crash">🐻 Bear Crash (-30%)</option>
-                        <option value="sideways">↔️ Sideways (±2%)</option>
-                        <option selected value="flash_crash">⚡ Flash Crash</option>
-                        <option value="volatile">🎢 Volatile (±5%)</option>
-                        <option value="pump_and_dump">🚀💥 Pump & Dump</option>
-                        <option value="dead_cat_bounce">📉📈📉 Dead Cat Bounce</option>
-                        <option value="accumulation">📊↗️ Accumulation</option>
-                        <option value="distribution">📊↘️ Distribution</option>
-                    </select>
-                </div>
-
-                <div class="control-group">
-                    <label class="control-label">Initial Price (USDT)</label>
-                    <input class="control-input" id="initial_price" step="1000" type="number" value="50000">
-                </div>
-
-                <div class="control-group">
-                    <label class="control-label">Volatility Multiplier</label>
-                    <input class="control-input" id="volatility" max="5.0" min="0.1" step="0.1" type="number" value="1.0">
-                </div>
-
-                <div class="control-group">
-                    <label class="control-label">Spread (basis points)</label>
-                    <input class="control-input" id="spread" min="1" step="5" type="number" value="20">
-                </div>
+            <div class="card-content">
+                <h3>Uploader un fichier de données</h3>
+                <form id="upload-form">
+                    <input type="file" id="file-input" name="file" accept=".csv,.json" required>
+                    <button type="submit" class="btn btn-primary">Uploader</button>
+                </form>
+                <div id="upload-status"></div>
             </div>
 
-            <div class="button-group">
-                <button class="btn btn-primary" id="start-btn" onclick="startSimulation()">▶️ Start Simulation</button>
-                <button class="btn btn-secondary" disabled id="pause-btn" onclick="pauseSimulation()">⏸ Pause</button>
-                <button class="btn btn-danger" disabled id="stop-btn" onclick="stopSimulation()">⏹ Stop</button>
-                <span class="status-badge status-stopped" id="status-badge">● Stopped</span>
+            <div class="card-content">
+                <h3>Fichiers de Replay Disponibles</h3>
+                <table id="replay-files-table">
+                    <thead>
+                        <tr>
+                            <th>Nom du fichier</th>
+                            <th>Taille (KB)</th>
+                            <th>Date d'ajout</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if replay_files %}
+                            {% for file in replay_files %}
+                            <tr data-filename="{{ file.filename }}">
+                                <td>{{ file.filename }}</td>
+                                <td>{{ file.size_kb }}</td>
+                                <td>{{ file.created_at | format_datetime }}</td>
+                                <td>
+                                    <button class="btn-play" data-filename="{{ file.filename }}" title="Lancer le replay">▶️</button>
+                                    <button class="btn-delete" data-filename="{{ file.filename }}" title="Supprimer le fichier">🗑️</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 2rem;">Aucun fichier de replay trouvé. Uploadez-en un pour commencer.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Current Price</div>
-                <div class="stat-value" id="current-price">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Return</div>
-                <div class="stat-value" id="total-return">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Min Price</div>
-                <div class="stat-value" id="min-price">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Max Price</div>
-                <div class="stat-value" id="max-price">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Volatility</div>
-                <div class="stat-value" id="volatility-stat">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Candles</div>
-                <div class="stat-value" id="candle-count">0</div>
-            </div>
-        </div>
-
-        <div class="chart-container">
-            <div class="chart-title">📈 Live Price Chart</div>
-            <canvas class="chart-canvas" id="price-chart"></canvas>
         </div>
     </div>
 
-    <div class="footer">
-        <p>🎰 Mock Exchange Simulator | Port 5557 | <kbd>Ctrl+R</kbd> to refresh</p>
-    </div>
-</div>
-
-<button class="refresh-btn" onclick="location.reload()" title="Refresh">
-    ↻
-</button>
-
-<button class="dark-mode-btn" id="dark-mode-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode (D)">
-    🌙
-</button>
-
-<script src="{{ url_for('static', filename='js/mock_exchange.js') }}"></script>
+    {% include 'footer.html' %}
+    <script src="{{ url_for('static', filename='js/mock_exchange.js') }}"></script>
 </body>
 </html>
