@@ -37,23 +37,20 @@ logger = logging.getLogger(__name__)
 class ScenarioRunner:
     """Runs declarative test scenarios"""
 
-    def __init__(self, scenario_path: str, event_registry=None):
+    def __init__(self, service_bus: Any, event_registry=None):
         """Initialize scenario runner
 
         Args:
-            scenario_path: Path to YAML scenario file
+            service_bus: The service bus instance to use for chaos and assertions.
             event_registry: Optional event registry for chaos injector. Can be:
                 - Dict[str, type]: Mapping of event names to classes
                 - Callable: Factory function (event_name, event_data) -> event
                 - None: Use SimpleNamespace (zero coupling, default)
         """
-        self.scenario_path = Path(scenario_path)
+        self.service_bus = service_bus
         self.event_registry = event_registry
         self.scenario: Optional[TestScenario] = None  # type: ignore
-        self.exchange: Optional[Any] = None  # Optional[ScenarioBasedMockExchange]
-        self.recorder: Optional[Any] = None  # Optional[EventRecorder]
         self.chaos_injector: Optional[ChaosInjector] = None
-        self.service_bus = None
 
         # Results
         self.start_time = None
@@ -61,26 +58,18 @@ class ScenarioRunner:
         self.assertion_results: List[AssertionResult] = []
         self.events = []
 
-    def load_scenario(self) -> TestScenario:
+    def load_scenario(self, scenario_path: str | Path) -> TestScenario:
         """Load scenario from YAML file"""
-        logger.info(f"📖 Loading scenario from {self.scenario_path}")
+        logger.info(f"📖 Loading scenario from {scenario_path}")
 
-        with open(self.scenario_path, 'r') as f:
+        with open(scenario_path, 'r') as f:
             data = yaml.safe_load(f)
 
-        self.scenario = TestScenario(**data)  # type: ignore
+        self.scenario = TestScenario(**data)
         logger.info(f"✅ Loaded scenario: {self.scenario.name}")  # type: ignore
         logger.info(f"   {self.scenario.description}")  # type: ignore
 
         return self.scenario
-
-    def setup_exchange(self) -> None:
-        """Setup mock exchange based on scenario config"""
-        logger.info("Skipping exchange setup in runner. This should be controlled by API calls to mock_exchange.")
-
-    def setup_recording(self, service_bus):
-        """Setup event recording"""
-        logger.info("Skipping event recorder setup. Recording is now handled by API calls to event_recorder.")
 
     def setup_chaos(self, service_bus) -> Optional[ChaosInjector]:
         """Setup chaos engineering"""
@@ -153,8 +142,9 @@ class ScenarioRunner:
         """Check assertions"""
         logger.info(f"🔍 Checking assertions...")
 
-        # Collect events from recorder
-        events = self.recorder.events if self.recorder else []
+        # TODO: Collect events from the Event Recorder API instead of a direct object reference.
+        # For now, this part needs to be adapted to fetch events.
+        events = []  # Placeholder
 
         # Create assertion checker
         checker = AssertionChecker(events)
@@ -173,32 +163,17 @@ class ScenarioRunner:
         if self.chaos_injector:
             self.chaos_injector.stop()
 
-        if self.recorder:
-            self.recorder.stop_recording()
-            self.recorder.save()
-
-    def run(self) -> Dict[str, Any]:
+    def run(self, scenario_path: str | Path) -> Dict[str, Any]:
         """Execute complete scenario
 
         Returns:
             Dict with test results
         """
         self.start_time = datetime.now(timezone.utc)
-
         try:
-            # Load scenario
-            self.load_scenario()
-
-            # Setup mock service bus (simplified for testing)
-            from unittest.mock import Mock
-
-            self.service_bus = Mock()
-            self.service_bus.publish = lambda event_name, event, source: None
-            self.service_bus.subscribe = lambda event_name, handler: None
+            self.load_scenario(scenario_path)
 
             # Setup components
-            self.setup_exchange()
-            self.setup_recording(self.service_bus)
             self.setup_chaos(self.service_bus)
 
             # Run steps
@@ -272,8 +247,10 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
 
     # Run scenario
-    runner = ScenarioRunner(args.scenario)
-    results = runner.run()
+    # This CLI is broken due to dependency injection needs.
+    # It should be run via the ScenarioTestingServer.
+    print("❌ This CLI entrypoint is deprecated. Please use the ScenarioTestingServer.")
+    sys.exit(1)
 
     # Print summary
     print("\n" + "=" * 80)

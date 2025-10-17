@@ -1,0 +1,3 @@
+[console_scripts]
+pubsub-devtools = python_pubsub_devtools.cli.main:cli
+pubsub-tools = python_pubsub_devtools.cli.main:cli

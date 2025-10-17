@@ -3,11 +3,12 @@ Routes Flask pour le tableau de bord Scenario Testing.
 """
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 import yaml
 from flask import Flask, render_template, request, jsonify, current_app
@@ -15,6 +16,22 @@ from flask import Flask, render_template, request, jsonify, current_app
 # État global des exécutions de tests
 test_runs: Dict[str, Dict[str, Any]] = {}
 test_runs_lock = threading.Lock()
+
+
+class ListLogHandler(logging.Handler):
+    """Un handler de logging qui stocke les logs dans une liste."""
+
+    def __init__(self, log_list: List[Dict[str, Any]]):
+        super().__init__()
+        self.log_list = log_list
+
+    def emit(self, record: logging.LogRecord):
+        log_entry = {
+            'timestamp': datetime.fromtimestamp(record.created).strftime('%H:%M:%S'),
+            'level': record.levelname.lower(),
+            'message': self.format(record)
+        }
+        self.log_list.append(log_entry)
 
 
 def load_scenario_metadata(filepath: Path) -> Optional[Dict[str, Any]]:

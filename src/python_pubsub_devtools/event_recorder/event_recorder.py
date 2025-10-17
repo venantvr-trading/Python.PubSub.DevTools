@@ -161,6 +161,7 @@ class EventReplayer:
             self,
             service_bus,
             speed_multiplier: float = 1.0,
+            events_module_name: Optional[str] = None,
             event_filter: Optional[Callable[[str], bool]] = None,
             progress_callback: Optional[Callable[[int, int], None]] = None
     ) -> None:
@@ -169,16 +170,20 @@ class EventReplayer:
         Args:
             service_bus: ServiceBus instance to publish events to
             speed_multiplier: Speed control (1.0=real-time, 10.0=10x faster, 0.1=10x slower)
-            event_filter: Optional function to filter events (return True to replay)
+            events_module_name: Optional name of the module containing event classes for reconstruction.
+            event_filter: Optional function to filter events by name (return True to replay).
             progress_callback: Optional callback(current_event, total_events)
         """
         import importlib
 
         # Import events module dynamically
         try:
-            events_module = importlib.import_module('your_project.events')  # Replace 'your_project' with your project's module
-        except ImportError:
-            print("⚠️  Warning: Could not import events module. Event reconstruction may fail.")
+            if events_module_name:
+                events_module = importlib.import_module(events_module_name)
+            else:
+                events_module = None
+        except ImportError as e:
+            print(f"⚠️  Warning: Could not import events module '{events_module_name}': {e}. Event reconstruction may fail.")
             events_module = None
 
         print(f"🎬 Replaying at {speed_multiplier}x speed...")

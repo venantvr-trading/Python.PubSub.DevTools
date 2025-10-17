@@ -4,8 +4,9 @@ Scenario Testing Server - Serveur web pour l'exécution de tests de scénarios.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
-from flask import Flask
+from flask import Flask, g
 
 from ..config import ScenarioTestingConfig
 
@@ -38,6 +39,12 @@ def create_app(config: ScenarioTestingConfig) -> Flask:
     config.scenarios_dir.mkdir(parents=True, exist_ok=True)
     config.reports_dir.mkdir(parents=True, exist_ok=True)
 
+    @app.before_request
+    def before_request():
+        # Stocker les dépendances dans le contexte global de la requête (g)
+        # C'est une façon propre de rendre les dépendances disponibles dans les vues.
+        g.service_bus = app.config.get('SERVICE_BUS')
+
     # Importer et enregistrer les routes
     from . import views
 
@@ -65,16 +72,20 @@ class ScenarioTestingServer:
         >>> server.run()  # Bloquant
     """
 
-    def __init__(self, config: ScenarioTestingConfig):
+    def __init__(self, config: ScenarioTestingConfig, service_bus: Any):
         """Initialise le serveur avec la configuration.
 
         Args:
             config: Configuration ScenarioTestingConfig avec répertoires et port
+            service_bus: Instance du bus de services pour l'injection de chaos
+                et l'écoute d'événements.
         """
         self.config = config
         self.scenarios_dir = config.scenarios_dir
         self.reports_dir = config.reports_dir
+        self.service_bus = service_bus
         self.port = config.port
+
         self.app = create_app(config)
 
     def run(self, host: str = '0.0.0.0', debug: bool = False) -> None:
@@ -108,6 +119,9 @@ class ScenarioTestingServer:
         print("   Press Ctrl+C to stop")
         print("=" * 80)
         print()
+
+        # Injecter le service_bus dans la configuration de l'app
+        self.app.config['SERVICE_BUS'] = self.service_bus
 
         # threaded=True est nécessaire pour gérer les tests en background
         self.app.run(host=host, port=self.port, debug=debug, threaded=True)

@@ -351,9 +351,10 @@ open http://localhost:5556
 - 📋 **Liste des recordings** : Vue d'ensemble avec métadonnées (durée, événements, date)
 - 📊 **Statistiques globales** : Total events, durée totale, moyenne par recording
 - 🔍 **Vue détaillée** : Timeline complète des événements de chaque recording
+- 📝 **Sélection et Création** : Sélectionnez des événements dans la timeline pour créer un nouvel enregistrement filtré.
 - 📈 **Graphiques** : Distribution des événements par type (bar charts)
 - 🔎 **Filtrage** : Recherche en temps réel dans la timeline
-- 🎮 **Contrôles de replay** : Interface pour replay (bientôt disponible)
+- 🎮 **Contrôles de replay (Simulation)** : Interface pour simuler un replay dans le navigateur (Play/Pause/Vitesse).
 - 🔗 **Navigation** : Liens vers les autres outils (Event Flow, Mock Exchange, Testing)
 
 **API REST** :
@@ -362,6 +363,10 @@ open http://localhost:5556
 - `GET /recording/<filename>` : Vue détaillée d'un recording
 - `GET /api/recordings` : JSON avec metadata de tous les recordings
 - `GET /api/recording/<filename>` : JSON complet d'un recording
+- `POST /api/record/start` : Démarre une session d'enregistrement à distance.
+- `POST /api/record/event` : Enregistre un événement dans la session active.
+- `POST /api/record/stop` : Arrête et sauvegarde la session.
+- `POST /api/replay/start/<filename>` : Démarre une simulation de replay pour l'UI.
 
 **Intégration** :
 
@@ -380,11 +385,3 @@ Idées pour améliorer l'outil :
 - Export en différents formats (CSV, Parquet)
 - Replay controls dans le web UI (play/pause/speed)
 - Comparaison de 2 recordings côte à côte
-
-## 📝 Notes
-
-- Les enregistrements sont **lisibles** (JSON formaté)
-- Les timestamps sont en **millisecondes** depuis le début
-- La sérialisation utilise **Pydantic** quand disponible
-- Le rejeu est **non-blocking** (asyncio compatible)
-- **Dashboard web** disponible sur port 5556 pour visualisation interactive

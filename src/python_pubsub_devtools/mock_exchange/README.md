@@ -430,12 +430,6 @@ Idées pour améliorer :
 - Corrélations entre plusieurs paires
 - Latence réseau simulée
 
-## 📚 Voir Aussi
-
-- **Event Recorder** : `tools/event_recorder/` - Pour enregistrer les sessions
-- **Event Flow** : `tools/event_flow/` - Pour visualiser les événements
-- **Tests Integration** : `tests/integration/` - Tests avec mock exchange
-
 ---
 
 **Status** : ✅ Production-ready
