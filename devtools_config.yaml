@@ -32,6 +32,6 @@ mock_exchange:
   default_spread_bps: 10.0
 
 scenario_testing:
-  # Le chemin scenarios_dir est hérité de la configuration globale.
+  scenarios_dir: "./examples/sample_project/scenarios" # Champ obligatoire ajouté
   reports_dir: "./reports"
   port: 5558
