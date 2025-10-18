@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Event Flow Visualization Server
 
@@ -10,6 +9,7 @@ Usage:
 """
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -41,7 +41,7 @@ def get_namespace_color(namespace: str) -> str:
     return NAMESPACE_COLORS.get(namespace, NAMESPACE_COLORS['unknown'])
 
 
-def _convert_dot_to_svg(dot_content: str, graph_type: str) -> bytes:
+def _convert_dot_to_svg(dot_content: str, graph_type: str) -> bytes | None:
     """
     Convert DOT content to SVG using Graphviz
 
@@ -60,7 +60,7 @@ def _convert_dot_to_svg(dot_content: str, graph_type: str) -> bytes:
 
     try:
         # Write DOT to temp file
-        dot_file.write_text(dot_content)
+        dot_file.write_text(dot_content, encoding='utf-8')
 
         # Convert to SVG
         result = subprocess.run(
@@ -90,6 +90,76 @@ def _convert_dot_to_svg(dot_content: str, graph_type: str) -> bytes:
             dot_file.unlink()
         if svg_file.exists():
             svg_file.unlink()
+
+
+def _filter_dot_content(dot_content: str, namespaces: list[str], keywords: list[str]) -> str:
+    """
+    Filtre le contenu DOT en ne gardant que les nœuds et arêtes pertinents. (Version corrigée)
+    """
+    lines = dot_content.splitlines()
+    header_lines = []
+    node_definitions = {}  # Dictionnaire pour stocker la ligne de définition de chaque noeud
+    edge_lines = []
+
+    for line in lines:
+        stripped_line = line.strip()
+        if stripped_line.startswith(('digraph', 'graph', 'rankdir', 'node', 'edge')):
+            header_lines.append(line)
+        elif '->' in stripped_line:
+            edge_lines.append(stripped_line)
+        elif '[' in stripped_line and ']' in stripped_line:
+            match = re.search(r'"([^"]+)"', stripped_line)
+            if match:
+                node_name = match.group(1)
+                node_definitions[node_name] = line
+
+    # --- NOUVELLE LOGIQUE ---
+
+    # 1. On sélectionne d'abord les noeuds à garder en se basant sur les namespaces
+    nodes_to_keep_after_ns_filter = set()
+    node_pattern_attributes = re.compile(r'\[(.*?)\]')
+
+    for node_name, definition_line in node_definitions.items():
+        attributes_match = node_pattern_attributes.search(definition_line)
+        if not attributes_match:
+            continue
+        attributes = attributes_match.group(1)
+
+        is_agent = 'fillcolor="#ffcc80"' in attributes
+        if is_agent:
+            nodes_to_keep_after_ns_filter.add(node_name)
+            continue
+
+        # Pour les événements, on vérifie le namespace
+        if namespaces:
+            ns_match = re.search(r'namespace="([^"]+)"', attributes)
+            if ns_match and ns_match.group(1) in namespaces:
+                nodes_to_keep_after_ns_filter.add(node_name)
+        else:  # Si aucun namespace n'est coché, on n'affiche aucun événement
+            pass
+
+    # 2. Maintenant, on retire de cette sélection les noeuds qui correspondent aux mots-clés d'exclusion.
+    final_nodes_to_keep = set()
+    for node_name in nodes_to_keep_after_ns_filter:
+        if any(keyword.lower() in node_name.lower() for keyword in keywords):
+            continue  # Ce noeud est exclu
+        final_nodes_to_keep.add(node_name)
+
+    # 3. On reconstruit les listes de définitions à partir des noeuds finaux
+    filtered_node_definitions = [node_definitions[name] for name in sorted(final_nodes_to_keep) if name in node_definitions]
+
+    filtered_edge_definitions = []
+    edge_pattern = re.compile(r'"([^"]+)"\s*->\s*"([^"]+)"')
+    for line in edge_lines:
+        match = edge_pattern.search(line)
+        if not match:
+            continue
+        source, target = match.groups()
+        if source in final_nodes_to_keep and target in final_nodes_to_keep:
+            filtered_edge_definitions.append(line)
+
+    # Reconstruit le fichier DOT
+    return "\n".join(header_lines + filtered_node_definitions + filtered_edge_definitions + ["}"])
 
 
 def create_app(config) -> Flask:
@@ -183,6 +253,36 @@ def create_app(config) -> Flask:
         storage = get_storage()
         storage.clear()
         return jsonify({'status': 'success', 'message': 'All graphs cleared from cache'})
+
+    @app.route('/api/graph/filtered/<graph_type>', methods=['POST'])
+    def api_get_filtered_graph(graph_type):
+        """
+        Génère et renvoie un SVG filtré à la volée.
+        """
+        storage = get_storage()
+        original_graph = storage.get(graph_type)
+
+        if not original_graph:
+            return jsonify({'error': f'Graph "{graph_type}" not found in cache'}), 404
+
+        filters = request.get_json()
+        namespaces = filters.get('namespaces', [])
+        keywords = filters.get('keywords', [])
+
+        # Crée une version éphémère du graphe en filtrant le contenu DOT
+        filtered_dot = _filter_dot_content(original_graph.dot_content, namespaces, keywords)
+
+        svg_content = _convert_dot_to_svg(filtered_dot, f"{graph_type}_filtered")
+
+        if svg_content:
+            return Response(svg_content, mimetype='image/svg+xml')
+        else:
+            error_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400">
+                <rect width="800" height="400" fill="#f5f5f5"/>
+                <text x="400" y="180" font-family="Arial" font-size="18" fill="#d32f2f" text-anchor="middle" font-weight="bold">SVG Conversion Failed</text>
+                <text x="400" y="220" font-family="Arial" font-size="14" fill="#666" text-anchor="middle">Graphviz is not installed or encountered an error while filtering.</text>
+            </svg>'''
+            return Response(error_svg, mimetype='image/svg+xml'), 500
 
     @app.route('/')
     def index():
@@ -284,11 +384,11 @@ def main():
     # Check Graphviz (needed for DOT→SVG conversion)
     if not shutil.which('dot'):
         print("⚠️  WARNING: Graphviz not installed!")
-        print("   SVG conversion from cached DOT will fail.")
+        print("    SVG conversion from cached DOT will fail.")
         print()
-        print("   Install with:")
-        print("     sudo apt-get install graphviz")
-        print("     brew install graphviz  (macOS)")
+        print("    Install with:")
+        print("      sudo apt-get install graphviz")
+        print("      brew install graphviz  (macOS)")
         print()
 
     # Initialize storage before using it
@@ -303,16 +403,16 @@ def main():
     if status['total_graphs'] > 0:
         print(f"📊 Cache status: {status['total_graphs']} graph(s) cached")
         for graph_type in status['graphs']:
-            print(f"   - {graph_type}")
+            print(f"    - {graph_type}")
     else:
         print("📊 Cache status: Empty")
 
     print()
     print("🌐 Starting web server...")
-    print(f"   📍 API: http://{args.host}:{args.port}")
-    print(f"   📍 Web UI: http://{args.host}:{args.port}")
+    print(f"    📍 API: http://{args.host}:{args.port}")
+    print(f"    📍 Web UI: http://{args.host}:{args.port}")
     print()
-    print("   Press Ctrl+C to stop")
+    print("    Press Ctrl+C to stop")
     print("=" * 80)
     print()
 

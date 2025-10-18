@@ -17,57 +17,37 @@ function toggleFilters() {
 // Fullscreen toggle
 function toggleFullscreen() {
     document.body.classList.toggle('fullscreen');
-
-    // Update button icon
     const btn = document.getElementById('fullscreen-btn');
-    if (document.body.classList.contains('fullscreen')) {
-        btn.textContent = '⛶'; // Exit fullscreen icon
-    } else {
-        btn.textContent = '⛶'; // Fullscreen icon
-    }
-
-    // Save state
+    btn.textContent = document.body.classList.contains('fullscreen') ? '↘' : '⛶';
     localStorage.setItem('fullscreenMode', document.body.classList.contains('fullscreen'));
 }
 
 // Dark mode toggle
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
-
-    // Update button icon
     const btn = document.getElementById('dark-mode-btn');
     if (document.body.classList.contains('dark-mode')) {
-        btn.textContent = '☀️'; // Light mode icon
+        btn.textContent = '☀️';
         localStorage.setItem('darkMode', 'enabled');
     } else {
-        btn.textContent = '🌙'; // Dark mode icon
+        btn.textContent = '🌙';
         localStorage.setItem('darkMode', 'disabled');
     }
 }
 
 // Restore UI state
 function restoreUIState() {
-    // Restore filters sidebar state
-    const sidebarOpen = localStorage.getItem('filtersSidebarOpen') === 'true';
-    if (sidebarOpen) {
+    if (localStorage.getItem('filtersSidebarOpen') === 'true') {
         document.getElementById('filters-sidebar').classList.add('open');
         document.getElementById('filters-overlay').classList.add('visible');
     }
-
-    // Restore fullscreen state
-    const fullscreen = localStorage.getItem('fullscreenMode') === 'true';
-    if (fullscreen) {
+    if (localStorage.getItem('fullscreenMode') === 'true') {
         document.body.classList.add('fullscreen');
+        document.getElementById('fullscreen-btn').textContent = '↘';
     }
-
-    // Restore dark mode state
-    const darkMode = localStorage.getItem('darkMode');
-    const btn = document.getElementById('dark-mode-btn');
-    if (darkMode === 'enabled') {
+    if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
-        btn.textContent = '☀️';
-    } else {
-        btn.textContent = '🌙';
+        document.getElementById('dark-mode-btn').textContent = '☀️';
     }
 }
 
@@ -79,51 +59,66 @@ let isDragging = false;
 let startX = 0;
 let startY = 0;
 
-// Load SVG content directly into DOM
-async function loadSVG(container) {
+async function refreshGraphView(container) {
+    /**
+     * Récupère l'état actuel des filtres, envoie une requête POST au serveur
+     * et met à jour le contenu SVG du conteneur.
+     */
     const graphType = container.getAttribute('data-graph-type');
     const svgContent = container.querySelector('.svg-content');
 
-    // Get current filters
-    const params = new URLSearchParams();
+    svgContent.innerHTML = '<p style="padding: 20px; text-align: center; color: #667eea;">Chargement du graphe filtré...</p>';
 
-    // Get selected namespaces
-    const checkedNamespaces = Array.from(
+    // 1. Récupérer les filtres
+    const selectedNamespaces = Array.from(
         document.querySelectorAll('input[name="namespace"]:checked')
     ).map(cb => cb.value);
 
-    checkedNamespaces.forEach(ns => params.append('namespaces', ns));
-
-    // Get hide_failed option
-    const hideFailed = document.querySelector('#hide-failed').checked;
-    if (hideFailed) {
-        params.append('hide_failed', '1');
+    const keywordsToHide = [];
+    if (document.querySelector('#hide-failed').checked) {
+        // Le nom de l'input est hide_failed mais le label dit Masquer
+        // ce qui est ambigu. On va suivre l'id. Si coché, on masque.
+        keywordsToHide.push('Failed');
+    }
+    if (document.querySelector('#hide-rejected').checked) {
+        keywordsToHide.push('Rejected');
     }
 
-    // Get hide_rejected option
-    const hideRejected = document.querySelector('#hide-rejected').checked;
-    if (hideRejected) {
-        params.append('hide_rejected', '1');
-    }
+    const filters = {
+        namespaces: selectedNamespaces,
+        keywords: keywordsToHide,
+    };
 
+    // 2. Envoyer la requête POST
     try {
-        const response = await fetch(`/graph/${graphType}?${params.toString()}`);
+        const response = await fetch(`/api/graph/filtered/${graphType}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(filters),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erreur du serveur: ${response.status} ${response.statusText}`);
+        }
+
         const svgText = await response.text();
         svgContent.innerHTML = svgText;
+
     } catch (error) {
-        console.error('Error loading SVG:', error);
-        svgContent.innerHTML = '<p style="color: red;">Error loading graph</p>';
+        console.error('Erreur lors du chargement du graphe filtré:', error);
+        svgContent.innerHTML = `<p style="color: red; padding: 20px;">Erreur lors du chargement du graphe : ${error.message}</p>`;
     }
 }
 
-async function applyFilters() {
-    // Reload all SVGs with new filters
-    const containers = document.querySelectorAll('.graph-container');
-    for (const container of containers) {
-        await loadSVG(container);
+function applyAndSaveFilters() {
+    /** Applique les filtres et sauvegarde leur état. */
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab) {
+        const container = activeTab.querySelector('.graph-container');
+        if (container) {
+            refreshGraphView(container);
+        }
     }
-
-    // Save filter state
     saveFilterState();
 }
 
@@ -173,26 +168,25 @@ function restoreFilterState() {
 }
 
 function showTab(tabName) {
-    // Hide all tabs
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
 
-    // Show selected tab
     document.getElementById(tabName).classList.add('active');
-    event.target.classList.add('active');
+    // Cible le bouton qui a été cliqué
+    const clickedTabButton = document.querySelector(`button.tab[onclick="showTab('${tabName}')"]`);
+    if(clickedTabButton) {
+        clickedTabButton.classList.add('active');
+    }
 
-    // Save to localStorage
     localStorage.setItem('lastActiveTab', tabName);
 
-    // Reset zoom for new tab
-    currentZoom = 1;
-    currentX = 0;
-    currentY = 0;
-    updateTransform();
+    const newActiveTab = document.getElementById(tabName);
+    const container = newActiveTab.querySelector('.graph-container');
+    if (container) {
+        refreshGraphView(container);
+    }
+
+    resetZoom();
 }
 
 function zoomIn() {
@@ -225,81 +219,53 @@ function updateTransform() {
     svgContent.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentZoom})`;
 }
 
-// Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
-    // F = Toggle filters
-    if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        toggleFilters();
-    }
-    // ESC = Close filters if open
-    if (e.key === 'Escape') {
-        const sidebar = document.getElementById('filters-sidebar');
-        if (sidebar.classList.contains('open')) {
-            toggleFilters();
-        }
-    }
-    // Ctrl/Cmd + Shift + F = Toggle fullscreen
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
-        e.preventDefault();
-        toggleFullscreen();
-    }
-    // D = Toggle dark mode
-    if (e.key === 'd' || e.key === 'D') {
-        e.preventDefault();
-        toggleDarkMode();
-    }
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFilters(); }
+    if (e.key === 'Escape' && document.getElementById('filters-sidebar').classList.contains('open')) { toggleFilters(); }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'F' || e.key ==='f')) { e.preventDefault(); toggleFullscreen(); }
+    if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleDarkMode(); }
 });
 
-// Setup zoom and pan for all graph containers
 document.addEventListener('DOMContentLoaded', async function() {
-    // Restore UI state
     restoreUIState();
-
-    // Restore filter state
     restoreFilterState();
 
-    const containers = document.querySelectorAll('.graph-container');
-
-    // Load all SVGs
-    for (const container of containers) {
-        await loadSVG(container);
-    }
-
-    // Restore last active tab
-    const lastTab = localStorage.getItem('lastActiveTab') || 'simplified';
+    const lastTab = localStorage.getItem('lastActiveTab') || 'complete';
     const tabButton = document.querySelector(`button.tab[onclick="showTab('${lastTab}')"]`);
     if (tabButton) {
         tabButton.click();
+    } else {
+        const firstContainer = document.querySelector('.graph-container');
+        if (firstContainer) {
+            refreshGraphView(firstContainer);
+        }
     }
 
-    // Add real-time filter change listeners
-    document.querySelectorAll('input[name="namespace"]').forEach(checkbox => {
-        checkbox.addEventListener('change', applyFilters);
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', applyAndSaveFilters);
     });
 
-    document.querySelector('#hide-failed').addEventListener('change', applyFilters);
-    document.querySelector('#hide-rejected').addEventListener('change', applyFilters);
+    document.querySelector('button[onclick="selectAllNamespaces()"]').addEventListener('click', () => {
+        selectAllNamespaces();
+        applyAndSaveFilters();
+    });
+    document.querySelector('button[onclick="deselectAllNamespaces()"]').addEventListener('click', () => {
+        deselectAllNamespaces();
+        applyAndSaveFilters();
+    });
 
-    // Setup interactions
-    containers.forEach(container => {
-        // Mouse wheel zoom
+    document.querySelectorAll('.graph-container').forEach(container => {
         container.addEventListener('wheel', function(e) {
             e.preventDefault();
-
             const delta = e.deltaY;
             const zoomSpeed = 0.001;
             const zoomFactor = 1 - delta * zoomSpeed;
-
-            const newZoom = currentZoom * zoomFactor;
-            currentZoom = Math.max(0.1, Math.min(10, newZoom));
-
+            currentZoom = Math.max(0.1, Math.min(10, currentZoom * zoomFactor));
             updateTransform();
         });
 
-        // Mouse drag pan
         container.addEventListener('mousedown', function(e) {
-            if (e.button === 0) { // Left click only
+            if (e.button === 0) {
                 isDragging = true;
                 startX = e.clientX - currentX;
                 startY = e.clientY - currentY;
@@ -315,19 +281,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
 
-        container.addEventListener('mouseup', function() {
+        const stopDragging = () => {
             isDragging = false;
             container.style.cursor = 'grab';
-        });
+        };
 
-        container.addEventListener('mouseleave', function() {
-            isDragging = false;
-            container.style.cursor = 'grab';
-        });
-
-        // Double click to reset
-        container.addEventListener('dblclick', function() {
-            resetZoom();
-        });
+        container.addEventListener('mouseup', stopDragging);
+        container.addEventListener('mouseleave', stopDragging);
+        container.addEventListener('dblclick', resetZoom);
     });
 });
