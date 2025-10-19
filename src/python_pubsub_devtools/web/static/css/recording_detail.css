@@ -574,3 +574,251 @@ body {
     justify-content: flex-end;
     gap: 10px;
 }
+
+/* Dark Mode Toggle Button */
+.dark-mode-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #667eea;
+    background: white;
+    color: #667eea;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.dark-mode-toggle:hover {
+    background: #667eea;
+    transform: scale(1.1);
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+body.dark-mode .container {
+    background: #1a1a1a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .header {
+    background: linear-gradient(135deg, #2d2d44 0%, #3a3a5a 100%);
+}
+
+body.dark-mode .back-link {
+    color: #e0e0e0;
+}
+
+body.dark-mode .toolbar {
+    background: #2d2d2d;
+    border-bottom-color: #3a3a3a;
+}
+
+body.dark-mode .selection-count {
+    color: #b0b0b0;
+}
+
+body.dark-mode .selection-count strong {
+    color: #8fa3ff;
+}
+
+body.dark-mode .btn-secondary {
+    background: #3a3a3a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .btn-secondary:hover {
+    background: #4a4a4a;
+}
+
+body.dark-mode .replay-controls {
+    background: #2d2d2d;
+    border-color: #3a3a3a;
+}
+
+body.dark-mode .replay-title {
+    color: #e0e0e0;
+}
+
+body.dark-mode .replay-info {
+    color: #8fa3ff;
+}
+
+body.dark-mode .replay-mode {
+    background: #3a3a3a;
+}
+
+body.dark-mode .replay-mode label {
+    color: #b0b0b0;
+}
+
+body.dark-mode .speed-control label {
+    color: #b0b0b0;
+}
+
+body.dark-mode .speed-control select {
+    background: #3a3a3a;
+    border-color: #4a4a4a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .progress-bar {
+    background: #3a3a3a;
+}
+
+body.dark-mode .progress-text {
+    color: #b0b0b0;
+}
+
+body.dark-mode .info-card {
+    background: #2d2d2d;
+    border-left-color: #8fa3ff;
+}
+
+body.dark-mode .info-label {
+    color: #b0b0b0;
+}
+
+body.dark-mode .info-value {
+    color: #e0e0e0;
+}
+
+body.dark-mode .filters-container {
+    background: #2d2d2d;
+    border-color: #3a3a3a;
+}
+
+body.dark-mode .filters-title {
+    color: #e0e0e0;
+}
+
+body.dark-mode .filter-item label {
+    color: #b0b0b0;
+}
+
+body.dark-mode .filter-item select,
+body.dark-mode .filter-item input[type="text"] {
+    background: #3a3a3a;
+    border-color: #4a4a4a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .filter-item select:focus,
+body.dark-mode .filter-item input[type="text"]:focus {
+    border-color: #8fa3ff;
+}
+
+body.dark-mode .events-table-container {
+    background: #2d2d2d;
+    border-color: #3a3a3a;
+}
+
+body.dark-mode .events-table-header {
+    background: #3a3a3a;
+    border-bottom-color: #4a4a4a;
+}
+
+body.dark-mode .events-table-title {
+    color: #e0e0e0;
+}
+
+body.dark-mode .events-table thead {
+    background: #3a3a3a;
+}
+
+body.dark-mode .events-table th {
+    color: #e0e0e0;
+    border-bottom-color: #4a4a4a;
+}
+
+body.dark-mode .events-table td {
+    border-bottom-color: #3a3a3a;
+    color: #b0b0b0;
+}
+
+body.dark-mode .event-row:hover {
+    background: #3a3a3a;
+}
+
+body.dark-mode .event-index {
+    color: #b0b0b0;
+}
+
+body.dark-mode .event-time {
+    color: #8fa3ff;
+}
+
+body.dark-mode .event-name {
+    color: #e0e0e0;
+}
+
+body.dark-mode .event-source {
+    color: #888;
+}
+
+body.dark-mode .pagination-info {
+    background: #3a3a3a;
+    border-top-color: #4a4a4a;
+    color: #b0b0b0;
+}
+
+body.dark-mode .chart-container {
+    background: #2d2d2d;
+    border-color: #3a3a3a;
+}
+
+body.dark-mode .chart-title {
+    color: #e0e0e0;
+}
+
+body.dark-mode .bar-label {
+    color: #b0b0b0;
+}
+
+body.dark-mode .bar-fill-container {
+    background: #3a3a3a;
+}
+
+body.dark-mode .bar-value {
+    color: #8fa3ff;
+}
+
+body.dark-mode .modal-content {
+    background: #2d2d2d;
+}
+
+body.dark-mode .modal-header {
+    background: linear-gradient(135deg, #2d2d44 0%, #3a3a5a 100%);
+}
+
+body.dark-mode .modal-body pre {
+    background: #3a3a3a;
+    border-color: #4a4a4a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .modal-footer {
+    background: #3a3a3a;
+}
+
+body.dark-mode .dark-mode-toggle {
+    background: #2d2d2d;
+    border-color: #8fa3ff;
+    color: #8fa3ff;
+}
+
+body.dark-mode .dark-mode-toggle:hover {
+    background: #8fa3ff;
+    color: #1a1a1a;
+}

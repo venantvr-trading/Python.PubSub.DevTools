@@ -6,11 +6,14 @@ from __future__ import annotations
 import json
 import threading
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 from flask import Flask, render_template, jsonify, current_app
+
+from .player_manager import PlayerManager
+from .recording_manager import RecordingManager
 
 # État global du replay
 replay_state: Dict[str, Any] = {
@@ -27,15 +30,9 @@ replay_state: Dict[str, Any] = {
 }
 replay_lock = threading.Lock()
 
-# État global de l'enregistrement
-recording_state: Dict[str, Any] = {
-    'active': False,
-    'session_name': None,
-    'start_time': None,
-    'events': [],
-    'event_count': 0
-}
-recording_lock = threading.Lock()
+# Managers dédiés (nouvelle architecture)
+player_manager: Optional[PlayerManager] = None
+recording_manager: Optional[RecordingManager] = None
 
 
 def load_recording(filename: str) -> Optional[Dict[str, Any]]:
@@ -143,6 +140,12 @@ def register_routes(app: Flask) -> None:
     Args:
         app: Instance Flask
     """
+    global player_manager, recording_manager
+
+    # Initialiser les managers
+    recordings_dir = Path(app.config['RECORDINGS_DIR'])
+    player_manager = PlayerManager()
+    recording_manager = RecordingManager(recordings_dir)
 
     @app.route('/')
     def index():
@@ -391,30 +394,39 @@ def register_routes(app: Flask) -> None:
 
         data = request.json or {}
         speed = data.get('speed', 1.0)
+        events = recording.get('events', [])
 
-        with replay_lock:
-            if replay_state['active']:
-                return jsonify({'error': 'Replay already active'}), 400
+        # Vérifier si des players sont enregistrés pour faire un vrai replay
+        has_players = player_manager.has_players()
 
-            replay_state['active'] = True
-            replay_state['filename'] = filename
-            replay_state['current_event_index'] = 0
-            replay_state['total_events'] = len(recording.get('events', []))
-            replay_state['speed'] = speed
-            replay_state['paused'] = False
-            replay_state['simulation_mode'] = True  # Le serveur ne supporte que le mode simulation
-            replay_state['events'] = recording.get('events', [])
-            replay_state['replayer'] = None
-            replay_state['replay_thread'] = None
+        if has_players:
+            # Vrai replay via les players
+            return api_replay_execute(filename)
+        else:
+            # Mode simulation pour l'UI uniquement
+            with replay_lock:
+                if replay_state['active']:
+                    return jsonify({'error': 'Replay already active'}), 400
 
-            message = 'Replay started (simulation mode)'
+                replay_state['active'] = True
+                replay_state['filename'] = filename
+                replay_state['current_event_index'] = 0
+                replay_state['total_events'] = len(events)
+                replay_state['speed'] = speed
+                replay_state['paused'] = False
+                replay_state['simulation_mode'] = True
+                replay_state['events'] = events
+                replay_state['replayer'] = None
+                replay_state['replay_thread'] = None
 
-        return jsonify({
-            'success': True,
-            'message': message,
-            'total_events': replay_state['total_events'],
-            'simulation_mode': True
-        })
+                message = 'Replay started (simulation mode - no players registered)'
+
+            return jsonify({
+                'success': True,
+                'message': message,
+                'total_events': replay_state['total_events'],
+                'simulation_mode': True
+            })
 
     @app.route('/api/replay/pause', methods=['POST'])
     def api_replay_pause():
@@ -496,27 +508,17 @@ def register_routes(app: Flask) -> None:
         Request JSON:
             session_name: Nom de la session (optionnel, défaut: auto-généré)
         """
-        global recording_state
         from flask import request
 
         data = request.json or {}
-        session_name = data.get('session_name', f'session_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
+        session_name = data.get('session_name')
 
-        with recording_lock:
-            if recording_state['active']:
-                return jsonify({'error': 'Recording already active'}), 400
+        result = recording_manager.start_session(session_name)
 
-            recording_state['active'] = True
-            recording_state['session_name'] = session_name
-            recording_state['start_time'] = datetime.now(timezone.utc)
-            recording_state['events'] = []
-            recording_state['event_count'] = 0
-
-        return jsonify({
-            'success': True,
-            'message': 'Recording started',
-            'session_name': session_name
-        })
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify({'error': result.get('error')}), 400
 
     @app.route('/api/record/event', methods=['POST'])
     def api_record_event():
@@ -528,11 +530,7 @@ def register_routes(app: Flask) -> None:
             source: Source de l'événement
             timestamp_offset_ms: Offset temporel (optionnel, calculé si absent)
         """
-        global recording_state
         from flask import request
-
-        if not recording_state['active']:
-            return jsonify({'error': 'No active recording session'}), 400
 
         data = request.json
         if not data or 'event_name' not in data:
@@ -541,83 +539,128 @@ def register_routes(app: Flask) -> None:
         event_name = data['event_name']
         event_data = data.get('event_data', {})
         source = data.get('source', 'Unknown')
+        timestamp_offset_ms = data.get('timestamp_offset_ms')
 
-        with recording_lock:
-            # Calculer timestamp offset si non fourni
-            if 'timestamp_offset_ms' in data:
-                timestamp_offset_ms = data['timestamp_offset_ms']
-            else:
-                timestamp_offset_ms = int(
-                    (datetime.now(timezone.utc) - recording_state['start_time']).total_seconds() * 1000
-                )
+        result = recording_manager.record_event(
+            event_name, event_data, source, timestamp_offset_ms
+        )
 
-            # Ajouter l'événement
-            recording_state['events'].append({
-                'timestamp_offset_ms': timestamp_offset_ms,
-                'event_name': event_name,
-                'event_data': event_data,
-                'source': source
-            })
-            recording_state['event_count'] += 1
-
-        return jsonify({'success': True, 'event_count': recording_state['event_count']})
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify({'error': result.get('error')}), 400
 
     @app.route('/api/record/stop', methods=['POST'])
     def api_record_stop():
         """Arrête l'enregistrement et sauvegarde dans un fichier."""
-        global recording_state
+        result = recording_manager.stop_session()
 
-        with recording_lock:
-            if not recording_state['active']:
-                return jsonify({'error': 'No active recording session'}), 400
-
-            session_name = recording_state['session_name']
-            events = recording_state['events']
-            start_time = recording_state['start_time']
-
-            # Créer le fichier d'enregistrement
-            recordings_dir = Path(current_app.config['RECORDINGS_DIR'])
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{session_name}_{timestamp}.json"
-            filepath = recordings_dir / filename
-
-            recording_data = {
-                'session_name': session_name,
-                'start_time': start_time.isoformat() if start_time else None,
-                'duration_ms': events[-1]['timestamp_offset_ms'] if events else 0,
-                'total_events': len(events),
-                'events': events
-            }
-
-            with open(filepath, 'w') as f:
-                json.dump(recording_data, f, indent=2)
-
-            event_count = len(events)
-
-            # Réinitialiser l'état
-            recording_state['active'] = False
-            recording_state['session_name'] = None
-            recording_state['start_time'] = None
-            recording_state['events'] = []
-            recording_state['event_count'] = 0
-
-        return jsonify({
-            'success': True,
-            'message': 'Recording saved',
-            'filename': filename,
-            'event_count': event_count
-        })
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify({'error': result.get('error')}), 400
 
     @app.route('/api/record/status')
     def api_record_status():
         """Récupère le statut de l'enregistrement."""
-        global recording_state
+        return jsonify(recording_manager.get_status())
 
-        with recording_lock:
-            status = {
-                'active': recording_state['active'],
-                'session_name': recording_state['session_name'],
-                'event_count': recording_state['event_count']
-            }
+    # ========== API de gestion des Players (Replay) ==========
 
-        return jsonify(status)
+    @app.route('/api/player/register', methods=['POST'])
+    def api_player_register():
+        """Enregistre un player endpoint pour le replay d'événements.
+
+        Request JSON:
+            player_endpoint: URL du endpoint player (ex: http://localhost:12345/replay)
+            consumer_name: Nom du consumer
+        """
+        from flask import request
+
+        data = request.json
+        if not data or 'player_endpoint' not in data:
+            return jsonify({'error': 'player_endpoint is required'}), 400
+
+        player_endpoint = data['player_endpoint']
+        consumer_name = data.get('consumer_name', 'Unknown')
+
+        player_manager.register(consumer_name, player_endpoint)
+
+        return jsonify({
+            'success': True,
+            'message': 'Player registered successfully',
+            'consumer_name': consumer_name,
+            'player_endpoint': player_endpoint
+        })
+
+    @app.route('/api/player/unregister', methods=['POST'])
+    def api_player_unregister():
+        """Désenregistre un player endpoint.
+
+        Request JSON:
+            player_endpoint: URL du endpoint player
+        """
+        from flask import request
+
+        data = request.json
+        if not data or 'player_endpoint' not in data:
+            return jsonify({'error': 'player_endpoint is required'}), 400
+
+        player_endpoint = data['player_endpoint']
+        consumer_name = player_manager.unregister(player_endpoint)
+
+        if consumer_name:
+            return jsonify({
+                'success': True,
+                'message': 'Player unregistered successfully',
+                'consumer_name': consumer_name
+            })
+        else:
+            return jsonify({'error': 'Player endpoint not found'}), 404
+
+    @app.route('/api/player/list')
+    def api_player_list():
+        """Liste tous les players enregistrés."""
+        players = player_manager.get_all()
+        return jsonify({'players': players, 'count': len(players)})
+
+    @app.route('/api/replay/execute/<filename>', methods=['POST'])
+    def api_replay_execute(filename: str):
+        """Exécute le replay en envoyant les événements aux players enregistrés.
+
+        Request JSON:
+            speed: Vitesse de replay (0.1 à 10.0, défaut 1.0)
+            player_name: Nom du player spécifique (optionnel, sinon tous les players)
+        """
+        from flask import request
+
+        recording = load_recording(filename)
+        if not recording:
+            return jsonify({'error': 'Recording not found'}), 404
+
+        events = recording.get('events', [])
+        if not events:
+            return jsonify({'error': 'No events in recording'}), 400
+
+        # Vérifier qu'il y a des players enregistrés
+        if not player_manager.has_players():
+            return jsonify({'error': 'No players registered'}), 400
+
+        data = request.json or {}
+        speed = data.get('speed', 1.0)
+        target_player = data.get('player_name')
+
+        # Lancer le replay dans un thread
+        def replay_thread():
+            player_manager.replay_events(events, speed, target_player)
+
+        thread = threading.Thread(target=replay_thread, daemon=True)
+        thread.start()
+
+        return jsonify({
+            'success': True,
+            'message': 'Replay started',
+            'total_events': len(events),
+            'target_players': player_manager.count() if not target_player else 1,
+            'speed': speed
+        })
