@@ -228,9 +228,11 @@ def create_app(config) -> Flask:
 
     return app
 
+
 def main():
     # ... (la fonction main reste identique) ...
     pass
+
 
 if __name__ == '__main__':
     main()
