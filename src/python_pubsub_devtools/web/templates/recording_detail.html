@@ -56,8 +56,8 @@
 
             <div class="replay-mode">
                 <label>
-                    <input checked id="simulation-mode" type="checkbox">
-                    Simulation Mode (no ServiceBus)
+                    <input id="simulation-mode" type="checkbox">
+                    Simulation Mode (no PubSub publishing)
                 </label>
             </div>
 
@@ -375,7 +375,16 @@
                 simulation_mode: simulationMode
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 409) {
+                // Replay already active
+                return response.json().then(data => {
+                    alert(`Cannot start replay: Another replay is already active (${data.active_file}). Please stop it first.`);
+                    throw new Error('Replay conflict');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 document.getElementById('play-btn').disabled = true;
@@ -392,6 +401,9 @@
             } else {
                 alert('Error: ' + (data.error || 'Unknown error'));
             }
+        })
+        .catch(error => {
+            console.error('Error starting replay:', error);
         });
     }
 
@@ -447,9 +459,24 @@
         fetch('/api/replay/status')
         .then(response => response.json())
         .then(data => {
-            const progressPercent = data.progress || 0;
-            document.getElementById('progress-fill').style.width = progressPercent + '%';
-            document.getElementById('progress-text').textContent = `${data.current_event} / ${data.total_events} events`;
+            // Check if a replay is active but NOT for this file
+            const playBtn = document.getElementById('play-btn');
+            if (data.active && data.filename !== currentFilename) {
+                // Another file is replaying - disable play button
+                playBtn.disabled = true;
+                playBtn.title = `Cannot start: ${data.filename} is currently replaying`;
+            } else if (!data.active) {
+                // No replay active - enable play button
+                playBtn.disabled = false;
+                playBtn.title = 'Play';
+            }
+
+            // Update progress if this file is playing
+            if (data.active && data.filename === currentFilename) {
+                const progressPercent = data.progress || 0;
+                document.getElementById('progress-fill').style.width = progressPercent + '%';
+                document.getElementById('progress-text').textContent = `${data.current_event} / ${data.total_events} events`;
+            }
 
             if (!data.active && replayStatusInterval) {
                 // Replay terminé
@@ -463,6 +490,13 @@
             }
         });
     }
+
+    // Check initial replay status on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateReplayStatus();
+        // Poll status even when not playing to detect external replays
+        setInterval(updateReplayStatus, 1000);
+    });
 
     // ===== DARK MODE =====
     function toggleDarkMode() {

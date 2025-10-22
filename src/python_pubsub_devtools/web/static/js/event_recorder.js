@@ -144,6 +144,9 @@ async function updateRecordingStatus() {
 // Check recording status on page load
 document.addEventListener('DOMContentLoaded', function() {
     checkRecordingStatus();
+    checkGlobalReplayStatus();
+    // Poll for replay status
+    setInterval(checkGlobalReplayStatus, 1000);
 });
 
 async function checkRecordingStatus() {
@@ -224,3 +227,106 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+
+// ============================================================================
+// GLOBAL REPLAY STATUS
+// ============================================================================
+
+async function checkGlobalReplayStatus() {
+    try {
+        const response = await fetch('/api/replay/status');
+        const status = await response.json();
+
+        const banner = document.getElementById('replay-status-banner');
+
+        if (status.active) {
+            // Show banner
+            banner.style.display = 'flex';
+
+            // Update banner content
+            const statusText = status.paused ? 'Paused' : 'Replaying';
+            const modeText = status.simulation_mode ? '(Simulation)' : '(Publishing to PubSub)';
+
+            document.getElementById('replay-status-text').textContent = `${statusText} ${modeText}`;
+            document.getElementById('replay-status-file').textContent = status.filename || '';
+            document.getElementById('replay-progress-text').textContent =
+                `${status.current_event} / ${status.total_events} events (${Math.round(status.progress)}%)`;
+
+            // Update recording card indicator
+            updateRecordingCardReplayIndicator(status);
+        } else {
+            // Hide banner
+            banner.style.display = 'none';
+
+            // Hide all card indicators
+            document.querySelectorAll('.recording-card').forEach(card => {
+                card.classList.remove('replaying');
+                const indicator = card.querySelector('.recording-replay-indicator');
+                if (indicator) {
+                    indicator.style.display = 'none';
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error checking global replay status:', error);
+    }
+}
+
+function updateRecordingCardReplayIndicator(status) {
+    // Find the recording card matching the filename
+    const cards = document.querySelectorAll('.recording-card');
+
+    cards.forEach(card => {
+        const filename = card.getAttribute('data-filename');
+        const indicator = card.querySelector('.recording-replay-indicator');
+
+        if (!indicator) return;
+
+        if (filename === status.filename) {
+            // This card is replaying - show indicator
+            card.classList.add('replaying');
+            indicator.style.display = 'block';
+
+            // Update progress bar
+            const fill = indicator.querySelector('.replay-indicator-fill');
+            fill.style.width = `${status.progress}%`;
+
+            // Update status text
+            const statusText = status.paused ? '⏸️ Paused' : '🎬 Replaying';
+            const modeText = status.simulation_mode ? 'Simulation' : 'PubSub';
+            indicator.querySelector('.replay-indicator-status').textContent = `${statusText} (${modeText})`;
+
+            // Update progress percentage
+            indicator.querySelector('.replay-indicator-progress').textContent =
+                `${status.current_event}/${status.total_events} (${Math.round(status.progress)}%)`;
+        } else {
+            // Hide indicator for other cards
+            card.classList.remove('replaying');
+            indicator.style.display = 'none';
+        }
+    });
+}
+
+async function stopGlobalReplay() {
+    if (!confirm('Stop the current replay?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/replay/stop', {
+            method: 'POST'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            console.log('Replay stopped:', result.message);
+            // The banner will be hidden by the next status poll
+        } else {
+            alert(`Failed to stop replay: ${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error stopping replay:', error);
+        alert('Failed to stop replay');
+    }
+}

@@ -1,5 +1,57 @@
 /* Event Recorder Specific Styles */
 
+/* Replay Status Banner */
+.replay-status-banner {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 15px 25px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.replay-status-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.replay-status-icon {
+    font-size: 1.5em;
+}
+
+.replay-status-text {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.replay-status-file {
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.replay-progress-text {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -39,12 +91,62 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     transition: all 0.2s;
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
 .recording-card:hover {
     border-color: #667eea;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     transform: translateY(-2px);
+}
+
+.recording-card.replaying {
+    border-color: #f5576c;
+    background: linear-gradient(135deg, rgba(240, 147, 251, 0.05) 0%, rgba(245, 87, 108, 0.05) 100%);
+}
+
+/* Replay Indicator in Card */
+.recording-replay-indicator {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 6px;
+    color: white;
+}
+
+.replay-indicator-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.replay-indicator-fill {
+    height: 100%;
+    background: white;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.replay-indicator-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9em;
+}
+
+.replay-indicator-status {
+    font-weight: bold;
+}
+
+.replay-indicator-progress {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.85em;
 }
 
 .recording-header {

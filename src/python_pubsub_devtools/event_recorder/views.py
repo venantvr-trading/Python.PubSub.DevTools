@@ -398,6 +398,7 @@ def register_routes(app: Flask) -> None:
 
         Request JSON:
             speed: Vitesse de replay (0.1 à 10.0, défaut 1.0)
+            simulation_mode: Si True, ne publie pas sur PubSub (défaut False)
         """
         global replay_state
         from flask import request
@@ -408,39 +409,60 @@ def register_routes(app: Flask) -> None:
 
         data = request.json or {}
         speed = data.get('speed', 1.0)
+        simulation_mode = data.get('simulation_mode', False)
         events = recording.get('events', [])
 
-        # Vérifier si des players sont enregistrés pour faire un vrai replay
-        has_players = player_manager.has_players()
+        with replay_lock:
+            if replay_state['active']:
+                return jsonify({
+                    'error': 'Replay already active',
+                    'active_file': replay_state.get('filename', 'unknown')
+                }), 409  # 409 Conflict
 
-        if has_players:
-            # Vrai replay via les players
-            return api_replay_execute(filename)
+            replay_state['active'] = True
+            replay_state['filename'] = filename
+            replay_state['current_event_index'] = 0
+            replay_state['total_events'] = len(events)
+            replay_state['speed'] = speed
+            replay_state['paused'] = False
+            replay_state['simulation_mode'] = simulation_mode
+            replay_state['events'] = events
+
+        if not simulation_mode:
+            # Vrai replay via PubSub
+            def progress_callback(current: int, total: int):
+                """Mise à jour de la progression du replay"""
+                with replay_lock:
+                    replay_state['current_event_index'] = current
+
+            def replay_thread_fn():
+                try:
+                    player_manager.replay_events(
+                        events,
+                        speed,
+                        None,
+                        progress_callback=progress_callback
+                    )
+                except Exception as e:
+                    print(f"❌ Replay error: {e}")
+                finally:
+                    with replay_lock:
+                        replay_state['active'] = False
+
+            thread = threading.Thread(target=replay_thread_fn, daemon=True)
+            thread.start()
+            replay_state['replay_thread'] = thread
+            message = 'Replay started (publishing to PubSub)'
         else:
             # Mode simulation pour l'UI uniquement
-            with replay_lock:
-                if replay_state['active']:
-                    return jsonify({'error': 'Replay already active'}), 400
+            message = 'Replay started (simulation mode - no actual publishing)'
 
-                replay_state['active'] = True
-                replay_state['filename'] = filename
-                replay_state['current_event_index'] = 0
-                replay_state['total_events'] = len(events)
-                replay_state['speed'] = speed
-                replay_state['paused'] = False
-                replay_state['simulation_mode'] = True
-                replay_state['events'] = events
-                replay_state['replayer'] = None
-                replay_state['replay_thread'] = None
-
-                message = 'Replay started (simulation mode - no players registered)'
-
-            return jsonify({
-                'success': True,
-                'message': message,
-                'total_events': replay_state['total_events'],
-                'simulation_mode': True
-            })
+        return jsonify({
+            'success': True,
+            'message': message,
+            'total_events': len(events),
+            'simulation_mode': simulation_mode
+        })
 
     @app.route('/api/replay/pause', methods=['POST'])
     def api_replay_pause():
@@ -454,6 +476,10 @@ def register_routes(app: Flask) -> None:
             replay_state['paused'] = not replay_state['paused']
             status = 'paused' if replay_state['paused'] else 'playing'
 
+            # Informer le PlayerManager si ce n'est pas en mode simulation
+            if not replay_state['simulation_mode']:
+                player_manager.pause_replay(replay_state['paused'])
+
         return jsonify({'success': True, 'status': status})
 
     @app.route('/api/replay/stop', methods=['POST'])
@@ -462,6 +488,10 @@ def register_routes(app: Flask) -> None:
         global replay_state
 
         with replay_lock:
+            # Informer le PlayerManager si ce n'est pas en mode simulation
+            if not replay_state['simulation_mode']:
+                player_manager.stop_replay()
+
             replay_state['active'] = False
             replay_state['paused'] = False
             replay_state['current_event_index'] = 0
@@ -482,9 +512,7 @@ def register_routes(app: Flask) -> None:
         speed = data.get('speed', 1.0)
 
         with replay_lock:
-            if not replay_state['active']:
-                return jsonify({'error': 'No active replay'}), 400
-
+            # Permettre le changement de vitesse même si pas actif (préréglage)
             replay_state['speed'] = speed
 
         return jsonify({'success': True, 'speed': speed})
@@ -495,8 +523,8 @@ def register_routes(app: Flask) -> None:
         global replay_state
 
         with replay_lock:
-            # Simuler l'avancement
-            if replay_state['active'] and not replay_state['paused']:
+            # Simuler l'avancement UNIQUEMENT en mode simulation
+            if replay_state['simulation_mode'] and replay_state['active'] and not replay_state['paused']:
                 replay_state['current_event_index'] += 1
                 if replay_state['current_event_index'] >= replay_state['total_events']:
                     replay_state['active'] = False
@@ -508,6 +536,8 @@ def register_routes(app: Flask) -> None:
                 'current_event': replay_state['current_event_index'],
                 'total_events': replay_state['total_events'],
                 'speed': replay_state['speed'],
+                'simulation_mode': replay_state['simulation_mode'],
+                'filename': replay_state.get('filename', ''),
                 'progress': (replay_state['current_event_index'] / replay_state['total_events'] * 100) if replay_state['total_events'] > 0 else 0
             }
 

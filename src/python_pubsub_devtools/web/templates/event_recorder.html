@@ -25,6 +25,17 @@
 
     {% include '_navbar.html' %}
 
+    <!-- Replay Status Banner (hidden by default) -->
+    <div class="replay-status-banner" id="replay-status-banner" style="display: none;">
+        <div class="replay-status-info">
+            <span class="replay-status-icon">🎬</span>
+            <span class="replay-status-text" id="replay-status-text">Replaying...</span>
+            <span class="replay-status-file" id="replay-status-file"></span>
+            <span class="replay-progress-text" id="replay-progress-text">0 / 0</span>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="stopGlobalReplay()">⏹️ Stop Replay</button>
+    </div>
+
     <div class="content">
         <div class="stats-grid">
             <div class="stat-card">
@@ -55,7 +66,18 @@
         {% if recordings %}
         <div class="recordings-list">
             {% for recording in recordings %}
-            <div class="recording-card" onclick="viewRecording('{{ recording.filename }}')">
+            <div class="recording-card" data-filename="{{ recording.filename }}" onclick="viewRecording('{{ recording.filename }}')">
+                <!-- Replay Progress Indicator (hidden by default) -->
+                <div class="recording-replay-indicator" style="display: none;">
+                    <div class="replay-indicator-bar">
+                        <div class="replay-indicator-fill"></div>
+                    </div>
+                    <div class="replay-indicator-text">
+                        <span class="replay-indicator-status">🎬 Replaying</span>
+                        <span class="replay-indicator-progress">0%</span>
+                    </div>
+                </div>
+
                 <div class="recording-header">
                     <div class="recording-name">{{ recording.session_name }}</div>
                     <div class="recording-date">{{ recording.created_at }}</div>
