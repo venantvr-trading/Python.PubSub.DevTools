@@ -36,17 +36,28 @@ class EventListener:
         self._listener_thread: Optional[threading.Thread] = None
         self._running = False
 
-    def _on_message(self, message: dict) -> None:
+    def _on_message(self, enriched_message: dict) -> None:
         """
-        Callback appelé quand un message est reçu.
+        Callback appelé quand un message est reçu via wildcard.
+
+        Pour les handlers wildcard, le client enrichit automatiquement le payload JSON
+        avec les métadonnées du message (topic, producer, message_id).
 
         Args:
-            message: Message PubSub contenant topic, message, producer, message_id
+            enriched_message: Objet enrichi contenant:
+                - topic: Nom du topic
+                - message: Payload du message
+                - producer: Nom du producteur
+                - message_id: ID unique du message
         """
         try:
-            topic = message.get("topic")
-            data = message.get("message")
-            producer = message.get("producer", "Unknown")
+            topic = enriched_message.get("topic")
+            data = enriched_message.get("message")
+            producer = enriched_message.get("producer", "Unknown")
+
+            if not topic:
+                print(f"⚠ Received message without topic, skipping")
+                return
 
             # Enregistrer l'événement
             self._recording_manager.record_event(
@@ -57,6 +68,8 @@ class EventListener:
 
         except Exception as e:
             print(f"❌ Error recording event: {e}")
+            import traceback
+            traceback.print_exc()
 
     def start(self) -> bool:
         """
