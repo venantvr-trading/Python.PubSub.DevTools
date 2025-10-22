@@ -8,6 +8,12 @@
     <link href="{{ url_for('static', filename='css/scenario_testing.css') }}" rel="stylesheet">
 </head>
 <body>
+<div class="control-buttons">
+    <button class="control-btn" id="dark-mode-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode (D)">
+        🌙
+    </button>
+</div>
+
 <div class="container">
     <div class="header">
         <h1>🎯 Scenario Testing Dashboard</h1>
@@ -140,10 +146,6 @@
 
 <button class="refresh-btn" onclick="location.reload()" title="Refresh">
     ↻
-</button>
-
-<button class="dark-mode-btn" id="dark-mode-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode">
-    🌙
 </button>
 
 <script src="{{ url_for('static', filename='js/scenario_testing.js') }}"></script>

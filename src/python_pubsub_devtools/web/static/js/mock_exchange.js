@@ -187,3 +187,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+// Dark mode toggle
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+
+    // Update button icon
+    const btn = document.getElementById('dark-mode-btn');
+    if (document.body.classList.contains('dark-mode')) {
+        btn.textContent = '☀️'; // Light mode icon
+        localStorage.setItem('darkMode', 'enabled');
+    } else {
+        btn.textContent = '🌙'; // Dark mode icon
+        localStorage.setItem('darkMode', 'disabled');
+    }
+
+    // Update chart colors if exists
+    if (typeof candlestickChart !== 'undefined' && candlestickChart) {
+        const isDark = document.body.classList.contains('dark-mode');
+        candlestickChart.applyOptions({
+            layout: {
+                background: { color: isDark ? '#1a1a1a' : '#ffffff' },
+                textColor: isDark ? '#e0e0e0' : '#333333',
+            },
+            grid: {
+                vertLines: { color: isDark ? '#3a3a3a' : '#e1e1e1' },
+                horzLines: { color: isDark ? '#3a3a3a' : '#e1e1e1' },
+            },
+        });
+    }
+}
+
+// Restore dark mode preference on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'enabled') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('dark-mode-btn').textContent = '☀️';
+    }
+});
