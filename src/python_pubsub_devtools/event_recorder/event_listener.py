@@ -70,15 +70,21 @@ class EventListener:
             return False
 
         try:
+            print(f"🔄 Starting Event Listener...")
+            print(f"   PubSub URL: {self._pubsub_url}")
+            print(f"   Consumer: {self._consumer_name}")
+
             # Créer le client PubSub avec wildcard "*" pour écouter TOUS les topics
             self._client = PubSubClient(
                 url=self._pubsub_url,
                 consumer=self._consumer_name,
                 topics=["*"]  # Wildcard pour tous les topics
             )
+            print(f"   ✓ PubSub client created")
 
             # Enregistrer le handler pour tous les messages
-            self._client.on("*", self._on_message)
+            self._client.register_handler("*", self._on_message)
+            print(f"   ✓ Handler registered for wildcard '*'")
 
             # Lancer le client dans un thread daemon
             self._running = True
@@ -88,24 +94,32 @@ class EventListener:
                 name="EventListener"
             )
             self._listener_thread.start()
+            print(f"   ✓ Listener thread started")
 
             print(f"✓ Event Listener started (listening to ALL topics via wildcard '*')")
             return True
 
         except Exception as e:
             print(f"❌ Failed to start Event Listener: {e}")
+            import traceback
+            traceback.print_exc()
             self._running = False
             return False
 
     def _run_client(self) -> None:
         """Thread worker qui exécute le client PubSub."""
         try:
+            print(f"🔌 Connecting to PubSub Server at {self._pubsub_url}...")
             if self._client:
-                self._client.start()  # Bloquant
+                self._client.start()  # Bloquant - se connecte et attend les messages
+                print(f"✓ PubSub client connected successfully")
         except Exception as e:
             print(f"❌ Event Listener error: {e}")
+            import traceback
+            traceback.print_exc()
         finally:
             self._running = False
+            print(f"⚠ Event Listener thread terminated")
 
     def stop(self) -> None:
         """Arrête le listener."""
