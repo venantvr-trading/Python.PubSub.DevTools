@@ -1,41 +1,4 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: monospace;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 15px;
-}
-
-.container {
-    max-width: 1800px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    padding-bottom: 30px;
-}
-
-.header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px 30px;
-}
-
-.header h1 {
-    font-size: 1.5em;
-    margin-bottom: 5px;
-}
-
-.header p {
-    font-size: 0.9em;
-    opacity: 0.9;
-}
+/* Recording Detail Specific Styles */
 
 .back-link {
     color: white;
@@ -602,19 +565,7 @@ body {
     transform: scale(1.1);
 }
 
-/* Dark Mode Styles */
-body.dark-mode {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-}
-
-body.dark-mode .container {
-    background: #1a1a1a;
-    color: #e0e0e0;
-}
-
-body.dark-mode .header {
-    background: linear-gradient(135deg, #2d2d44 0%, #3a3a5a 100%);
-}
+/* Dark Mode Overrides for Recording Detail */
 
 body.dark-mode .back-link {
     color: #e0e0e0;

@@ -1,78 +1,5 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Scenario Testing Specific Styles */
 
-body {
-    font-family: monospace;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 15px;
-    transition: background 0.3s ease;
-}
-
-.container {
-    max-width: 1800px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-}
-
-.header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px 30px;
-    text-align: center;
-}
-
-.header h1 {
-    font-size: 1.8em;
-    margin-bottom: 8px;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.header p {
-    font-size: 1em;
-    opacity: 0.9;
-}
-
-.navbar {
-    background: #f8f9fa;
-    border-bottom: 2px solid #dee2e6;
-    padding: 0 30px;
-    display: flex;
-    gap: 0;
-}
-
-.nav-link {
-    padding: 12px 24px;
-    text-decoration: none;
-    color: #6c757d;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    font-size: 0.95em;
-    display: inline-flex;
-    align-items: center;
-    line-height: 1.4;
-}
-
-.nav-link:hover {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-}
-
-.nav-link.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
-    font-weight: 600;
-}
-
-.content {
-    padding: 30px;
-}
 
 .grid-container {
     display: grid;
@@ -373,15 +300,6 @@ body {
     color: #1565c0;
 }
 
-.footer {
-    text-align: center;
-    padding: 15px;
-    color: #6c757d;
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    font-size: 0.85em;
-}
-
 .scenario-preview {
     background: #f8f9fa;
     border: 1px solid #dee2e6;
@@ -431,92 +349,7 @@ body {
     display: block;
 }
 
-.refresh-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    font-size: 1.3em;
-    cursor: pointer;
-    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
-    transition: all 0.2s;
-    z-index: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    padding: 0;
-}
-
-.refresh-btn:hover {
-    background: #764ba2;
-    transform: scale(1.05);
-}
-
-.dark-mode-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 80px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    font-size: 1.3em;
-    cursor: pointer;
-    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.4);
-    transition: all 0.2s;
-    z-index: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    padding: 0;
-}
-
-.dark-mode-btn:hover {
-    background: #764ba2;
-    transform: scale(1.05);
-}
-
-/* Dark Mode Styles */
-body.dark-mode {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-}
-
-body.dark-mode .container {
-    background: #2d2d2d;
-    color: #e0e0e0;
-}
-
-body.dark-mode .header {
-    background: linear-gradient(135deg, #3a3a3a 0%, #2d2d2d 100%);
-}
-
-body.dark-mode .navbar {
-    background: #1a1a1a;
-    border-bottom-color: #3a3a3a;
-}
-
-body.dark-mode .nav-link {
-    color: #b0b0b0;
-}
-
-body.dark-mode .nav-link:hover {
-    background: rgba(102, 126, 234, 0.2);
-    color: #8fa3f5;
-}
-
-body.dark-mode .nav-link.active {
-    color: #8fa3f5;
-    border-bottom-color: #8fa3f5;
-}
+/* Dark Mode Overrides for Scenario Testing */
 
 body.dark-mode .panel {
     background: #2d2d2d;
@@ -659,28 +492,6 @@ body.dark-mode .chaos-config-title {
 
 body.dark-mode .chaos-item {
     background: rgba(246, 173, 85, 0.15);
-}
-
-body.dark-mode .footer {
-    background: #1a1a1a;
-    color: #b0b0b0;
-    border-top-color: #3a3a3a;
-}
-
-body.dark-mode .refresh-btn {
-    background: #8fa3f5;
-}
-
-body.dark-mode .refresh-btn:hover {
-    background: #667eea;
-}
-
-body.dark-mode .dark-mode-btn {
-    background: #8fa3f5;
-}
-
-body.dark-mode .dark-mode-btn:hover {
-    background: #667eea;
 }
 
 body.dark-mode .status-idle {
