@@ -5,7 +5,7 @@
         quality-check quality-format quality-format-check quality-lint \
         serve-all 5555-serve-event-flow 5556-serve-event-recorder 5557-serve-mock-exchange 5558-serve-scenario-testing \
         setup-dev setup-venv \
-        test-coverage test-unit
+        test tests test-coverage test-unit
 
 # ============================================================================
 # VARIABLES
@@ -44,7 +44,7 @@ help:
 	@echo "  make quality-format-check  Check formatting without modifying"
 	@echo "  make quality-lint          Run linting (flake8 + mypy)"
 	@echo ""
-	@echo "🚀 Run Services (using $(CONFIG)):
+	@echo "🚀 Run Services (using $(CONFIG)):"
 	@echo "  make serve-all              Launch all services simultaneously"
 	@echo "  make 5555-serve-event-flow       Launch Event Flow Visualization (port 5555)"
 	@echo "  make 5556-serve-event-recorder   Launch Event Recorder Dashboard (port 5556)"
@@ -56,8 +56,10 @@ help:
 	@echo "  make setup-venv      Create virtual environment"
 	@echo ""
 	@echo "🧪 Testing:"
+	@echo "  make test            Run unit tests (alias for test-unit)"
+	@echo "  make tests           Run unit tests (alias for test-unit)"
+	@echo "  make test-unit       Run unit tests with pytest"
 	@echo "  make test-coverage   Run tests with coverage report"
-	@echo "  make test-unit       Run tests with pytest"
 	@echo ""
 
 # ============================================================================
@@ -270,6 +272,19 @@ setup-venv:
 # TESTING
 # ============================================================================
 
+test: test-unit
+	@echo ""
+
+tests: test-unit
+	@echo ""
+
+test-unit:
+	@echo "🧪 Running unit tests..."
+	@if [ -d "$(VENV)" ]; then \
+		. $(VENV)/bin/activate && pytest tests/ -v; \
+	else \
+		pytest tests/ -v; \
+	fi
 
 test-coverage:
 	@echo "🧪 Running tests with coverage..."
@@ -279,11 +294,3 @@ test-coverage:
 		pytest tests/ --cov=$(PROJECT_PATH) --cov-report=html --cov-report=term-missing -v; \
 	fi
 	@echo "✅ Coverage report: htmlcov/index.html"
-
-test-unit:
-	@echo "🧪 Running tests..."
-	@if [ -d "$(VENV)" ]; then \
-		. $(VENV)/bin/activate && pytest tests/ -v; \
-	else \
-		pytest tests/ -v; \
-	fi
