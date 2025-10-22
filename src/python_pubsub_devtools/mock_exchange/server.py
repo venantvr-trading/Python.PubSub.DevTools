@@ -32,12 +32,15 @@ def create_app(config: Any, service_bus: Any) -> Flask:
     app.config['REPLAY_DATA_DIR'] = config.replay_data_dir
     app.config['PORT'] = config.port
 
-    # Initialiser le moteur de simulation
+    # Importer les modules nécessaires
     from .scenario_exchange import ScenarioBasedMockExchange
+    from . import views
 
+    # Initialiser le moteur de simulation avec callback pour les receivers
     engine = ScenarioBasedMockExchange(
         replay_data_dir=config.replay_data_dir,
-        service_bus=service_bus
+        service_bus=service_bus,
+        get_receivers_callback=views.get_registered_receivers
     )
     app.config['EXCHANGE_ENGINE'] = engine
 
@@ -45,9 +48,7 @@ def create_app(config: Any, service_bus: Any) -> Flask:
     if config.replay_data_dir:
         config.replay_data_dir.mkdir(parents=True, exist_ok=True)
 
-    # Importer et enregistrer les routes
-    from . import views
-
+    # Enregistrer les routes
     views.register_routes(app)
 
     return app

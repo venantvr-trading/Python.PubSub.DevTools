@@ -22,6 +22,20 @@ _registered_endpoints: Dict[str, str] = {}  # consumer_name -> endpoint
 _registry_lock = threading.Lock()
 
 
+def get_registered_receivers() -> List[Dict[str, str]]:
+    """
+    Retourne la liste des receivers enregistrés.
+
+    Returns:
+        Liste des receivers avec consumer_name et endpoint
+    """
+    with _registry_lock:
+        return [
+            {'consumer_name': name, 'player_endpoint': endpoint}
+            for name, endpoint in _registered_endpoints.items()
+        ]
+
+
 def _allowed_file(filename: str) -> bool:
     """Vérifie si l'extension du fichier est autorisée."""
     return '.' in filename and \
@@ -134,12 +148,15 @@ def register_routes(app: Flask) -> None:
             return jsonify({'error': 'Le nom du fichier est manquant.'}), 400
 
         filename = secure_filename(data['filename'])
+        mode = data.get('mode', 'pull')
+        interval_seconds = data.get('interval_seconds', 1.0)
+
         engine = current_app.config.get('EXCHANGE_ENGINE')
 
         if not engine:
             return jsonify({'error': 'Le moteur de simulation n\'est pas disponible.'}), 500
 
-        success = engine.start_replay_from_file(filename)
+        success = engine.start_replay_from_file(filename, mode=mode, interval_seconds=interval_seconds)
 
         if success:
             status = engine.get_replay_status()
@@ -180,7 +197,7 @@ def register_routes(app: Flask) -> None:
         return jsonify({
             'active': status['status'] == 'running',
             'session': {
-                'mode': 'pull',  # Default mode for now
+                'mode': status.get('mode', 'pull'),
                 'filename': status['current_file']
             },
             'cursor': status['current_index'],
