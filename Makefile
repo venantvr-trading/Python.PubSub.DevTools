@@ -104,6 +104,10 @@ install-dev:
 		make setup-venv; \
 	fi
 	@. $(VENV)/bin/activate && $(PIP) install --upgrade pip setuptools wheel
+	@if [ -f "requirements-dev.txt" ]; then \
+		echo "📦 Installing local dependencies in editable mode..."; \
+		. $(VENV)/bin/activate && $(PIP) install -r requirements-dev.txt; \
+	fi
 	@. $(VENV)/bin/activate && $(PIP) install -e ".[dev]"
 	@echo "✅ Development installation complete!"
 	@echo ""
@@ -256,6 +260,10 @@ serve-all: check-config
 setup-dev: setup-venv
 	@echo "🔧 Setting up development environment..."
 	@. $(VENV)/bin/activate && $(PIP) install --upgrade pip setuptools wheel
+	@if [ -f "requirements-dev.txt" ]; then \
+		echo "📦 Installing local dependencies in editable mode..."; \
+		. $(VENV)/bin/activate && $(PIP) install -r requirements-dev.txt; \
+	fi
 	@. $(VENV)/bin/activate && $(PIP) install -e ".[dev]"
 	@echo "✅ Development environment ready!"
 	@echo "   Activate with: source $(VENV)/bin/activate"

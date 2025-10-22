@@ -1,0 +1,5 @@
+# Development dependencies in editable mode
+# These are local packages that need to be installed with pip install -e
+
+-e ../../venantvr-pubsub/Python.PubSub.Client
+-e ../../venantvr-pubsub/Python.PubSub.DevTools.Consumers
