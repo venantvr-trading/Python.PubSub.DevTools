@@ -7,6 +7,7 @@ de fichiers de replay de chandeliers.
 from __future__ import annotations
 
 import os
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List
@@ -15,6 +16,10 @@ from flask import Flask, render_template, jsonify, request, current_app
 from werkzeug.utils import secure_filename
 
 ALLOWED_EXTENSIONS = {'csv', 'json'}
+
+# Simple in-memory registry for players/receivers
+_registered_endpoints: Dict[str, str] = {}  # consumer_name -> endpoint
+_registry_lock = threading.Lock()
 
 
 def _allowed_file(filename: str) -> bool:
@@ -140,3 +145,95 @@ def register_routes(app: Flask) -> None:
             return jsonify({'success': True, 'message': f'Replay du fichier "{filename}" démarré.'})
         else:
             return jsonify({'error': f'Impossible de démarrer le replay pour "{filename}".'}), 500
+
+    # ========== Player/Receiver Registration Endpoints ==========
+
+    @app.route('/api/player/register', methods=['POST'])
+    def api_player_register():
+        """
+        Endpoint pour enregistrer un player/receiver.
+
+        Compatible avec Event Recorder et Mock Exchange.
+        """
+        data = request.json
+        if not data:
+            return jsonify({'error': 'JSON payload required'}), 400
+
+        # Support both player_endpoint and receiver_endpoint
+        endpoint = data.get('player_endpoint') or data.get('receiver_endpoint')
+        if not endpoint:
+            return jsonify({'error': 'player_endpoint or receiver_endpoint is required'}), 400
+
+        consumer_name = data.get('consumer_name', 'Unknown')
+
+        with _registry_lock:
+            _registered_endpoints[consumer_name] = endpoint
+
+        print(f"✓ Player registered: {consumer_name} -> {endpoint}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Player registered successfully',
+            'consumer_name': consumer_name,
+            'player_endpoint': endpoint
+        })
+
+    @app.route('/api/player/unregister', methods=['POST'])
+    def api_player_unregister():
+        """Désenregistre un player/receiver."""
+        data = request.json
+        if not data:
+            return jsonify({'error': 'JSON payload required'}), 400
+
+        endpoint = data.get('player_endpoint') or data.get('receiver_endpoint')
+        if not endpoint:
+            return jsonify({'error': 'player_endpoint or receiver_endpoint is required'}), 400
+
+        consumer_name = None
+        with _registry_lock:
+            for name, ep in list(_registered_endpoints.items()):
+                if ep == endpoint:
+                    consumer_name = name
+                    del _registered_endpoints[name]
+                    break
+
+        if consumer_name:
+            print(f"✓ Player unregistered: {consumer_name}")
+            return jsonify({
+                'success': True,
+                'message': 'Player unregistered successfully',
+                'consumer_name': consumer_name
+            })
+        else:
+            return jsonify({'error': 'Player endpoint not found'}), 404
+
+    @app.route('/api/player/list')
+    def api_player_list():
+        """Liste tous les players/receivers enregistrés."""
+        with _registry_lock:
+            players = [
+                {'consumer_name': name, 'player_endpoint': endpoint}
+                for name, endpoint in _registered_endpoints.items()
+            ]
+        return jsonify({'players': players, 'count': len(players)})
+
+    # Alias pour compatibilité
+    @app.route('/api/receiver/register', methods=['POST'])
+    def api_receiver_register():
+        """Alias pour /api/player/register."""
+        return api_player_register()
+
+    @app.route('/api/receiver/unregister', methods=['POST'])
+    def api_receiver_unregister():
+        """Alias pour /api/player/unregister."""
+        return api_player_unregister()
+
+    @app.route('/api/receiver/list')
+    def api_receiver_list():
+        """Liste tous les receivers (alias)."""
+        with _registry_lock:
+            receivers = [
+                {'consumer_name': name, 'receiver_endpoint': endpoint}
+                for name, endpoint in _registered_endpoints.items()
+            ]
+        return jsonify({'receivers': receivers, 'count': len(receivers)})
