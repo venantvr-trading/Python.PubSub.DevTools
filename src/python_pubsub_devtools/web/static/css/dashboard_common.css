@@ -90,6 +90,49 @@ body {
     font-size: 0.85em;
 }
 
+.control-btn {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2em;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+}
+
+.control-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: scale(1.05);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.control-btn.recording-active {
+    background: #dc3545 !important;
+    color: white !important;
+    border-color: #dc3545 !important;
+    animation: recordPulse 2s infinite;
+}
+
+@keyframes recordPulse {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(220, 53, 69, 0.6);
+    }
+}
 
 /* --- Composants d'interface (UI Components) --- */
 
@@ -108,6 +151,15 @@ body {
     gap: 6px;
     line-height: 1;
     min-height: 38px;
+}
+
+.control-buttons {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 900;
 }
 
 .btn-primary { background: #667eea; color: white; }
@@ -147,6 +199,14 @@ body {
 .stat-value.positive { color: #28a745; }
 .stat-value.negative { color: #dc3545; }
 
+.players-list {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    background: #f8f9fa;
+    max-height: 300px;
+    overflow-y: auto;
+}
 
 /* Formulaires */
 .control-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
@@ -174,6 +234,33 @@ body {
 
 
 /* --- Dark Mode --- */
+
+body.dark-mode .control-btn {
+    background: #2d2d2d;
+    color: #8fa3ff;
+    border-color: #8fa3ff;
+}
+
+body.dark-mode .control-btn:hover {
+    background: #8fa3f5;
+    color: #1a1a1a;
+    transform: scale(1.05);
+}
+
+body.dark-mode .control-btn.recording-active {
+    background: #f87171 !important;
+    color: #1a1a1a !important;
+    border-color: #f87171 !important;
+}
+
+body.dark-mode .content {
+    background: #1a1a1a;
+}
+
+body.dark-mode .players-list {
+    background: #1a1a1a;
+    border-color: #3a3a3a;
+}
 
 body.dark-mode { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); }
 body.dark-mode .container { background: #2d2d2d; color: #e0e0e0; }

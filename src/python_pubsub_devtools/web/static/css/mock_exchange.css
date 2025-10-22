@@ -179,10 +179,6 @@
 
 /* Dark Mode Overrides for Mock Exchange */
 
-body.dark-mode .content {
-    background: #2d2d2d;
-}
-
 body.dark-mode .info-box {
     background: #2d3748;
     border-left-color: #4299e1;
@@ -296,8 +292,6 @@ body.dark-mode .status-paused {
     background: white;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    padding: 20px;
-    margin: 20px 30px;
 }
 
 .card h2 {
@@ -958,15 +952,6 @@ body.dark-mode .receiver-endpoint {
     color: #333;
 }
 
-.players-list {
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    background: #f8f9fa;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
 .player-empty {
     color: #6c757d;
     font-style: italic;
@@ -1009,11 +994,6 @@ body.dark-mode .players-section {
 
 body.dark-mode .players-section h2 {
     color: #e0e0e0;
-}
-
-body.dark-mode .players-list {
-    background: #2a2a2a;
-    border-color: #3a3a3a;
 }
 
 body.dark-mode .player-empty {

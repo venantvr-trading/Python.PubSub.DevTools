@@ -106,17 +106,6 @@ body.dark-mode .filters-close:hover {
     color: #8fa3f5;
 }
 
-body.dark-mode .control-btn {
-    background: #2d2d2d;
-    color: #8fa3f5;
-    border-color: #8fa3f5;
-}
-
-body.dark-mode .control-btn:hover {
-    background: #8fa3f5;
-    color: #1a1a1a;
-}
-
 body.dark-mode .panel {
     background: #2d2d2d;
     border-color: #3a3a3a;
@@ -558,43 +547,8 @@ body.fullscreen .filters-overlay {
 }
 
 /* Control Buttons */
-.control-buttons {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    display: flex;
-    gap: 10px;
-    z-index: 900;
-}
-
 body.fullscreen .control-buttons {
     z-index: 1900;
-}
-
-.control-btn {
-    background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
-    border-radius: 8px;
-    width: 40px;
-    height: 40px;
-    font-size: 1.2em;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.control-btn:hover {
-    background: #667eea;
-    color: white;
-    transform: scale(1.05);
-}
-
-.control-btn:active {
-    transform: scale(0.95);
 }
 
 /* Buttons */
