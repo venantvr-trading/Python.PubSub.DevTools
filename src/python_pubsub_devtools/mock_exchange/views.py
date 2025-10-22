@@ -142,7 +142,12 @@ def register_routes(app: Flask) -> None:
         success = engine.start_replay_from_file(filename)
 
         if success:
-            return jsonify({'success': True, 'message': f'Replay du fichier "{filename}" démarré.'})
+            status = engine.get_replay_status()
+            return jsonify({
+                'success': True,
+                'message': f'Replay du fichier "{filename}" démarré.',
+                'total_candles': status['total_candles']
+            })
         else:
             return jsonify({'error': f'Impossible de démarrer le replay pour "{filename}".'}), 500
 
@@ -170,7 +175,17 @@ def register_routes(app: Flask) -> None:
             return jsonify({'error': 'Le moteur de simulation n\'est pas disponible.'}), 500
 
         status = engine.get_replay_status()
-        return jsonify(status)
+
+        # Format attendu par le frontend
+        return jsonify({
+            'active': status['status'] == 'running',
+            'session': {
+                'mode': 'pull',  # Default mode for now
+                'filename': status['current_file']
+            },
+            'cursor': status['current_index'],
+            'total_candles': status['total_candles']
+        })
 
     @app.route('/api/replay/candles', methods=['GET'])
     def api_replay_candles():
@@ -181,7 +196,11 @@ def register_routes(app: Flask) -> None:
             return jsonify({'error': 'Le moteur de simulation n\'est pas disponible.'}), 500
 
         candles = engine.get_candles()
-        return jsonify({'candles': candles, 'total': len(candles)})
+        return jsonify({
+            'success': True,
+            'candles': candles,
+            'count': len(candles)
+        })
 
     @app.route('/api/replay/logs', methods=['GET'])
     def api_replay_logs():
@@ -193,7 +212,10 @@ def register_routes(app: Flask) -> None:
 
         limit = request.args.get('limit', 100, type=int)
         logs = engine.get_logs(limit=limit)
-        return jsonify({'logs': logs, 'total': len(logs)})
+        return jsonify({
+            'success': True,
+            'logs': logs
+        })
 
     # ========== Player/Receiver Registration Endpoints ==========
 

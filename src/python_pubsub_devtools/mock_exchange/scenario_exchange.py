@@ -168,7 +168,7 @@ class ScenarioBasedMockExchange:
             message: Message du log
         """
         log_entry = {
-            'timestamp': datetime.now().strftime('%H:%M:%S'),
+            'timestamp': datetime.now().isoformat(),  # ISO format pour que JS puisse parser
             'level': level,
             'message': message
         }
