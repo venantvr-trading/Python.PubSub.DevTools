@@ -30,6 +30,13 @@
 
     <div class="content">
 
+    <div class="players-section">
+        <h2>Registered Players</h2>
+        <div id="players-list" class="players-list">
+            <div class="player-empty">No players registered. Applications must register via POST /api/player/register</div>
+        </div>
+    </div>
+
     <div class="card">
         <h2>Scénarios Générés</h2>
         <p>Les contrôles pour lancer les scénarios algorithmiques (BULL_RUN, FLASH_CRASH, etc.) seront ajoutés ici.</p>
@@ -92,12 +99,6 @@
                 </div>
 
                 <div id="push-options" style="display: none;">
-                    <div class="receivers-section">
-                        <h4>Receivers Enregistrés</h4>
-                        <div id="receivers-list" class="receivers-list">
-                            <div class="receiver-empty">Aucun receiver enregistré. Les consumers doivent s'enregistrer via POST /api/receiver/register</div>
-                        </div>
-                    </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="interval">Intervalle (secondes)</label>
@@ -250,13 +251,9 @@
         setInterval(loadCandles, 2000);
         setInterval(loadLogs, 2000);
 
-        // Poll receivers list every 3 seconds if in push mode
-        setInterval(() => {
-            const mode = document.getElementById('mode-select').value;
-            if (mode === 'push') {
-                loadReceivers();
-            }
-        }, 3000);
+        // Poll players list every 3 seconds
+        loadPlayers();
+        setInterval(loadPlayers, 3000);
     });
 
     // Toggle push mode options
@@ -270,7 +267,6 @@
             pushOptions.style.display = 'block';
             modeInfo.style.display = 'none';
             pushWarning.style.display = 'block';
-            loadReceivers(); // Load receivers when switching to push mode
         } else {
             pushOptions.style.display = 'none';
             modeInfo.style.display = 'block';
@@ -278,26 +274,26 @@
         }
     }
 
-    // Load receivers list
-    async function loadReceivers() {
+    // Load players list
+    async function loadPlayers() {
         try {
             const response = await fetch('/api/receiver/list');
             const data = await response.json();
 
-            const receiversList = document.getElementById('receivers-list');
+            const playersList = document.getElementById('players-list');
 
             if (data.count === 0) {
-                receiversList.innerHTML = '<div class="receiver-empty">Aucun receiver enregistré. Les consumers doivent s\'enregistrer via POST /api/receiver/register</div>';
+                playersList.innerHTML = '<div class="player-empty">No players registered. Applications must register via POST /api/player/register</div>';
             } else {
-                receiversList.innerHTML = data.receivers.map(receiver => `
-                    <div class="receiver-item">
-                        <span class="receiver-name">${receiver.consumer_name}</span>
-                        <span class="receiver-endpoint">${receiver.receiver_endpoint}</span>
+                playersList.innerHTML = data.receivers.map(receiver => `
+                    <div class="player-item">
+                        <span class="player-name">${receiver.consumer_name}</span>
+                        <span class="player-endpoint">${receiver.receiver_endpoint}</span>
                     </div>
                 `).join('');
             }
         } catch (error) {
-            console.error('Failed to load receivers:', error);
+            console.error('Failed to load players:', error);
         }
     }
 
