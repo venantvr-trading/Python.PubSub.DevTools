@@ -15,6 +15,11 @@ from flask import Flask, render_template, jsonify, current_app
 from .player_manager import PlayerManager
 from .recording_manager import RecordingManager
 
+# Managers globaux
+player_manager: Optional[PlayerManager] = None
+recording_manager: Optional[RecordingManager] = None
+event_listener = None  # EventListener initialisé dans register_routes
+
 # État global du replay
 replay_state: Dict[str, Any] = {
     'active': False,
@@ -140,13 +145,17 @@ def register_routes(app: Flask) -> None:
     Args:
         app: Instance Flask
     """
-    global player_manager, recording_manager
+    global player_manager, recording_manager, event_listener
 
     # Initialiser les managers
     recordings_dir = Path(app.config['RECORDINGS_DIR'])
     pubsub_url = app.config.get('PUBSUB_URL', 'http://localhost:5000')
     player_manager = PlayerManager(pubsub_url=pubsub_url)
     recording_manager = RecordingManager(recordings_dir)
+
+    # Initialiser le listener d'événements (ne démarre pas automatiquement)
+    from .event_listener import EventListener
+    event_listener = EventListener(pubsub_url, recording_manager)
 
     @app.route('/')
     def index():
@@ -521,6 +530,15 @@ def register_routes(app: Flask) -> None:
         result = recording_manager.start_session(session_name)
 
         if result['success']:
+            # Démarrer le listener PubSub pour écouter tous les événements
+            if event_listener and not event_listener.is_running():
+                if event_listener.start():
+                    result['listener_status'] = 'started'
+                else:
+                    result['listener_status'] = 'failed_to_start'
+            else:
+                result['listener_status'] = 'already_running'
+
             return jsonify(result)
         else:
             return jsonify({'error': result.get('error')}), 400
@@ -561,6 +579,13 @@ def register_routes(app: Flask) -> None:
         result = recording_manager.stop_session()
 
         if result['success']:
+            # Arrêter le listener PubSub
+            if event_listener and event_listener.is_running():
+                event_listener.stop()
+                result['listener_status'] = 'stopped'
+            else:
+                result['listener_status'] = 'not_running'
+
             return jsonify(result)
         else:
             return jsonify({'error': result.get('error')}), 400
