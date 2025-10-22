@@ -52,6 +52,13 @@
             </div>
         </div>
 
+        <div class="players-section">
+            <h2>Registered Players</h2>
+            <div id="players-list" class="players-list">
+                <div class="player-empty">No players registered. Applications must register via POST /api/player/register</div>
+            </div>
+        </div>
+
         {% if recordings %}
         <div class="recordings-list">
             {% for recording in recordings %}
@@ -134,5 +141,35 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/event_recorder.js') }}"></script>
+<script>
+    // Load players list
+    async function loadPlayers() {
+        try {
+            const response = await fetch('/api/player/list');
+            const data = await response.json();
+
+            const playersList = document.getElementById('players-list');
+
+            if (data.count === 0) {
+                playersList.innerHTML = '<div class="player-empty">No players registered. Applications must register via POST /api/player/register</div>';
+            } else {
+                playersList.innerHTML = data.players.map(player => `
+                    <div class="player-item">
+                        <span class="player-name">${player.consumer_name}</span>
+                        <span class="player-endpoint">${player.player_endpoint}</span>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Failed to load players:', error);
+        }
+    }
+
+    // Poll players list every 3 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        loadPlayers();
+        setInterval(loadPlayers, 3000);
+    });
+</script>
 </body>
 </html>

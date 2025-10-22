@@ -12,7 +12,7 @@ body {
 }
 
 .container {
-    max-width: 1600px;
+    /* max-width: 1600px; */
     margin: 0 auto;
     background: white;
     border-radius: 10px;
@@ -935,4 +935,93 @@ body.dark-mode .btn-secondary:hover {
 body.dark-mode .control-btn.recording-active {
     background: #ff6b7a !important;
     border-color: #ff6b7a !important;
+}
+
+/* Players Section */
+.players-section {
+    margin-bottom: 30px;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.players-section h2 {
+    font-size: 1.3em;
+    margin-bottom: 15px;
+    color: #495057;
+}
+
+.players-list {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    background: #f8f9fa;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.player-empty {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    padding: 15px;
+}
+
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.player-item:last-child {
+    margin-bottom: 0;
+}
+
+.player-name {
+    font-weight: 600;
+    color: #667eea;
+    min-width: 150px;
+}
+
+.player-endpoint {
+    color: #6c757d;
+    font-size: 0.9em;
+    word-break: break-all;
+}
+
+/* Dark Mode - Players */
+body.dark-mode .players-section {
+    background: #2a2a2a;
+}
+
+body.dark-mode .players-section h2 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .players-list {
+    background: #1a1a1a;
+    border-color: #3a3a3a;
+}
+
+body.dark-mode .player-empty {
+    color: #b0b0b0;
+}
+
+body.dark-mode .player-item {
+    background: #3a3a3a;
+    border-color: #4a4a4a;
+}
+
+body.dark-mode .player-name {
+    color: #8fa3f5;
+}
+
+body.dark-mode .player-endpoint {
+    color: #b0b0b0;
 }
