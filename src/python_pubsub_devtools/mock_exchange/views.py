@@ -146,6 +146,55 @@ def register_routes(app: Flask) -> None:
         else:
             return jsonify({'error': f'Impossible de démarrer le replay pour "{filename}".'}), 500
 
+    @app.route('/api/replay/stop', methods=['POST'])
+    def api_stop_replay():
+        """Endpoint API pour arrêter le replay en cours."""
+        engine = current_app.config.get('EXCHANGE_ENGINE')
+
+        if not engine:
+            return jsonify({'error': 'Le moteur de simulation n\'est pas disponible.'}), 500
+
+        success = engine.stop_replay()
+
+        if success:
+            return jsonify({'success': True, 'message': 'Replay arrêté.'})
+        else:
+            return jsonify({'error': 'Aucun replay en cours.'}), 400
+
+    @app.route('/api/replay/status', methods=['GET'])
+    def api_replay_status():
+        """Endpoint API pour obtenir le statut du replay en cours."""
+        engine = current_app.config.get('EXCHANGE_ENGINE')
+
+        if not engine:
+            return jsonify({'error': 'Le moteur de simulation n\'est pas disponible.'}), 500
+
+        status = engine.get_replay_status()
+        return jsonify(status)
+
+    @app.route('/api/replay/candles', methods=['GET'])
+    def api_replay_candles():
+        """Endpoint API pour obtenir les candles chargées."""
+        engine = current_app.config.get('EXCHANGE_ENGINE')
+
+        if not engine:
+            return jsonify({'error': 'Le moteur de simulation n\'est pas disponible.'}), 500
+
+        candles = engine.get_candles()
+        return jsonify({'candles': candles, 'total': len(candles)})
+
+    @app.route('/api/replay/logs', methods=['GET'])
+    def api_replay_logs():
+        """Endpoint API pour obtenir les logs du replay."""
+        engine = current_app.config.get('EXCHANGE_ENGINE')
+
+        if not engine:
+            return jsonify({'error': 'Le moteur de simulation n\'est pas disponible.'}), 500
+
+        limit = request.args.get('limit', 100, type=int)
+        logs = engine.get_logs(limit=limit)
+        return jsonify({'logs': logs, 'total': len(logs)})
+
     # ========== Player/Receiver Registration Endpoints ==========
 
     @app.route('/api/player/register', methods=['POST'])
