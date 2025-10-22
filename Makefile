@@ -3,7 +3,7 @@
         help \
         install-dev install-prod \
         quality-check quality-format quality-format-check quality-lint \
-        serve-all serve-event-flow serve-event-recorder serve-mock-exchange serve-scenario-testing \
+        serve-all 5555-serve-event-flow 5556-serve-event-recorder 5557-serve-mock-exchange 5558-serve-scenario-testing \
         setup-dev setup-venv \
         test-coverage test-unit
 
@@ -46,10 +46,10 @@ help:
 	@echo ""
 	@echo "🚀 Run Services (using $(CONFIG)):
 	@echo "  make serve-all              Launch all services simultaneously"
-	@echo "  make serve-event-flow       Launch Event Flow Visualization (port 5555)"
-	@echo "  make serve-event-recorder   Launch Event Recorder Dashboard (port 5556)"
-	@echo "  make serve-mock-exchange    Launch Mock Exchange Simulator (port 5557)"
-	@echo "  make serve-scenario-testing Launch Scenario Testing Dashboard (port 5558)"
+	@echo "  make 5555-serve-event-flow       Launch Event Flow Visualization (port 5555)"
+	@echo "  make 5556-serve-event-recorder   Launch Event Recorder Dashboard (port 5556)"
+	@echo "  make 5557-serve-mock-exchange    Launch Mock Exchange Simulator (port 5557)"
+	@echo "  make 5558-serve-scenario-testing Launch Scenario Testing Dashboard (port 5558)"
 	@echo ""
 	@echo "⚙️  Setup:"
 	@echo "  make setup-dev       Complete dev setup (venv + install-dev)"
@@ -209,7 +209,7 @@ serve-all: check-config
 	@echo ""
 	@. $(VENV)/bin/activate && pubsub-tools serve-all --config $(CONFIG)
 
-serve-event-flow: check-config
+5555-serve-event-flow: check-config
 	@echo "╔══════════════════════════════════════════════════════════════════╗"
 	@echo "║         🎯 Launching Event Flow Visualization                    ║"
 	@echo "╚══════════════════════════════════════════════════════════════════╝"
@@ -219,7 +219,7 @@ serve-event-flow: check-config
 	@echo ""
 	@. $(VENV)/bin/activate && pubsub-tools event-flow --config $(CONFIG)
 
-serve-event-recorder: check-config
+5556-serve-event-recorder: check-config
 	@echo "╔══════════════════════════════════════════════════════════════════╗"
 	@echo "║          🎬 Launching Event Recorder Dashboard                   ║"
 	@echo "╚══════════════════════════════════════════════════════════════════╝"
@@ -229,7 +229,7 @@ serve-event-recorder: check-config
 	@echo ""
 	@. $(VENV)/bin/activate && pubsub-tools event-recorder --config $(CONFIG)
 
-serve-mock-exchange: check-config
+5557-serve-mock-exchange: check-config
 	@echo "╔══════════════════════════════════════════════════════════════════╗"
 	@echo "║         🎰 Launching Mock Exchange Simulator                     ║"
 	@echo "╚══════════════════════════════════════════════════════════════════╝"
@@ -239,7 +239,7 @@ serve-mock-exchange: check-config
 	@echo ""
 	@. $(VENV)/bin/activate && pubsub-tools mock-exchange --config $(CONFIG)
 
-serve-scenario-testing: check-config
+5558-serve-scenario-testing: check-config
 	@echo "╔══════════════════════════════════════════════════════════════════╗"
 	@echo "║        🎯 Launching Scenario Testing Dashboard                   ║"
 	@echo "╚══════════════════════════════════════════════════════════════════╝"
