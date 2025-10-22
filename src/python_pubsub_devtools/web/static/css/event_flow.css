@@ -2,13 +2,8 @@
 
 /* Dark Mode Overrides for Event Flow */
 
-body.dark-mode .stats {
-    background: #1a1a1a;
-    border-bottom-color: #3a3a3a;
-}
-
-body.dark-mode .stat-label {
-    color: #b0b0b0;
+body.dark-mode .stat {
+    background: linear-gradient(135deg, #2d2d44 0%, #3a3a5a 100%);
 }
 
 body.dark-mode .tabs {
@@ -209,27 +204,30 @@ body.fullscreen .container {
 
 /* Stats */
 .stats {
-    display: flex;
-    justify-content: space-around;
-    padding: 10px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
 }
 
 .stat {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
 .stat-value {
-    font-size: 1.3em;
+    font-size: 2em;
     font-weight: bold;
-    color: #667eea;
+    margin-bottom: 5px;
 }
 
 .stat-label {
-    color: #6c757d;
-    margin-top: 2px;
-    font-size: 0.85em;
+    font-size: 0.9em;
+    opacity: 0.9;
 }
 
 /* Filters Sidebar */
