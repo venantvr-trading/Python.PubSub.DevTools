@@ -1,6 +1,6 @@
 """Tests pour PlayerManager - vérifie qu'on poste bien aux applications enregistrées."""
 from unittest.mock import Mock, patch, call
-import pytest
+
 from python_pubsub_devtools.event_recorder.player_manager import PlayerManager
 
 

@@ -4,7 +4,9 @@ import tempfile
 import time
 from pathlib import Path
 from unittest.mock import Mock, patch
+
 import pytest
+
 from python_pubsub_devtools.mock_exchange.scenario_exchange import ScenarioBasedMockExchange
 
 
@@ -55,7 +57,7 @@ class TestScenarioBasedMockExchange:
 
     @patch('python_pubsub_devtools.mock_exchange.scenario_exchange.requests.post')
     def test_push_mode_posts_to_registered_receivers(
-        self, mock_post, temp_replay_dir, sample_candles_file
+            self, mock_post, temp_replay_dir, sample_candles_file
     ):
         """Vérifie que le mode push poste aux receivers enregistrés via HTTP POST."""
         # Setup receivers
@@ -124,7 +126,7 @@ class TestScenarioBasedMockExchange:
 
     @patch('python_pubsub_devtools.mock_exchange.scenario_exchange.requests.post')
     def test_push_mode_posts_all_candles_to_all_receivers(
-        self, mock_post, temp_replay_dir, sample_candles_file
+            self, mock_post, temp_replay_dir, sample_candles_file
     ):
         """Vérifie que chaque candle est postée à tous les receivers."""
         receivers = [
@@ -170,7 +172,7 @@ class TestScenarioBasedMockExchange:
 
     @patch('python_pubsub_devtools.mock_exchange.scenario_exchange.requests.post')
     def test_push_mode_handles_receiver_failures(
-        self, mock_post, temp_replay_dir, sample_candles_file
+            self, mock_post, temp_replay_dir, sample_candles_file
     ):
         """Vérifie qu'on gère les erreurs de receivers."""
         import requests
@@ -212,7 +214,7 @@ class TestScenarioBasedMockExchange:
         engine.stop_replay()
 
     def test_push_mode_fails_without_receivers(
-        self, temp_replay_dir, sample_candles_file
+            self, temp_replay_dir, sample_candles_file
     ):
         """Vérifie qu'on ne peut pas démarrer en push sans receivers."""
         engine = ScenarioBasedMockExchange(
