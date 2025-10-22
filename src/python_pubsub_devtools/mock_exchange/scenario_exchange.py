@@ -9,11 +9,12 @@ import json
 import logging
 import threading
 import time
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-import requests
+from python_pubsub_client import PubSubClient
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +25,15 @@ class ScenarioBasedMockExchange:
 
     Args:
         replay_data_dir: Répertoire contenant les fichiers de replay (CSV, JSON)
-        service_bus: Instance du ServiceBus pour publier les événements de marché
+        pubsub_url: URL du serveur PubSub
+        candle_topic: Nom du topic pour publier les candles
     """
 
     def __init__(
             self,
             replay_data_dir: Path | None = None,
-            service_bus: Any | None = None,
+            pubsub_url: str = "http://localhost:5000",
+            candle_topic: str = "market.candle",
             get_receivers_callback: Optional[Callable[[], List[Dict[str, str]]]] = None
     ):
         """
@@ -38,11 +41,15 @@ class ScenarioBasedMockExchange:
 
         Args:
             replay_data_dir: Répertoire des fichiers de replay
-            service_bus: Bus d'événements pour publier les données de marché
-            get_receivers_callback: Fonction pour obtenir la liste des receivers enregistrés
+            pubsub_url: URL du serveur PubSub
+            candle_topic: Nom du topic pour publier les candles
+            get_receivers_callback: Fonction pour obtenir la liste des receivers (obsolète)
         """
         self.replay_data_dir = replay_data_dir
-        self.service_bus = service_bus
+        self._pubsub_url = pubsub_url
+        self._candle_topic = candle_topic
+        self._producer_name = "MockExchange"
+        self._pubsub_client: Optional[PubSubClient] = None
         self.get_receivers = get_receivers_callback or (lambda: [])
 
         # État du replay
@@ -57,7 +64,25 @@ class ScenarioBasedMockExchange:
         self._replay_thread: Optional[threading.Thread] = None
         self._stop_thread_event = threading.Event()
 
+        # Initialiser le client PubSub
+        self._init_pubsub_client()
+
         logger.info("ScenarioBasedMockExchange initialisé.")
+
+    def _init_pubsub_client(self) -> None:
+        """
+        Initialise le client PubSub pour la publication de candles.
+        """
+        try:
+            self._pubsub_client = PubSubClient(
+                url=self._pubsub_url,
+                consumer=self._producer_name,
+                topics=[]  # Aucun topic à écouter, uniquement publication
+            )
+            logger.info(f"PubSub client initialized: {self._pubsub_url}")
+        except Exception as e:
+            logger.error(f"Failed to initialize PubSub client: {e}")
+            self._pubsub_client = None
 
     def start_replay_from_file(
             self,
@@ -95,10 +120,9 @@ class ScenarioBasedMockExchange:
 
             # Validation du mode push
             if mode == "push":
-                receivers = self.get_receivers()
-                if not receivers:
-                    logger.error("Mode push requiert au moins un receiver enregistré")
-                    self._add_log("error", "Mode push: aucun receiver enregistré")
+                if not self._pubsub_client:
+                    logger.error("Mode push requiert un client PubSub actif")
+                    self._add_log("error", "Mode push: PubSub client non initialisé")
                     return False
 
             # Charger le fichier
@@ -206,7 +230,7 @@ class ScenarioBasedMockExchange:
 
     def _push_replay_loop(self) -> None:
         """
-        Thread qui envoie les chandelles progressivement aux receivers enregistrés.
+        Thread qui publie les chandelles progressivement sur le service bus.
         """
         logger.info("Thread push démarré")
 
@@ -223,40 +247,36 @@ class ScenarioBasedMockExchange:
 
                 # Récupérer la chandelle courante
                 candle = self._candles[self._current_index]
+                current_index = self._current_index
 
-            # Envoyer aux receivers (hors du lock pour éviter les blocages)
-            receivers = self.get_receivers()
-            if not receivers:
-                logger.warning("Aucun receiver disponible, arrêt du push")
+            # Vérifier que le client PubSub est disponible
+            if not self._pubsub_client:
+                logger.error("PubSub client non disponible")
                 with self._replay_state_lock:
-                    self._add_log("warning", "Aucun receiver disponible")
+                    self._add_log("error", "PubSub client non disponible")
                     self._replay_status = "stopped"
                 break
 
-            # Envoyer à tous les receivers
-            for receiver in receivers:
-                endpoint = receiver.get('player_endpoint') or receiver.get('receiver_endpoint')
-                consumer_name = receiver.get('consumer_name', 'Unknown')
+            # Publier la candle sur le service bus
+            try:
+                message_id = str(uuid.uuid4())
+                candle_message = {
+                    'candle': candle,
+                    'index': current_index
+                }
 
-                if not endpoint:
-                    continue
+                self._pubsub_client.publish(
+                    topic=self._candle_topic,
+                    message=candle_message,
+                    producer=self._producer_name,
+                    message_id=message_id
+                )
+                logger.debug(f"Chandelle {current_index} publiée sur topic '{self._candle_topic}'")
 
-                try:
-                    response = requests.post(
-                        endpoint,
-                        json={'candle': candle, 'index': self._current_index},
-                        timeout=2.0
-                    )
-                    if response.ok:
-                        logger.debug(f"Chandelle {self._current_index} envoyée à {consumer_name}")
-                    else:
-                        logger.warning(f"Erreur HTTP {response.status_code} de {consumer_name}")
-                        with self._replay_state_lock:
-                            self._add_log("warning", f"{consumer_name}: HTTP {response.status_code}")
-                except requests.exceptions.RequestException as e:
-                    logger.error(f"Erreur d'envoi à {consumer_name}: {e}")
-                    with self._replay_state_lock:
-                        self._add_log("error", f"{consumer_name}: {str(e)}")
+            except Exception as e:
+                logger.error(f"Erreur lors de la publication de la candle: {e}")
+                with self._replay_state_lock:
+                    self._add_log("error", f"Publication échouée: {str(e)}")
 
             # Incrémenter l'index et logger
             with self._replay_state_lock:

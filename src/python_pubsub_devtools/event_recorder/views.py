@@ -144,7 +144,8 @@ def register_routes(app: Flask) -> None:
 
     # Initialiser les managers
     recordings_dir = Path(app.config['RECORDINGS_DIR'])
-    player_manager = PlayerManager()
+    pubsub_url = app.config.get('PUBSUB_URL', 'http://localhost:5000')
+    player_manager = PlayerManager(pubsub_url=pubsub_url)
     recording_manager = RecordingManager(recordings_dir)
 
     @app.route('/')

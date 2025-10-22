@@ -32,6 +32,7 @@ def create_app(config: EventRecorderConfig) -> Flask:
     # Stocker la configuration dans l'app
     app.config['RECORDINGS_DIR'] = config.recordings_dir
     app.config['PORT'] = config.port
+    app.config['PUBSUB_URL'] = config.pubsub_url
 
     # S'assurer que le répertoire existe
     config.recordings_dir.mkdir(parents=True, exist_ok=True)

@@ -158,16 +158,14 @@ def mock_exchange(config: Path, host: str):
 
     Simule un marché avec différents scénarios (tendance, volatilité, etc.).
     """
-    # Le mock_exchange a besoin du bus pour publier les événements de replay.
-    from python_pubsub_devtools.service_bus import ServiceBus
+    # Le mock_exchange utilise maintenant PubSubClient directement
     from python_pubsub_devtools.mock_exchange.server import MockExchangeServer
 
     try:
         cfg = DevToolsConfig.from_yaml(config)
-        # Créer et injecter le bus de services
-        service_bus = ServiceBus()
-        click.echo("🚌 ServiceBus instancié.")
-        server = MockExchangeServer(cfg.mock_exchange, service_bus=service_bus)
+        click.echo("🚌 Mock Exchange using PubSub client")
+        click.echo(f"   PubSub URL: {cfg.mock_exchange.pubsub_url}")
+        server = MockExchangeServer(cfg.mock_exchange)
         server.run(host=host, debug=False)
     except FileNotFoundError as e:
         click.echo(f"❌ Erreur: {e}", err=True)
@@ -258,7 +256,7 @@ def serve_all(config: Path):
         server.run(host='0.0.0.0', debug=False)
 
     def run_mock_exchange():
-        server = MockExchangeServer(cfg.mock_exchange, service_bus=service_bus)
+        server = MockExchangeServer(cfg.mock_exchange)
         server.run(host='0.0.0.0', debug=False)
 
     def run_scenario_testing():

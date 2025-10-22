@@ -52,9 +52,11 @@ class EventRecorderConfig(BaseModel):
     Attributes:
         recordings_dir: Répertoire des enregistrements d'événements
         port: Port d'écoute du serveur web (défaut: 5556)
+        pubsub_url: URL du serveur PubSub pour publier les événements rejoués
     """
     recordings_dir: Path
     port: int = 5556
+    pubsub_url: str = "http://localhost:5000"
 
     @field_validator('recordings_dir', mode='before')
     @classmethod
@@ -71,12 +73,16 @@ class MockExchangeConfig(BaseModel):
     Attributes:
         port: Port d'écoute du serveur web (défaut: 5557)
         replay_data_dir: Répertoire pour stocker les fichiers de replay de chandeliers.
+        pubsub_url: URL du serveur PubSub pour publier les candles
+        candle_topic: Nom du topic pour publier les candles
         default_initial_price: Prix initial par défaut pour les actifs
         default_volatility: Volatilité par défaut
         default_spread_bps: Spread par défaut en points de base
     """
     port: int = 5557
     replay_data_dir: Path | None = None
+    pubsub_url: str = "http://localhost:5000"
+    candle_topic: str = "market.candle"
     default_initial_price: float = 50000.0
     default_volatility: float = 0.02
     default_spread_bps: float = 10.0

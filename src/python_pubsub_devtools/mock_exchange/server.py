@@ -11,13 +11,12 @@ from typing import Any
 from flask import Flask
 
 
-def create_app(config: Any, service_bus: Any) -> Flask:
+def create_app(config: Any) -> Flask:
     """
     Crée et configure l'application Flask pour Mock Exchange.
 
     Args:
         config: MockExchangeConfig avec replay_data_dir et autres paramètres
-        service_bus: Instance du bus de services à injecter.
 
     Returns:
         Flask app configurée
@@ -36,11 +35,12 @@ def create_app(config: Any, service_bus: Any) -> Flask:
     from .scenario_exchange import ScenarioBasedMockExchange
     from . import views
 
-    # Initialiser le moteur de simulation avec callback pour les receivers
+    # Initialiser le moteur de simulation
     engine = ScenarioBasedMockExchange(
         replay_data_dir=config.replay_data_dir,
-        service_bus=service_bus,
-        get_receivers_callback=views.get_registered_receivers
+        pubsub_url=config.pubsub_url,
+        candle_topic=config.candle_topic,
+        get_receivers_callback=views.get_registered_receivers  # Conservé pour compatibilité
     )
     app.config['EXCHANGE_ENGINE'] = engine
 
@@ -57,21 +57,19 @@ def create_app(config: Any, service_bus: Any) -> Flask:
 class MockExchangeServer:
     """Server for Mock Exchange Simulator"""
 
-    def __init__(self, config: Any, service_bus: Any):
+    def __init__(self, config: Any):
         """
         Initialise le serveur avec la configuration.
 
         Args:
-            config: MockExchangeConfig object avec replay_data_dir et port
-            service_bus: Instance du bus de services.
+            config: MockExchangeConfig object avec replay_data_dir, port, pubsub_url, etc.
         """
         self.config = config
         self.port = config.port
         self.replay_data_dir = getattr(config, 'replay_data_dir', None)
-        self.service_bus = service_bus
 
         # Créer l'application Flask
-        self.app = create_app(config, self.service_bus)
+        self.app = create_app(config)
 
     def run(self, host: str = '0.0.0.0', debug: bool = False) -> None:
         """

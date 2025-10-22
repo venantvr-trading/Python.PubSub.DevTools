@@ -14,26 +14,6 @@ import argparse
 from pathlib import Path
 
 
-class MockServiceBus:
-    """
-    Mock ServiceBus for standalone usage.
-    
-    In production, inject a real ServiceBus instance.
-    """
-
-    # noinspection PyMethodMayBeStatic
-    def publish(self, event_name: str, event: any, source: str) -> None:
-        """
-        Mock publish method - logs events instead of publishing.
-        
-        Args:
-            event_name: Name of the event
-            event: Event data
-            source: Event source
-        """
-        print(f"[MOCK BUS] {source} -> {event_name}: {event}")
-
-
 def main():
     """
     Start the Mock Exchange Simulator server
@@ -78,9 +58,9 @@ def main():
         port=args.port
     )
 
-    # Create mock service bus for standalone usage
-    service_bus = MockServiceBus()
-    print("🚌 Mock ServiceBus initialized (standalone mode)")
+    print("🚌 Using PubSub client for candle publication")
+    print(f"   PubSub URL: {config.pubsub_url}")
+    print(f"   Candle topic: {config.candle_topic}")
     print()
 
     # Count replay files
@@ -99,7 +79,7 @@ def main():
     print("=" * 80)
     print()
 
-    server = MockExchangeServer(config, service_bus=service_bus)
+    server = MockExchangeServer(config)
     server.run(host=args.host, debug=True)
 
 
