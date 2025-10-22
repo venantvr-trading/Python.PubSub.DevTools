@@ -28,10 +28,10 @@ class ScenarioBasedMockExchange:
     """
 
     def __init__(
-        self,
-        replay_data_dir: Path | None = None,
-        service_bus: Any | None = None,
-        get_receivers_callback: Optional[Callable[[], List[Dict[str, str]]]] = None
+            self,
+            replay_data_dir: Path | None = None,
+            service_bus: Any | None = None,
+            get_receivers_callback: Optional[Callable[[], List[Dict[str, str]]]] = None
     ):
         """
         Initialise le moteur de simulation.
@@ -60,10 +60,10 @@ class ScenarioBasedMockExchange:
         logger.info("ScenarioBasedMockExchange initialisé.")
 
     def start_replay_from_file(
-        self,
-        filename: str,
-        mode: str = "pull",
-        interval_seconds: float = 1.0
+            self,
+            filename: str,
+            mode: str = "pull",
+            interval_seconds: float = 1.0
     ) -> bool:
         """
         Démarre une simulation en lisant les données d'un fichier de replay.

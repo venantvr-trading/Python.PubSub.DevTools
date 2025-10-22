@@ -90,10 +90,10 @@ class PlayerManager:
             return dict(self._players)
 
     def replay_events(
-        self,
-        events: List[Dict],
-        speed: float = 1.0,
-        target_player: Optional[str] = None
+            self,
+            events: List[Dict],
+            speed: float = 1.0,
+            target_player: Optional[str] = None
     ) -> Dict[str, int]:
         """
         Rejoue une liste d'événements vers les players enregistrés.

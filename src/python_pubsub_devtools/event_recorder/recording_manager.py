@@ -89,11 +89,11 @@ class RecordingManager:
         }
 
     def record_event(
-        self,
-        event_name: str,
-        event_data: Any,
-        source: str,
-        timestamp_offset_ms: Optional[int] = None
+            self,
+            event_name: str,
+            event_data: Any,
+            source: str,
+            timestamp_offset_ms: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Enregistre un événement dans la session active.

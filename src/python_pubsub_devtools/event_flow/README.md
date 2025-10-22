@@ -4,7 +4,9 @@ Visualize your event-driven architecture in real-time. Understand event chains, 
 
 ## Overview
 
-Event Flow provides a live, interactive dashboard that displays your system's event architecture as a graph. It works by receiving graph data from a separate scanner tool, which analyzes your codebase to find event publications and subscriptions. This separation allows the visualization server to remain lightweight and independent of your project's code.
+Event Flow provides a live, interactive dashboard that displays your system's event architecture as a graph. It works by receiving graph data from a separate scanner
+tool, which analyzes your codebase to find event publications and subscriptions. This separation allows the visualization server to remain lightweight and independent of
+your project's code.
 
 ## Components
 
@@ -94,13 +96,15 @@ Quickly trace the path of an event through multiple agents to understand why a b
 ### 3. Architectural Reviews
 
 Identify architectural smells such as:
+
 - **Orphan Events**: Events that are published but never consumed.
 - **Dead-End Agents**: Agents that consume events but never produce any.
 - **Circular Dependencies**: Event chains that loop back on themselves.
 
 ### 4. Automated Documentation
 
-Integrate the `pubsub-scanner` into your CI/CD pipeline to automatically update the architecture diagram whenever your code changes, ensuring your documentation is never out of date.
+Integrate the `pubsub-scanner` into your CI/CD pipeline to automatically update the architecture diagram whenever your code changes, ensuring your documentation is never
+out of date.
 
 ## Configuration
 
