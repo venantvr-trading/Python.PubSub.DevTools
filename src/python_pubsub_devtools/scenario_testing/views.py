@@ -167,7 +167,13 @@ def register_routes(app: Flask) -> None:
     @app.route('/')
     def index():
         """Page principale du tableau de bord."""
-        return render_template('scenario_testing.html')
+        return render_template(
+            'scenario_testing.html',
+            title='🎯 Scenario Testing Dashboard',
+            subtitle='Declarative testing with chaos engineering',
+            active_page='testing',
+            footer_text='🎯 Scenario Testing Dashboard | Port 5558 | <kbd>Ctrl+R</kbd> to refresh'
+        )
 
     @app.route('/api/scenarios')
     def api_scenarios():

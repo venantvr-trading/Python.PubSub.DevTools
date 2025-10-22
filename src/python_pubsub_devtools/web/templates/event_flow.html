@@ -64,17 +64,9 @@
 </div>
 
 <div class="container">
-    <div class="header">
-        <h1>Event Flow Visualization</h1>
-        <p>Trading Bot Architecture</p>
-    </div>
+    {% include '_header.html' %}
 
-    <div class="navbar">
-        <a class="nav-link active" href="http://localhost:5555">Event Flow</a>
-        <a class="nav-link" href="http://localhost:5556">Recorder</a>
-        <a class="nav-link" href="http://localhost:5557">Exchange</a>
-        <a class="nav-link" href="http://localhost:5558">Testing</a>
-    </div>
+    {% include '_navbar.html' %}
 
     <div class="content">
         <div class="stats">
@@ -151,9 +143,7 @@
         </div>
     </div>
 
-    <div class="footer">
-        <p>🤖 Trading Bot Event-Driven Architecture | <kbd>Ctrl+R</kbd> to refresh</p>
-    </div>
+    {% include '_footer.html' %}
 </div>
 
 <button class="refresh-btn" onclick="location.reload()" title="Refresh graphs">

@@ -16,17 +16,9 @@
 </div>
 
 <div class="container">
-    <div class="header">
-        <h1>🎰 Mock Exchange Dashboard</h1>
-        <p>Simulez des scénarios de marché ou rejouez des données historiques.</p>
-    </div>
+    {% include '_header.html' %}
 
-    <div class="navbar">
-        <a class="nav-link" href="http://localhost:5555">Event Flow</a>
-        <a class="nav-link" href="http://localhost:5556">Recorder</a>
-        <a class="nav-link active" href="http://localhost:5557">Exchange</a>
-        <a class="nav-link" href="http://localhost:5558">Testing</a>
-    </div>
+    {% include '_navbar.html' %}
 
     <div class="content">
 
@@ -235,9 +227,7 @@
     </div>
     </div>
 
-    <div class="footer">
-        <p>🎰 Mock Exchange Dashboard | Port 5557 | <kbd>Ctrl+R</kbd> to refresh</p>
-    </div>
+    {% include '_footer.html' %}
 </div>
 
 <script src="{{ url_for('static', filename='js/mock_exchange.js') }}"></script>

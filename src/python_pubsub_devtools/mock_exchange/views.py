@@ -77,7 +77,14 @@ def register_routes(app: Flask) -> None:
     def index():
         """Affiche le tableau de bord principal du Mock Exchange."""
         # TODO: Ajouter la logique pour les scénarios générés
-        return render_template('mock_exchange.html', replay_files=get_replay_files())
+        return render_template(
+            'mock_exchange.html',
+            title='🎰 Mock Exchange Dashboard',
+            subtitle='Simulez des scénarios de marché ou rejouez des données historiques.',
+            active_page='exchange',
+            footer_text='🎰 Mock Exchange Dashboard | Port 5557 | <kbd>Ctrl+R</kbd> to refresh',
+            replay_files=get_replay_files()
+        )
 
     @app.route('/api/replay/files', methods=['GET'])
     def api_get_replay_files():

@@ -203,6 +203,10 @@ def create_app(config) -> Flask:
 
         return render_template(
             'event_flow.html',
+            title='Event Flow Visualization',
+            subtitle='Trading Bot Architecture',
+            active_page='event_flow',
+            footer_text='🤖 Trading Bot Event-Driven Architecture | <kbd>Ctrl+R</kbd> to refresh',
             total_events=stats['events'],
             total_agents=stats['agents'],
             total_connections=stats['connections'],

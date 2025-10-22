@@ -180,6 +180,10 @@ def register_routes(app: Flask) -> None:
 
         return render_template(
             'event_recorder.html',
+            title='🎬 Event Recorder Dashboard',
+            subtitle='View and replay event recordings',
+            active_page='recorder',
+            footer_text='🎬 Event Recorder Dashboard | Port 5556 | <kbd>Ctrl+R</kbd> to refresh',
             recordings=recordings,
             total_recordings=total_recordings,
             total_events=total_events,
