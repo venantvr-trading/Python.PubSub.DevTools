@@ -13,11 +13,9 @@ from python_pubsub_client import PubSubClient
 
 class PlayerManager:
     """
-    Gestionnaire centralisé des players enregistrés.
+    Gestionnaire pour la publication d'événements sur le service bus.
 
     Responsabilités:
-    - Enregistrement/désenregistrement des players
-    - Liste des players actifs
     - Publication d'événements sur le service bus pour replay
     """
 
@@ -29,8 +27,6 @@ class PlayerManager:
             pubsub_url: URL du serveur PubSub
             producer_name: Nom du producteur pour les événements rejoués
         """
-        self._players: Dict[str, str] = {}  # consumer_name -> player_endpoint (obsolète mais gardé pour compatibilité)
-        self._lock = threading.Lock()
         self._pubsub_url = pubsub_url
         self._producer_name = producer_name
         self._pubsub_client: Optional[PubSubClient] = None
@@ -63,62 +59,6 @@ class PlayerManager:
             print(f"⚠ Failed to initialize PubSub client: {e}")
             self._pubsub_client = None
 
-    def register(self, consumer_name: str, player_endpoint: str) -> bool:
-        """
-        Enregistre un player endpoint (conservé pour compatibilité).
-
-        Args:
-            consumer_name: Nom du consumer
-            player_endpoint: URL du endpoint player (non utilisé avec PubSub)
-
-        Returns:
-            True si enregistré avec succès
-        """
-        with self._lock:
-            self._players[consumer_name] = player_endpoint
-        print(f"✓ Player registered: {consumer_name} (using PubSub)")
-        return True
-
-    def unregister(self, player_endpoint: str) -> Optional[str]:
-        """
-        Désenregistre un player par son endpoint.
-
-        Args:
-            player_endpoint: URL du endpoint player
-
-        Returns:
-            Nom du consumer si trouvé, None sinon
-        """
-        with self._lock:
-            for name, endpoint in list(self._players.items()):
-                if endpoint == player_endpoint:
-                    del self._players[name]
-                    print(f"✓ Player unregistered: {name}")
-                    return name
-        return None
-
-    def get_all(self) -> List[Dict[str, str]]:
-        """
-        Liste tous les players enregistrés.
-
-        Returns:
-            Liste de dicts {consumer_name, player_endpoint}
-        """
-        with self._lock:
-            return [
-                {'consumer_name': name, 'player_endpoint': endpoint}
-                for name, endpoint in self._players.items()
-            ]
-
-    def count(self) -> int:
-        """Retourne le nombre de players enregistrés."""
-        with self._lock:
-            return len(self._players)
-
-    def has_players(self) -> bool:
-        """Vérifie s'il y a des players enregistrés."""
-        return self.count() > 0
-
     def shutdown(self) -> None:
         """
         Arrête proprement le client PubSub.
@@ -130,15 +70,6 @@ class PlayerManager:
                 print(f"✓ PubSub client stopped")
             except Exception as e:
                 print(f"⚠ Error stopping PubSub client: {e}")
-
-    def get_players_copy(self) -> Dict[str, str]:
-        """
-        Retourne une copie du dictionnaire des players.
-
-        Utile pour éviter les problèmes de verrouillage pendant le replay.
-        """
-        with self._lock:
-            return dict(self._players)
 
     def stop_replay(self) -> None:
         """Arrête le replay en cours."""
