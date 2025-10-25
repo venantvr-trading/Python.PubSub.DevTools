@@ -3,13 +3,15 @@ HMM Trainer for Market Regime Detection
 Uses Gaussian HMM to identify Bull/Bear/Sideways regimes
 """
 
-import numpy as np
 import pickle
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
+
+import numpy as np
 
 try:
     from hmmlearn import hmm
+
     HMM_AVAILABLE = True
 except ImportError:
     HMM_AVAILABLE = False
@@ -27,7 +29,7 @@ class HMMTrainer:
     REGIME_COLORS = {
         0: '#26a69a',  # Green
         1: '#ef5350',  # Red
-        2: '#ffc107'   # Yellow
+        2: '#ffc107'  # Yellow
     }
 
     def __init__(self, n_regimes: int = 3, model_dir: str = None):

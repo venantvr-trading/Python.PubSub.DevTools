@@ -7,6 +7,7 @@ This project depends on local packages that need to be installed in editable mod
 ### Local Dependencies
 
 The project has two local dependencies that are **not published to PyPI**:
+
 - `python-pubsub-client` (located in `../../venantvr-pubsub/Python.PubSub.Client`)
 - `python-pubsub-devtools-consumers` (located in `../../venantvr-pubsub/Python.PubSub.DevTools.Consumers`)
 
@@ -23,6 +24,7 @@ make install-dev
 ```
 
 This will:
+
 1. Create a virtual environment (if needed)
 2. Install local dependencies in editable mode from `requirements-dev.txt`
 3. Install this package in editable mode with dev dependencies
@@ -30,6 +32,7 @@ This will:
 ### Why Use requirements-dev.txt?
 
 The `requirements-dev.txt` file is used for local dependencies in editable mode because:
+
 - `pyproject.toml` cannot contain `-e` flags (not PEP 508 compliant)
 - Editable installs allow you to modify the source code of dependencies and see changes immediately
 - The Makefile automatically handles the installation order
@@ -43,6 +46,7 @@ pip list | grep -E "python-pubsub-client|python-pubsub-devtools-consumers"
 ```
 
 You should see:
+
 ```
 python-pubsub-client             0.1.0    /path/to/Python.PubSub.Client/src
 python-pubsub-devtools-consumers 0.1.0    /path/to/Python.PubSub.DevTools.Consumers/src

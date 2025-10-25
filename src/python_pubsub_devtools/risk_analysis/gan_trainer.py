@@ -3,15 +3,16 @@ TimeGAN Trainer for Synthetic OHLCV Generation
 Simplified TimeGAN architecture for generating realistic candlestick patterns
 """
 
-import numpy as np
-import pickle
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
+
+import numpy as np
 
 try:
     import torch
     import torch.nn as nn
     import torch.optim as optim
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False

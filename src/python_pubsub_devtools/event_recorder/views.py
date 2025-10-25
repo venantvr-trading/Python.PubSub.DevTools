@@ -155,6 +155,7 @@ def register_routes(app: Flask) -> None:
 
     # Initialiser le listener d'événements (ne démarre pas automatiquement)
     from .event_listener import EventListener
+
     event_listener = EventListener(pubsub_url, recording_manager)
 
     @app.route('/')

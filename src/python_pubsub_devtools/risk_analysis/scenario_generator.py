@@ -5,9 +5,11 @@ Supports two modes:
 2. GAN - Advanced, realistic patterns
 """
 
-import numpy as np
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List
+
+import numpy as np
+
 from .gan_trainer import GANTrainer
 
 
@@ -33,12 +35,12 @@ class ScenarioGenerator:
                 pass  # Model not trained yet
 
     def generate_gbm_scenario(
-        self,
-        n_candles: int,
-        start_price: float,
-        drift: float,
-        volatility: float,
-        interval_minutes: int = 1
+            self,
+            n_candles: int,
+            start_price: float,
+            drift: float,
+            volatility: float,
+            interval_minutes: int = 1
     ) -> List[Dict]:
         """
         Generate scenario using Geometric Brownian Motion
@@ -93,11 +95,11 @@ class ScenarioGenerator:
         return candles
 
     def generate_gan_scenario(
-        self,
-        n_candles: int,
-        start_price: float,
-        regime_id: int,
-        interval_minutes: int = 1
+            self,
+            n_candles: int,
+            start_price: float,
+            regime_id: int,
+            interval_minutes: int = 1
     ) -> List[Dict]:
         """
         Generate scenario using trained GAN
@@ -156,12 +158,12 @@ class ScenarioGenerator:
         return all_candles[:n_candles]
 
     def generate_scenarios(
-        self,
-        n_scenarios: int,
-        n_candles: int,
-        start_price: float,
-        regime_params: Dict[int, Dict],
-        interval_minutes: int = 1
+            self,
+            n_scenarios: int,
+            n_candles: int,
+            start_price: float,
+            regime_params: Dict[int, Dict],
+            interval_minutes: int = 1
     ) -> List[List[Dict]]:
         """
         Generate multiple scenarios with regime mixing

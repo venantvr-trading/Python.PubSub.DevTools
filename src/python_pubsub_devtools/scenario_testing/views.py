@@ -278,6 +278,7 @@ def register_routes(app: Flask) -> None:
     def api_pubsub_status():
         """Récupère le statut de connexion PubSub depuis mock_exchange."""
         import requests
+
         try:
             response = requests.get('http://localhost:5557/api/replay/status', timeout=1)
             if response.ok:

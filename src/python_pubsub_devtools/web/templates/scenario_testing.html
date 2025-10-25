@@ -32,172 +32,172 @@
 
         <!-- Tab Content: Quick Start -->
         <div class="main-tab-content active" id="main-tab-quickstart">
-        <div class="card">
-            <h2>📊 Quick Start Scenarios</h2>
-            <p>Scénarios de test prêts à l'emploi - Cliquez pour démarrer immédiatement</p>
+            <div class="card">
+                <h2>📊 Quick Start Scenarios</h2>
+                <p>Scénarios de test prêts à l'emploi - Cliquez pour démarrer immédiatement</p>
 
-            <div class="scenarios-grid">
-                <div class="scenario-card" onclick="quickStartScenario('bull_run_50_candles.json')">
-                    <div class="scenario-icon">📈</div>
-                    <div class="scenario-name">Bull Run</div>
-                    <div class="scenario-desc">50 candles • Tendance haussière forte</div>
-                    <div class="scenario-price">$30K → $37.6K</div>
+                <div class="scenarios-grid">
+                    <div class="scenario-card" onclick="quickStartScenario('bull_run_50_candles.json')">
+                        <div class="scenario-icon">📈</div>
+                        <div class="scenario-name">Bull Run</div>
+                        <div class="scenario-desc">50 candles • Tendance haussière forte</div>
+                        <div class="scenario-price">$30K → $37.6K</div>
+                    </div>
+
+                    <div class="scenario-card" onclick="quickStartScenario('bear_market_50_candles.json')">
+                        <div class="scenario-icon">📉</div>
+                        <div class="scenario-name">Bear Market</div>
+                        <div class="scenario-desc">50 candles • Tendance baissière</div>
+                        <div class="scenario-price">$40K → $33.9K</div>
+                    </div>
+
+                    <div class="scenario-card" onclick="quickStartScenario('sideways_50_candles.json')">
+                        <div class="scenario-icon">↔️</div>
+                        <div class="scenario-name">Sideways</div>
+                        <div class="scenario-desc">50 candles • Consolidation range</div>
+                        <div class="scenario-price">$34K - $36K</div>
+                    </div>
+
+                    <div class="scenario-card" onclick="quickStartScenario('flash_crash_60_candles.json')">
+                        <div class="scenario-icon">⚡</div>
+                        <div class="scenario-name">Flash Crash</div>
+                        <div class="scenario-desc">60 candles • Crash + récupération</div>
+                        <div class="scenario-price">$38K → $21K → $33K</div>
+                    </div>
+
+                    <div class="scenario-card" onclick="quickStartScenario('volatile_40_candles.json')">
+                        <div class="scenario-icon">🌪️</div>
+                        <div class="scenario-name">High Volatility</div>
+                        <div class="scenario-desc">40 candles • Mouvements chaotiques</div>
+                        <div class="scenario-price">Haute volatilité</div>
+                    </div>
                 </div>
 
-                <div class="scenario-card" onclick="quickStartScenario('bear_market_50_candles.json')">
-                    <div class="scenario-icon">📉</div>
-                    <div class="scenario-name">Bear Market</div>
-                    <div class="scenario-desc">50 candles • Tendance baissière</div>
-                    <div class="scenario-price">$40K → $33.9K</div>
-                </div>
-
-                <div class="scenario-card" onclick="quickStartScenario('sideways_50_candles.json')">
-                    <div class="scenario-icon">↔️</div>
-                    <div class="scenario-name">Sideways</div>
-                    <div class="scenario-desc">50 candles • Consolidation range</div>
-                    <div class="scenario-price">$34K - $36K</div>
-                </div>
-
-                <div class="scenario-card" onclick="quickStartScenario('flash_crash_60_candles.json')">
-                    <div class="scenario-icon">⚡</div>
-                    <div class="scenario-name">Flash Crash</div>
-                    <div class="scenario-desc">60 candles • Crash + récupération</div>
-                    <div class="scenario-price">$38K → $21K → $33K</div>
-                </div>
-
-                <div class="scenario-card" onclick="quickStartScenario('volatile_40_candles.json')">
-                    <div class="scenario-icon">🌪️</div>
-                    <div class="scenario-name">High Volatility</div>
-                    <div class="scenario-desc">40 candles • Mouvements chaotiques</div>
-                    <div class="scenario-price">Haute volatilité</div>
+                <div class="scenario-controls">
+                    <label>Mode replay rapide:</label>
+                    <select id="quick-mode-select">
+                        <option value="pull">Pull Mode</option>
+                        <option selected value="push">Push Mode</option>
+                    </select>
+                    <label>Intervalle:</label>
+                    <select id="quick-interval-select">
+                        <option value="0.5">0.5s (rapide)</option>
+                        <option selected value="1">1s</option>
+                        <option value="2">2s</option>
+                        <option value="3">3s</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="scenario-controls">
-                <label>Mode replay rapide:</label>
-                <select id="quick-mode-select">
-                    <option value="pull">Pull Mode</option>
-                    <option value="push" selected>Push Mode</option>
-                </select>
-                <label>Intervalle:</label>
-                <select id="quick-interval-select">
-                    <option value="0.5">0.5s (rapide)</option>
-                    <option value="1" selected>1s</option>
-                    <option value="2">2s</option>
-                    <option value="3">3s</option>
-                </select>
+            <div class="info-box">
+                💡 Ou sélectionnez un scénario YAML avancé ci-dessous pour tests avec assertions
             </div>
-        </div>
 
-        <div class="info-box">
-            💡 Ou sélectionnez un scénario YAML avancé ci-dessous pour tests avec assertions
-        </div>
+            <div class="grid-container">
+                <!-- Left: Scenarios list -->
+                <div class="panel">
+                    <div class="panel-title">📋 Available Scenarios</div>
+                    <div class="scenarios-list" id="scenarios-list">
+                        <div style="text-align: center; color: #6c757d; padding: 20px;">
+                            Loading scenarios...
+                        </div>
+                    </div>
+                </div>
 
-        <div class="grid-container">
-            <!-- Left: Scenarios list -->
-            <div class="panel">
-                <div class="panel-title">📋 Available Scenarios</div>
-                <div class="scenarios-list" id="scenarios-list">
-                    <div style="text-align: center; color: #6c757d; padding: 20px;">
-                        Loading scenarios...
+                <!-- Right: Configuration and execution -->
+                <div class="panel">
+                    <div class="panel-title">⚙️ Test Configuration</div>
+
+                    <div id="scenario-config" style="display: none;">
+                        <div class="control-group">
+                            <label class="control-label">Selected Scenario</label>
+                            <div id="selected-scenario-name" style="font-weight: 600; color: #667eea;">-</div>
+                        </div>
+
+                        <div class="tab-container">
+                            <div class="tab active" onclick="switchTab('preview')">Preview</div>
+                            <div class="tab" onclick="switchTab('config')">Configuration</div>
+                        </div>
+
+                        <div class="tab-content active" id="tab-preview">
+                            <div class="scenario-preview" id="scenario-preview">
+                                Select a scenario to see its configuration
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-config">
+                            <div class="control-group">
+                                <label class="control-label">Verbose Output</label>
+                                <input id="verbose-checkbox" type="checkbox"> Enable verbose logging
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">Save Recording</label>
+                                <input checked id="recording-checkbox" type="checkbox"> Record events during execution
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px; display: flex; gap: 10px; align-items: center;">
+                            <button class="btn btn-primary" id="run-btn" onclick="runTest()">▶️ Run Test</button>
+                            <button class="btn btn-danger" disabled id="stop-btn" onclick="stopTest()">⏹ Stop</button>
+                            <span class="status-badge status-idle" id="status-badge">● Idle</span>
+                        </div>
+                    </div>
+
+                    <div id="no-scenario" style="text-align: center; color: #6c757d; padding: 40px;">
+                        ← Select a scenario to configure and run
                     </div>
                 </div>
             </div>
 
-            <!-- Right: Configuration and execution -->
-            <div class="panel">
-                <div class="panel-title">⚙️ Test Configuration</div>
+            <!-- Results section -->
+            <div id="results-section" style="display: none;">
+                <div class="panel execution-panel">
+                    <div class="panel-title">📊 Execution Results</div>
 
-                <div id="scenario-config" style="display: none;">
-                    <div class="control-group">
-                        <label class="control-label">Selected Scenario</label>
-                        <div id="selected-scenario-name" style="font-weight: 600; color: #667eea;">-</div>
+                    <div class="results-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Status</div>
+                            <div class="stat-value" id="result-status">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Duration</div>
+                            <div class="stat-value" id="result-duration">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Assertions Passed</div>
+                            <div class="stat-value success" id="result-assertions">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Events Recorded</div>
+                            <div class="stat-value" id="result-events">-</div>
+                        </div>
                     </div>
 
                     <div class="tab-container">
-                        <div class="tab active" onclick="switchTab('preview')">Preview</div>
-                        <div class="tab" onclick="switchTab('config')">Configuration</div>
+                        <div class="tab active" onclick="switchResultTab('log')">Execution Log</div>
+                        <div class="tab" onclick="switchResultTab('assertions')">Assertions</div>
+                        <div class="tab" onclick="switchResultTab('chaos')">Chaos Report</div>
                     </div>
 
-                    <div class="tab-content active" id="tab-preview">
-                        <div class="scenario-preview" id="scenario-preview">
-                            Select a scenario to see its configuration
+                    <div class="tab-content active" id="result-tab-log">
+                        <div class="execution-log" id="execution-log">
+                            <div class="log-entry log-info">Waiting for test execution...</div>
                         </div>
                     </div>
 
-                    <div class="tab-content" id="tab-config">
-                        <div class="control-group">
-                            <label class="control-label">Verbose Output</label>
-                            <input id="verbose-checkbox" type="checkbox"> Enable verbose logging
-                        </div>
-                        <div class="control-group">
-                            <label class="control-label">Save Recording</label>
-                            <input checked id="recording-checkbox" type="checkbox"> Record events during execution
+                    <div class="tab-content" id="result-tab-assertions">
+                        <div class="assertions-list" id="assertions-list">
+                            No assertions to display yet
                         </div>
                     </div>
 
-                    <div style="margin-top: 20px; display: flex; gap: 10px; align-items: center;">
-                        <button class="btn btn-primary" id="run-btn" onclick="runTest()">▶️ Run Test</button>
-                        <button class="btn btn-danger" disabled id="stop-btn" onclick="stopTest()">⏹ Stop</button>
-                        <span class="status-badge status-idle" id="status-badge">● Idle</span>
-                    </div>
-                </div>
-
-                <div id="no-scenario" style="text-align: center; color: #6c757d; padding: 40px;">
-                    ← Select a scenario to configure and run
-                </div>
-            </div>
-        </div>
-
-        <!-- Results section -->
-        <div id="results-section" style="display: none;">
-            <div class="panel execution-panel">
-                <div class="panel-title">📊 Execution Results</div>
-
-                <div class="results-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Status</div>
-                        <div class="stat-value" id="result-status">-</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Duration</div>
-                        <div class="stat-value" id="result-duration">-</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Assertions Passed</div>
-                        <div class="stat-value success" id="result-assertions">-</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Events Recorded</div>
-                        <div class="stat-value" id="result-events">-</div>
-                    </div>
-                </div>
-
-                <div class="tab-container">
-                    <div class="tab active" onclick="switchResultTab('log')">Execution Log</div>
-                    <div class="tab" onclick="switchResultTab('assertions')">Assertions</div>
-                    <div class="tab" onclick="switchResultTab('chaos')">Chaos Report</div>
-                </div>
-
-                <div class="tab-content active" id="result-tab-log">
-                    <div class="execution-log" id="execution-log">
-                        <div class="log-entry log-info">Waiting for test execution...</div>
-                    </div>
-                </div>
-
-                <div class="tab-content" id="result-tab-assertions">
-                    <div class="assertions-list" id="assertions-list">
-                        No assertions to display yet
-                    </div>
-                </div>
-
-                <div class="tab-content" id="result-tab-chaos">
-                    <div class="chaos-config" id="chaos-report">
-                        No chaos report available yet
+                    <div class="tab-content" id="result-tab-chaos">
+                        <div class="chaos-config" id="chaos-report">
+                            No chaos report available yet
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
         </div>
         <!-- END Quick Start Tab -->
 

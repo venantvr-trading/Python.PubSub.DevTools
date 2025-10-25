@@ -16,10 +16,10 @@ class EventListener:
     """
 
     def __init__(
-        self,
-        pubsub_url: str,
-        recording_manager,
-        consumer_name: str = "EventRecorder"
+            self,
+            pubsub_url: str,
+            recording_manager,
+            consumer_name: str = "EventRecorder"
     ):
         """
         Initialise le listener.
@@ -69,6 +69,7 @@ class EventListener:
         except Exception as e:
             print(f"❌ Error recording event: {e}")
             import traceback
+
             traceback.print_exc()
 
     def start(self) -> bool:
@@ -115,6 +116,7 @@ class EventListener:
         except Exception as e:
             print(f"❌ Failed to start Event Listener: {e}")
             import traceback
+
             traceback.print_exc()
             self._running = False
             return False
@@ -129,6 +131,7 @@ class EventListener:
         except Exception as e:
             print(f"❌ Event Listener error: {e}")
             import traceback
+
             traceback.print_exc()
         finally:
             self._running = False

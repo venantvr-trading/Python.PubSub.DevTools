@@ -247,6 +247,7 @@ def serve_all(config: Path):
     try:
         import threading
         from python_pubsub_client import PubSubClient
+
         service_bus_client = PubSubClient(
             url=cfg.event_flow.pubsub_url,
             consumer='scenario_testing',

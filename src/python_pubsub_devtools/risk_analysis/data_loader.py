@@ -3,10 +3,10 @@ Data Loader for OHLCV CSV files
 Validates and extracts features for regime detection
 """
 
-import pandas as pd
-import numpy as np
 from typing import Dict, List, Optional
-from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 
 class DataLoader:
@@ -29,6 +29,7 @@ class DataLoader:
         """
         try:
             from io import StringIO
+
             df = pd.read_csv(StringIO(csv_content))
 
             # Validate columns

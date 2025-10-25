@@ -4,9 +4,9 @@ Saves scenarios in replay-compatible JSON format
 """
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
-from datetime import datetime
 
 
 class ExportManager:
@@ -25,10 +25,10 @@ class ExportManager:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def save_scenario(
-        self,
-        candles: List[Dict],
-        filename: str = None,
-        metadata: Dict = None
+            self,
+            candles: List[Dict],
+            filename: str = None,
+            metadata: Dict = None
     ) -> Dict:
         """
         Save scenario to JSON file
@@ -82,10 +82,10 @@ class ExportManager:
         }
 
     def save_scenarios_batch(
-        self,
-        scenarios: List[List[Dict]],
-        prefix: str = 'batch',
-        metadata: Dict = None
+            self,
+            scenarios: List[List[Dict]],
+            prefix: str = 'batch',
+            metadata: Dict = None
     ) -> List[Dict]:
         """
         Save multiple scenarios at once
