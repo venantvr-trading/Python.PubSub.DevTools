@@ -249,3 +249,371 @@ async function quickStartScenario(filename) {
         alert(`❌ Erreur de connexion à Mock Exchange (port 5557): ${error.message}\nAssurez-vous que Mock Exchange est démarré.`);
     }
 }
+
+// ============================================
+// RISK ANALYSIS MODULE
+// ============================================
+
+let riskState = {
+    uploadedData: null,
+    hmmRegimes: [],
+    trainedGANs: {},
+    simulations: [],
+    currentSimIndex: 0,
+    charts: {
+        live: null,
+        simulation: null,
+        histogram: null
+    }
+};
+
+// Tab switching
+function switchMainTab(tabName) {
+    document.querySelectorAll('.main-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.main-tab-content').forEach(content => content.classList.remove('active'));
+
+    event.target.classList.add('active');
+    document.getElementById('main-tab-' + tabName).classList.add('active');
+
+    if (tabName === 'risk' && !riskState.charts.live) {
+        initRiskCharts();
+    }
+}
+
+function switchSubTab(tabName) {
+    document.querySelectorAll('.sub-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.sub-tab-content').forEach(content => content.classList.remove('active'));
+
+    event.target.classList.add('active');
+    document.getElementById('sub-tab-' + tabName).classList.add('active');
+}
+
+// Initialize ApexCharts
+function initRiskCharts() {
+    // Live candlestick chart
+    const liveOptions = {
+        series: [{name: 'price', data: []}],
+        chart: {type: 'candlestick', height: 400, toolbar: {show: false}},
+        xaxis: {type: 'datetime'},
+        yaxis: {tooltip: {enabled: true}},
+        plotOptions: {
+            candlestick: {
+                colors: {upward: '#26a69a', downward: '#ef5350'}
+            }
+        }
+    };
+    riskState.charts.live = new ApexCharts(document.getElementById('chart-live'), liveOptions);
+    riskState.charts.live.render();
+
+    // Simulation chart
+    const simOptions = {
+        series: [{name: 'close', data: []}],
+        chart: {type: 'line', height: 400, toolbar: {show: false}},
+        stroke: {curve: 'smooth', width: 2},
+        xaxis: {type: 'numeric', title: {text: 'Bougie'}},
+        yaxis: {title: {text: 'Prix'}},
+        colors: ['#667eea']
+    };
+    riskState.charts.simulation = new ApexCharts(document.getElementById('chart-simulation'), simOptions);
+    riskState.charts.simulation.render();
+
+}
+
+// File upload handler
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file-upload-risk');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileUpload);
+    }
+});
+
+async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusDiv = document.getElementById('file-status-risk');
+    statusDiv.textContent = `Chargement: ${file.name}...`;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const csvContent = e.target.result;
+
+        try {
+            // Upload to backend
+            const response = await fetch('/api/risk/upload', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({csv_content: csvContent})
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                statusDiv.textContent = `❌ Erreur: ${result.error}`;
+                return;
+            }
+
+            const stats = result.stats;
+            statusDiv.textContent = `✅ ${stats.count} bougies chargées (${stats.start_date} → ${stats.end_date})`;
+
+            // Display last 200 candles from preview
+            if (stats.preview && stats.preview.length > 0) {
+                const candles = stats.preview.map(c => ({
+                    timestamp: c.timestamp,
+                    open: c.open,
+                    high: c.high,
+                    low: c.low,
+                    close: c.close
+                }));
+                displayLiveChart(candles);
+            }
+
+            // Enable HMM button
+            document.getElementById('btn-train-hmm').disabled = false;
+
+        } catch (error) {
+            statusDiv.textContent = `❌ Erreur: ${error.message}`;
+        }
+    };
+    reader.readAsText(file);
+}
+
+function displayLiveChart(candles) {
+    const chartData = candles.map(c => ({
+        x: new Date(c.timestamp),
+        y: [c.open, c.high, c.low, c.close]
+    }));
+
+    riskState.charts.live.updateSeries([{data: chartData}]);
+}
+
+// HMM Training
+document.addEventListener('DOMContentLoaded', function() {
+    const btnHmm = document.getElementById('btn-train-hmm');
+    if (btnHmm) {
+        btnHmm.addEventListener('click', trainHMM);
+    }
+});
+
+async function trainHMM() {
+    const statusDiv = document.getElementById('hmm-status');
+    const regimeList = document.getElementById('hmm-regimes');
+
+    statusDiv.textContent = '⏳ Identification des régimes en cours...';
+    regimeList.innerHTML = '';
+
+    try {
+        const response = await fetch('/api/risk/train_hmm', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+            statusDiv.textContent = `❌ Erreur: ${result.error}`;
+            return;
+        }
+
+        const regimes = result.regimes;
+        riskState.hmmRegimes = regimes;
+        statusDiv.textContent = `✅ ${regimes.length} régimes identifiés`;
+
+        regimeList.innerHTML = regimes.map(r =>
+            `<li style="color: ${r.color};">${r.name} (${(r.prob * 100).toFixed(0)}%)</li>`
+        ).join('');
+
+        // Populate GAN dropdown
+        const ganSelect = document.getElementById('gan-regime-select');
+        ganSelect.innerHTML = '<option>Sélectionner un régime</option>' +
+            regimes.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        ganSelect.disabled = false;
+        document.getElementById('btn-train-gan').disabled = false;
+
+        // Show current regime badge
+        const currentRegime = regimes[0];
+        document.getElementById('current-regime-badge').classList.remove('hidden');
+        document.getElementById('regime-name').textContent = currentRegime.name;
+        document.getElementById('regime-prob').textContent = (currentRegime.prob * 100).toFixed(0);
+
+    } catch (error) {
+        statusDiv.textContent = `❌ Erreur: ${error.message}`;
+    }
+}
+
+// GAN Training
+document.addEventListener('DOMContentLoaded', function() {
+    const btnGan = document.getElementById('btn-train-gan');
+    if (btnGan) {
+        btnGan.addEventListener('click', trainGAN);
+    }
+});
+
+async function trainGAN() {
+    const regimeId = document.getElementById('gan-regime-select').value;
+    if (regimeId === 'Sélectionner un régime') return;
+
+    const statusDiv = document.getElementById('gan-status');
+    statusDiv.textContent = `⏳ Entraînement du GAN pour régime ${regimeId}...`;
+
+    try {
+        const response = await fetch('/api/risk/train_gan', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({regime_id: parseInt(regimeId)})
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+            statusDiv.textContent = `❌ Erreur: ${result.error}`;
+            return;
+        }
+
+        // Poll for completion
+        const pollInterval = setInterval(async () => {
+            const statusResponse = await fetch(`/api/risk/gan_status/${regimeId}`);
+            const statusData = await statusResponse.json();
+
+            if (statusData.status !== 'training') {
+                clearInterval(pollInterval);
+
+                if (statusData.error) {
+                    statusDiv.textContent = `❌ ${statusData.error}`;
+                } else {
+                    riskState.trainedGANs[regimeId] = true;
+                    statusDiv.textContent = `✅ GAN entraîné pour ${Object.keys(riskState.trainedGANs).length}/${riskState.hmmRegimes.length} régimes`;
+
+                    // Enable simulation button if all GANs trained
+                    if (Object.keys(riskState.trainedGANs).length === riskState.hmmRegimes.length) {
+                        document.getElementById('btn-run-sim').disabled = false;
+                    }
+                }
+            }
+        }, 2000);
+
+    } catch (error) {
+        statusDiv.textContent = `❌ Erreur: ${error.message}`;
+    }
+}
+
+// Monte Carlo Simulation
+document.addEventListener('DOMContentLoaded', function() {
+    const btnSim = document.getElementById('btn-run-sim');
+    if (btnSim) {
+        btnSim.addEventListener('click', runSimulation);
+    }
+
+    const btnPrev = document.getElementById('btn-prev-sim');
+    const btnNext = document.getElementById('btn-next-sim');
+    if (btnPrev) btnPrev.addEventListener('click', () => navigateSimulation(-1));
+    if (btnNext) btnNext.addEventListener('click', () => navigateSimulation(1));
+});
+
+async function runSimulation() {
+    const simCount = parseInt(document.getElementById('sim-count').value);
+    const horizon = parseInt(document.getElementById('sim-horizon').value);
+
+    const loader = document.getElementById('sim-loader');
+    loader.classList.remove('hidden');
+
+    // Determine mode: use GAN if all trained, else GBM
+    const allGANsTrained = riskState.hmmRegimes &&
+                           Object.keys(riskState.trainedGANs).length === riskState.hmmRegimes.length;
+    const mode = allGANsTrained ? 'gan' : 'gbm';
+
+    try {
+        const response = await fetch('/api/risk/simulate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                n_scenarios: simCount,
+                n_candles: horizon,
+                mode: mode
+            })
+        });
+
+        const result = await response.json();
+
+        loader.classList.add('hidden');
+
+        if (result.error) {
+            alert(`❌ Erreur: ${result.error}`);
+            return;
+        }
+
+        alert(`✅ ${result.n_scenarios} scénarios générés!\nMode: ${result.mode.toUpperCase()}\nFichiers sauvegardés dans replay_data/generated/`);
+
+        // Switch to results tab
+        switchSubTab('results');
+        document.querySelector('.sub-tab[onclick*="results"]').click();
+
+        // Load generated scenarios for display
+        loadGeneratedScenarios(result.files);
+
+    } catch (error) {
+        loader.classList.add('hidden');
+        alert(`❌ Erreur: ${error.message}`);
+    }
+}
+
+async function loadGeneratedScenarios(filenames) {
+    // Load first few scenarios for preview
+    const scenarios = [];
+
+    for (let i = 0; i < Math.min(10, filenames.length); i++) {
+        try {
+            const response = await fetch(`/replay_data/generated/${filenames[i]}`);
+            const data = await response.json();
+            scenarios.push(data.candles);
+        } catch (error) {
+            console.error('Failed to load scenario:', error);
+        }
+    }
+
+    riskState.simulations = scenarios;
+    riskState.currentSimIndex = 0;
+
+    if (scenarios.length > 0) {
+        displaySimulation(0);
+        document.getElementById('btn-prev-sim').disabled = false;
+        document.getElementById('btn-next-sim').disabled = false;
+    }
+}
+
+function calculateRiskMetrics(sims, startPrice) {
+    // Just display first scenario
+    displaySimulation(0);
+}
+
+function displaySimulation(index) {
+    if (!riskState.simulations.length) return;
+
+    const scenario = riskState.simulations[index];
+
+    // Check if scenario is array of candles or array of prices
+    let data;
+    if (scenario[0] && typeof scenario[0] === 'object' && 'close' in scenario[0]) {
+        // Candles format
+        data = scenario.map((candle, i) => ({x: i, y: candle.close}));
+    } else {
+        // Prices array
+        data = scenario.map((price, i) => ({x: i, y: price}));
+    }
+
+    riskState.charts.simulation.updateSeries([{data: data}]);
+
+    document.getElementById('sim-counter').textContent = `Scénario ${index + 1} / ${riskState.simulations.length}`;
+}
+
+function navigateSimulation(direction) {
+    riskState.currentSimIndex += direction;
+
+    if (riskState.currentSimIndex < 0) {
+        riskState.currentSimIndex = 0;
+    } else if (riskState.currentSimIndex >= riskState.simulations.length) {
+        riskState.currentSimIndex = riskState.simulations.length - 1;
+    }
+
+    displaySimulation(riskState.currentSimIndex);
+}

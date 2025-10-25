@@ -286,3 +286,190 @@ def register_routes(app: Flask) -> None:
         except:
             pass
         return jsonify({'connected': False})
+
+    # ===== Risk Analysis API Routes =====
+
+    # Global state for risk analysis
+    risk_state = {
+        'data_loader': None,
+        'hmm_trainer': None,
+        'gan_trainers': {},  # regime_id -> GANTrainer
+        'training_status': {}  # track async training
+    }
+
+    @app.route('/api/risk/upload', methods=['POST'])
+    def api_risk_upload():
+        """Upload and parse CSV data"""
+        from python_pubsub_devtools.risk_analysis import DataLoader
+
+        data = request.get_json()
+        csv_content = data.get('csv_content')
+
+        if not csv_content:
+            return jsonify({'error': 'No CSV content provided'}), 400
+
+        loader = DataLoader()
+        result = loader.parse_csv(csv_content)
+
+        if 'error' in result:
+            return jsonify(result), 400
+
+        # Store in state
+        risk_state['data_loader'] = loader
+
+        return jsonify(result)
+
+    @app.route('/api/risk/train_hmm', methods=['POST'])
+    def api_risk_train_hmm():
+        """Train HMM for regime detection"""
+        from python_pubsub_devtools.risk_analysis import HMMTrainer
+
+        if risk_state['data_loader'] is None:
+            return jsonify({'error': 'No data loaded. Upload CSV first'}), 400
+
+        try:
+            # Extract features
+            features = risk_state['data_loader'].extract_features()
+
+            # Train HMM
+            trainer = HMMTrainer(n_regimes=3)
+            result = trainer.train(features)
+
+            if 'error' in result:
+                return jsonify(result), 400
+
+            # Store in state
+            risk_state['hmm_trainer'] = trainer
+
+            return jsonify(result)
+
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/risk/train_gan', methods=['POST'])
+    def api_risk_train_gan():
+        """Train GAN for specific regime"""
+        from python_pubsub_devtools.risk_analysis import GANTrainer
+
+        data = request.get_json()
+        regime_id = data.get('regime_id')
+
+        if regime_id is None:
+            return jsonify({'error': 'regime_id required'}), 400
+
+        regime_id = int(regime_id)
+
+        if risk_state['data_loader'] is None:
+            return jsonify({'error': 'No data loaded'}), 400
+
+        if risk_state['hmm_trainer'] is None:
+            return jsonify({'error': 'HMM not trained'}), 400
+
+        try:
+            # Get regime-specific candles
+            candles = risk_state['data_loader'].get_candles()
+
+            # Filter by regime (simplified - in real scenario, use HMM predictions)
+            # For now, use all candles
+            regime_candles = candles
+
+            # Train GAN asynchronously
+            def train_async():
+                trainer = GANTrainer(regime_id=regime_id)
+                result = trainer.train(regime_candles, epochs=50, batch_size=16)
+                risk_state['gan_trainers'][regime_id] = trainer
+                risk_state['training_status'][regime_id] = result
+
+            # Mark as training
+            risk_state['training_status'][regime_id] = {'status': 'training'}
+
+            # Start training thread
+            thread = threading.Thread(target=train_async, daemon=True)
+            thread.start()
+
+            return jsonify({
+                'success': True,
+                'regime_id': regime_id,
+                'status': 'training_started'
+            })
+
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/risk/gan_status/<int:regime_id>')
+    def api_risk_gan_status(regime_id):
+        """Check GAN training status"""
+        status = risk_state['training_status'].get(regime_id)
+
+        if status is None:
+            return jsonify({'error': 'No training found'}), 404
+
+        return jsonify(status)
+
+    @app.route('/api/risk/simulate', methods=['POST'])
+    def api_risk_simulate():
+        """Generate scenarios"""
+        from python_pubsub_devtools.risk_analysis import ScenarioGenerator, ExportManager
+
+        data = request.get_json()
+        n_scenarios = data.get('n_scenarios', 100)
+        n_candles = data.get('n_candles', 240)
+        mode = data.get('mode', 'gbm')  # 'gbm' or 'gan'
+
+        if risk_state['hmm_trainer'] is None:
+            return jsonify({'error': 'HMM not trained'}), 400
+
+        try:
+            # Get regime parameters
+            regime_stats = risk_state['hmm_trainer'].regime_stats
+            regime_params = {}
+
+            for regime_id, stats in regime_stats.items():
+                regime_params[regime_id] = {
+                    'drift': stats['avg_return'],
+                    'volatility': stats['avg_volatility'],
+                    'prob': stats['prob']
+                }
+
+            # Determine start price
+            if risk_state['data_loader'] and risk_state['data_loader'].data is not None:
+                start_price = float(risk_state['data_loader'].data['close'].iloc[-1])
+            else:
+                start_price = 35000.0
+
+            # Generate scenarios
+            generator = ScenarioGenerator(mode=mode)
+
+            if mode == 'gan':
+                generator.load_gan_models(list(regime_params.keys()))
+
+            scenarios = generator.generate_scenarios(
+                n_scenarios=n_scenarios,
+                n_candles=n_candles,
+                start_price=start_price,
+                regime_params=regime_params,
+                interval_minutes=1
+            )
+
+            # Export to files
+            exporter = ExportManager()
+            results = exporter.save_scenarios_batch(
+                scenarios=scenarios,
+                prefix='risk_scenario',
+                metadata={
+                    'mode': mode,
+                    'start_price': start_price,
+                    'n_scenarios': n_scenarios,
+                    'n_candles': n_candles
+                }
+            )
+
+            return jsonify({
+                'success': True,
+                'n_scenarios': len(results),
+                'files': [r['filename'] for r in results],
+                'mode': mode
+            })
+
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500

@@ -7,6 +7,7 @@
     <link href="{{ url_for('static', filename='css/dashboard_common.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/pubsub_status.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/scenario_testing.css') }}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
 </head>
 <body>
 <div class="control-buttons">
@@ -23,40 +24,48 @@
     <div class="content">
         {% include '_pubsub_status.html' %}
 
+        <!-- Main Tabs -->
+        <div class="main-tab-container">
+            <div class="main-tab active" onclick="switchMainTab('quickstart')">🚀 Quick Start</div>
+            <div class="main-tab" onclick="switchMainTab('risk')">📊 Analyse de Risque</div>
+        </div>
+
+        <!-- Tab Content: Quick Start -->
+        <div class="main-tab-content active" id="main-tab-quickstart">
         <div class="card">
             <h2>📊 Quick Start Scenarios</h2>
             <p>Scénarios de test prêts à l'emploi - Cliquez pour démarrer immédiatement</p>
 
             <div class="scenarios-grid">
-                <div class="scenario-card" onclick="quickStartScenario('bull_run_50candles.json')">
+                <div class="scenario-card" onclick="quickStartScenario('bull_run_50_candles.json')">
                     <div class="scenario-icon">📈</div>
                     <div class="scenario-name">Bull Run</div>
                     <div class="scenario-desc">50 candles • Tendance haussière forte</div>
                     <div class="scenario-price">$30K → $37.6K</div>
                 </div>
 
-                <div class="scenario-card" onclick="quickStartScenario('bear_market_50candles.json')">
+                <div class="scenario-card" onclick="quickStartScenario('bear_market_50_candles.json')">
                     <div class="scenario-icon">📉</div>
                     <div class="scenario-name">Bear Market</div>
                     <div class="scenario-desc">50 candles • Tendance baissière</div>
                     <div class="scenario-price">$40K → $33.9K</div>
                 </div>
 
-                <div class="scenario-card" onclick="quickStartScenario('sideways_50candles.json')">
+                <div class="scenario-card" onclick="quickStartScenario('sideways_50_candles.json')">
                     <div class="scenario-icon">↔️</div>
                     <div class="scenario-name">Sideways</div>
                     <div class="scenario-desc">50 candles • Consolidation range</div>
                     <div class="scenario-price">$34K - $36K</div>
                 </div>
 
-                <div class="scenario-card" onclick="quickStartScenario('flash_crash_60candles.json')">
+                <div class="scenario-card" onclick="quickStartScenario('flash_crash_60_candles.json')">
                     <div class="scenario-icon">⚡</div>
                     <div class="scenario-name">Flash Crash</div>
                     <div class="scenario-desc">60 candles • Crash + récupération</div>
                     <div class="scenario-price">$38K → $21K → $33K</div>
                 </div>
 
-                <div class="scenario-card" onclick="quickStartScenario('volatile_40candles.json')">
+                <div class="scenario-card" onclick="quickStartScenario('volatile_40_candles.json')">
                     <div class="scenario-icon">🌪️</div>
                     <div class="scenario-name">High Volatility</div>
                     <div class="scenario-desc">40 candles • Mouvements chaotiques</div>
@@ -189,6 +198,104 @@
                 </div>
             </div>
         </div>
+        </div>
+        <!-- END Quick Start Tab -->
+
+        <!-- Tab Content: Risk Analysis -->
+        <div class="main-tab-content" id="main-tab-risk">
+            <div class="risk-analysis-layout">
+                <!-- Sidebar de Contrôle -->
+                <div class="risk-sidebar">
+                    <h3 class="sidebar-title">Panneau de Contrôle</h3>
+
+                    <!-- Section 0: Upload -->
+                    <div class="control-section">
+                        <h4>0️⃣ Ingestion des Données</h4>
+                        <p class="section-desc">Chargez un fichier CSV avec colonnes: timestamp, open, high, low, close, volume</p>
+                        <div class="control-group">
+                            <label class="control-label">Fichier CSV (OHLCV)</label>
+                            <input accept=".csv" class="file-input" id="file-upload-risk" type="file">
+                        </div>
+                        <div class="status-text" id="file-status-risk">Aucun fichier chargé</div>
+                    </div>
+
+                    <!-- Section 1: HMM -->
+                    <div class="control-section">
+                        <h4>1️⃣ Le Cerveau (HMM)</h4>
+                        <p class="section-desc">Modèle de Markov caché pour identifier automatiquement les régimes (Bull/Bear/Sideways) selon volatilité et rendements</p>
+                        <button class="btn btn-primary" disabled id="btn-train-hmm">🧠 Lancer l'identification</button>
+                        <div class="status-text" id="hmm-status">État : Inactif</div>
+                        <ul class="regime-list" id="hmm-regimes"></ul>
+                    </div>
+
+                    <!-- Section 2: GANs -->
+                    <div class="control-section">
+                        <h4>2️⃣ Les Artistes (TimeGANs)</h4>
+                        <p class="section-desc">Réseau génératif qui apprend les patterns de chaque régime pour créer des séquences réalistes de bougies</p>
+                        <div class="control-group">
+                            <label class="control-label">Régime cible</label>
+                            <select class="control-input" disabled id="gan-regime-select">
+                                <option>Sélectionner un régime</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" disabled id="btn-train-gan">🎨 Entraîner le GAN</button>
+                        <div class="status-text" id="gan-status"></div>
+                    </div>
+
+                    <!-- Section 3: Simulation -->
+                    <div class="control-section">
+                        <h4>3️⃣ Génération des Scénarios</h4>
+                        <p class="section-desc">Monte Carlo: génère N trajectoires futures en mélangeant les régimes selon leurs probabilités (GBM ou GAN)</p>
+                        <div class="control-group">
+                            <label class="control-label">Nombre de simulations</label>
+                            <input class="control-input" id="sim-count" max="10000" min="100" type="number" value="1000">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Horizon (bougies)</label>
+                            <input class="control-input" id="sim-horizon" max="1000" min="10" type="number" value="240">
+                        </div>
+                        <button class="btn btn-primary btn-large" id="btn-run-sim">▶️ LANCER LA SIMULATION</button>
+                        <div class="spinner hidden" id="sim-loader"></div>
+                    </div>
+                </div>
+
+                <!-- Zone Principale -->
+                <div class="risk-main">
+                    <!-- Sub Tabs -->
+                    <div class="sub-tab-container">
+                        <div class="sub-tab active" onclick="switchSubTab('live')">📈 État Actuel</div>
+                        <div class="sub-tab" onclick="switchSubTab('results')">📊 Résultats de Simulation</div>
+                    </div>
+
+                    <!-- Sub Tab: État Actuel -->
+                    <div class="sub-tab-content active" id="sub-tab-live">
+                        <div class="regime-badge hidden" id="current-regime-badge">
+                            RÉGIME ACTUEL : <span id="regime-name">-</span> (Prob: <span id="regime-prob">0</span>%)
+                        </div>
+                        <div class="chart-container">
+                            <h3>📈 Dernières 200 Bougies</h3>
+                            <div id="chart-live" style="width: 100%; height: 400px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Sub Tab: Résultats -->
+                    <div class="sub-tab-content" id="sub-tab-results">
+                        <h3>Résultats de Simulation</h3>
+
+                        <!-- Explorateur de Scénarios -->
+                        <div class="chart-container">
+                            <div class="explorer-controls">
+                                <button class="btn btn-secondary" disabled id="btn-prev-sim">← Précédent</button>
+                                <span id="sim-counter">Scénario 0 / 0</span>
+                                <button class="btn btn-secondary" disabled id="btn-next-sim">Suivant →</button>
+                            </div>
+                            <div id="chart-simulation" style="width: 100%; height: 400px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END Risk Analysis Tab -->
     </div>
 
     {% include '_footer.html' %}

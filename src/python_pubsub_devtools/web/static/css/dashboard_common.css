@@ -210,8 +210,8 @@ body {
 
 /* Formulaires */
 .control-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
-.control-label { font-size: 0.9em; font-weight: 600; color: #333; }
-.control-input { padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 0.9em; }
+.control-label { font-size: 0.85em; font-weight: 600; color: #333; }
+.control-input { padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 0.85em; }
 .control-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
 
 /* Badges de Statut */
@@ -279,7 +279,7 @@ body.dark-mode .stat-value { color: #e0e0e0; }
 body.dark-mode .stat-value.positive { color: #4ade80; }
 body.dark-mode .stat-value.negative { color: #f87171; }
 
-body.dark-mode .control-label { color: #b0b0b0; }
+body.dark-mode .control-label { color: #e0e0e0; }
 body.dark-mode .control-input { background: #1a1a1a; border-color: #3a3a3a; color: #e0e0e0; }
 body.dark-mode .control-input:focus { border-color: #8fa3f5; box-shadow: 0 0 0 3px rgba(143, 163, 245, 0.2); }
 

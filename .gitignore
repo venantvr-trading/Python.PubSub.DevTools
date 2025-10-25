@@ -59,7 +59,7 @@ Thumbs.db
 
 # Project specific
 recordings/
-replay_data/
+replay_data/generated/
 scenarios/
 reports/
 *.dot
@@ -67,6 +67,12 @@ reports/
 temp_*.dot
 temp_*.svg
 
+# Risk analysis models and data
+src/python_pubsub_devtools/risk_analysis/models/*.pkl
+src/python_pubsub_devtools/risk_analysis/models/*.pth
+src/python_pubsub_devtools/risk_analysis/models/*.pt
+
 # Config files with secrets
 *_local.yaml
 *_dev.yaml
+/cex/
