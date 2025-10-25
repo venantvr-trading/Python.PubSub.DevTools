@@ -31,6 +31,7 @@ class MockServiceBus:
     def __init__(self):
         """Initialize the MockServiceBus"""
         self.published_events: list[dict[str, Any]] = []
+        self._pubsub_client = None  # Mock n'a pas de vraie connexion PubSub
 
     def publish(self, event_name: str, event: Any, source: str) -> None:
         """

@@ -5,8 +5,9 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>🎰 Mock Exchange Dashboard</title>
     <link href="{{ url_for('static', filename='css/dashboard_common.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/pubsub_status.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/mock_exchange.css') }}" rel="stylesheet">
-    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
 </head>
 <body>
 <div class="control-buttons">
@@ -21,19 +22,8 @@
     {% include '_navbar.html' %}
 
     <div class="content">
+        {% include '_pubsub_status.html' %}
 
-        <div class="pubsub-status-section">
-            <div class="pubsub-status-indicator checking" id="pubsub-status">
-                <span class="status-icon">⏳</span>
-                <span class="status-text">Vérification Service Bus...</span>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>Scénarios Générés</h2>
-            <p>Les contrôles pour lancer les scénarios algorithmiques (BULL_RUN, FLASH_CRASH, etc.) seront ajoutés ici.</p>
-            <!-- TODO: Intégrer la logique des scénarios générés -->
-        </div>
 
         <div class="card file-list">
             <h2>Rejouer des Données Historiques OHLCV</h2>
@@ -230,6 +220,7 @@
     {% include '_footer.html' %}
 </div>
 
+<script src="{{ url_for('static', filename='js/pubsub_status.js') }}"></script>
 <script src="{{ url_for('static', filename='js/mock_exchange.js') }}"></script>
 <script>
     // Initialize replay status polling
@@ -423,7 +414,6 @@
 
     // Candlestick chart instance
     let candlestickChart = null;
-    let candlestickSeries = null;
     let lastCandleCount = 0;
 
     // Initialize chart
@@ -434,44 +424,67 @@
 
         // Check if container is visible
         if (chartContainer.offsetParent === null) {
-            // Container not visible, retry later
             setTimeout(initCandlestickChart, 100);
             return;
         }
 
-        candlestickChart = LightweightCharts.createChart(chartContainer, {
-            width: chartContainer.clientWidth,
-            height: 400,
-            layout: {
-                background: { color: document.body.classList.contains('dark-mode') ? '#1a1a1a' : '#ffffff' },
-                textColor: document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#333333',
+        const isDark = document.body.classList.contains('dark-mode');
+
+        const options = {
+            series: [{
+                name: 'candle',
+                data: []
+            }],
+            chart: {
+                type: 'candlestick',
+                height: 400,
+                background: isDark ? '#1a1a1a' : '#ffffff',
+                foreColor: isDark ? '#e0e0e0' : '#333333',
+                toolbar: {
+                    show: true,
+                    tools: {
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                }
+            },
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    datetimeFormatter: {
+                        year: 'yyyy',
+                        month: 'MMM \'yy',
+                        day: 'dd MMM',
+                        hour: 'HH:mm'
+                    }
+                }
+            },
+            yaxis: {
+                tooltip: {
+                    enabled: true
+                }
+            },
+            plotOptions: {
+                candlestick: {
+                    colors: {
+                        upward: '#26a69a',
+                        downward: '#ef5350'
+                    }
+                }
             },
             grid: {
-                vertLines: { color: document.body.classList.contains('dark-mode') ? '#3a3a3a' : '#e1e1e1' },
-                horzLines: { color: document.body.classList.contains('dark-mode') ? '#3a3a3a' : '#e1e1e1' },
+                borderColor: isDark ? '#3a3a3a' : '#e1e1e1'
             },
-            timeScale: {
-                timeVisible: true,
-                secondsVisible: false,
-            },
-        });
-
-        candlestickSeries = candlestickChart.addCandlestickSeries({
-            upColor: '#26a69a',
-            downColor: '#ef5350',
-            borderVisible: false,
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
-        });
-
-        // Handle resize
-        window.addEventListener('resize', () => {
-            if (candlestickChart) {
-                candlestickChart.applyOptions({
-                    width: chartContainer.clientWidth
-                });
+            theme: {
+                mode: isDark ? 'dark' : 'light'
             }
-        });
+        };
+
+        candlestickChart = new ApexCharts(chartContainer, options);
+        candlestickChart.render();
     }
 
     // Load candles data
@@ -513,27 +526,17 @@
                     initCandlestickChart();
                 }
 
-                if (candlestickSeries) {
+                if (candlestickChart) {
                     const chartData = data.candles.map(candle => ({
-                        time: Math.floor(candle.timestamp / 1000), // Convert to seconds
-                        open: candle.open,
-                        high: candle.high,
-                        low: candle.low,
-                        close: candle.close,
+                        x: new Date(candle.timestamp),
+                        y: [candle.open, candle.high, candle.low, candle.close]
                     }));
 
-                    // Use setData for initial load or full refresh, update for incremental
+                    // Update chart data
                     if (data.candles.length !== lastCandleCount) {
-                        if (data.candles.length < lastCandleCount || lastCandleCount === 0) {
-                            // Full refresh if candle count decreased or first load
-                            candlestickSeries.setData(chartData);
-                            candlestickChart.timeScale().fitContent();
-                        } else {
-                            // Incremental update - add only new candles
-                            for (let i = lastCandleCount; i < data.candles.length; i++) {
-                                candlestickSeries.update(chartData[i]);
-                            }
-                        }
+                        candlestickChart.updateSeries([{
+                            data: chartData
+                        }]);
                         lastCandleCount = data.candles.length;
                     }
                 }

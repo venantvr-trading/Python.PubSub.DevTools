@@ -243,8 +243,26 @@ def serve_all(config: Path):
         click.echo(f"\n💡 Créez un fichier de configuration avec: pubsub-tools config-example", err=True)
         sys.exit(1)
 
-    # Créer une instance partagée du bus de services
-    service_bus = ServiceBus()
+    # Créer un PubSubClient pour scenario_testing
+    try:
+        import threading
+        from python_pubsub_client import PubSubClient
+        service_bus_client = PubSubClient(
+            url=cfg.event_flow.pubsub_url,
+            consumer='scenario_testing',
+            topics=[]
+        )
+        # Démarrer le client dans un thread
+        client_thread = threading.Thread(
+            target=service_bus_client.start,
+            daemon=True,
+            name="ScenarioTestingPubSubThread"
+        )
+        client_thread.start()
+        click.echo("✓ PubSub client initialized for scenario_testing")
+    except Exception as e:
+        click.echo(f"⚠️  Impossible de se connecter au PubSub: {e}")
+        service_bus_client = ServiceBus()
 
     def run_event_flow():
         server = EventFlowServer(cfg.event_flow)
@@ -261,7 +279,7 @@ def serve_all(config: Path):
 
     def run_scenario_testing():
         if cfg.scenario_testing:
-            server = ScenarioTestingServer(cfg.scenario_testing, service_bus=service_bus)
+            server = ScenarioTestingServer(cfg.scenario_testing, service_bus=service_bus_client)
             server.run(host='0.0.0.0', debug=False)
 
     click.echo("=" * 80)

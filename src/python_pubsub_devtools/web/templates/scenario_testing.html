@@ -5,6 +5,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Scenario Testing Dashboard</title>
     <link href="{{ url_for('static', filename='css/dashboard_common.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/pubsub_status.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/scenario_testing.css') }}" rel="stylesheet">
 </head>
 <body>
@@ -20,8 +21,67 @@
     {% include '_navbar.html' %}
 
     <div class="content">
+        {% include '_pubsub_status.html' %}
+
+        <div class="card">
+            <h2>📊 Quick Start Scenarios</h2>
+            <p>Scénarios de test prêts à l'emploi - Cliquez pour démarrer immédiatement</p>
+
+            <div class="scenarios-grid">
+                <div class="scenario-card" onclick="quickStartScenario('bull_run_50candles.json')">
+                    <div class="scenario-icon">📈</div>
+                    <div class="scenario-name">Bull Run</div>
+                    <div class="scenario-desc">50 candles • Tendance haussière forte</div>
+                    <div class="scenario-price">$30K → $37.6K</div>
+                </div>
+
+                <div class="scenario-card" onclick="quickStartScenario('bear_market_50candles.json')">
+                    <div class="scenario-icon">📉</div>
+                    <div class="scenario-name">Bear Market</div>
+                    <div class="scenario-desc">50 candles • Tendance baissière</div>
+                    <div class="scenario-price">$40K → $33.9K</div>
+                </div>
+
+                <div class="scenario-card" onclick="quickStartScenario('sideways_50candles.json')">
+                    <div class="scenario-icon">↔️</div>
+                    <div class="scenario-name">Sideways</div>
+                    <div class="scenario-desc">50 candles • Consolidation range</div>
+                    <div class="scenario-price">$34K - $36K</div>
+                </div>
+
+                <div class="scenario-card" onclick="quickStartScenario('flash_crash_60candles.json')">
+                    <div class="scenario-icon">⚡</div>
+                    <div class="scenario-name">Flash Crash</div>
+                    <div class="scenario-desc">60 candles • Crash + récupération</div>
+                    <div class="scenario-price">$38K → $21K → $33K</div>
+                </div>
+
+                <div class="scenario-card" onclick="quickStartScenario('volatile_40candles.json')">
+                    <div class="scenario-icon">🌪️</div>
+                    <div class="scenario-name">High Volatility</div>
+                    <div class="scenario-desc">40 candles • Mouvements chaotiques</div>
+                    <div class="scenario-price">Haute volatilité</div>
+                </div>
+            </div>
+
+            <div class="scenario-controls">
+                <label>Mode replay rapide:</label>
+                <select id="quick-mode-select">
+                    <option value="pull">Pull Mode</option>
+                    <option value="push" selected>Push Mode</option>
+                </select>
+                <label>Intervalle:</label>
+                <select id="quick-interval-select">
+                    <option value="0.5">0.5s (rapide)</option>
+                    <option value="1" selected>1s</option>
+                    <option value="2">2s</option>
+                    <option value="3">3s</option>
+                </select>
+            </div>
+        </div>
+
         <div class="info-box">
-            💡 Select a scenario from the list below and click "Run Test" to execute. Results will appear in real-time.
+            💡 Ou sélectionnez un scénario YAML avancé ci-dessous pour tests avec assertions
         </div>
 
         <div class="grid-container">
@@ -138,6 +198,7 @@
     ↻
 </button>
 
+<script src="{{ url_for('static', filename='js/pubsub_status.js') }}"></script>
 <script src="{{ url_for('static', filename='js/scenario_testing.js') }}"></script>
 </body>
 </html>

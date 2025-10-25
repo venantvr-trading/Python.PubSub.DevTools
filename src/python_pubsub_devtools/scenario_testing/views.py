@@ -273,3 +273,16 @@ def register_routes(app: Flask) -> None:
             test_run = test_runs[test_id].copy()
 
         return jsonify(test_run)
+
+    @app.route('/api/pubsub/status')
+    def api_pubsub_status():
+        """Récupère le statut de connexion PubSub depuis mock_exchange."""
+        import requests
+        try:
+            response = requests.get('http://localhost:5557/api/replay/status', timeout=1)
+            if response.ok:
+                data = response.json()
+                return jsonify({'connected': data.get('pubsub_connected', False)})
+        except:
+            pass
+        return jsonify({'connected': False})

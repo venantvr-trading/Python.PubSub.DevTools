@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from flask import Flask
+from flask_cors import CORS
 
 
 def create_app(config: Any) -> Flask:
@@ -30,6 +31,9 @@ def create_app(config: Any) -> Flask:
     # Configuration
     app.config['REPLAY_DATA_DIR'] = config.replay_data_dir
     app.config['PORT'] = config.port
+
+    # Enable CORS pour permettre les appels depuis scenario_testing (port 5558)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     # Importer les modules nécessaires
     from .scenario_exchange import ScenarioBasedMockExchange

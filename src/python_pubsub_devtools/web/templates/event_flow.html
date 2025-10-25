@@ -5,6 +5,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Event Flow Visualization - Trading Bot</title>
     <link href="{{ url_for('static', filename='css/dashboard_common.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/pubsub_status.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/event_flow.css') }}" rel="stylesheet">
 </head>
 <body>
@@ -69,6 +70,8 @@
     {% include '_navbar.html' %}
 
     <div class="content">
+        {% include '_pubsub_status.html' %}
+
         <div class="stats">
             <div class="stat">
                 <div class="stat-value">{{ total_events }}</div>
@@ -150,6 +153,7 @@
     ↻
 </button>
 
+<script src="{{ url_for('static', filename='js/pubsub_status.js') }}"></script>
 <script src="{{ url_for('static', filename='js/event_flow.js') }}"></script>
 </body>
 </html>

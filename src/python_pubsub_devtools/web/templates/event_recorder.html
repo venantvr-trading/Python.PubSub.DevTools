@@ -5,6 +5,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Event Recorder Dashboard</title>
     <link href="{{ url_for('static', filename='css/dashboard_common.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/pubsub_status.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/event_recorder.css') }}" rel="stylesheet">
 </head>
 <body>
@@ -37,6 +38,8 @@
     </div>
 
     <div class="content">
+        {% include '_pubsub_status.html' %}
+
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value">{{ total_recordings }}</div>
@@ -153,41 +156,7 @@
     <button class="stop-recording-btn" onclick="stopRecording()">⏹ Stop</button>
 </div>
 
+<script src="{{ url_for('static', filename='js/pubsub_status.js') }}"></script>
 <script src="{{ url_for('static', filename='js/event_recorder.js') }}"></script>
-<script>
-    // Load PubSub connection status
-    async function loadPubSubStatus() {
-        try {
-            const response = await fetch('/api/pubsub/status');
-            const data = await response.json();
-
-            const statusDiv = document.getElementById('pubsub-status');
-            const statusIcon = statusDiv.querySelector('.status-icon');
-            const statusText = statusDiv.querySelector('.status-text');
-
-            if (data.connected) {
-                statusDiv.className = 'pubsub-status-indicator connected';
-                statusIcon.textContent = '✅';
-                statusText.textContent = 'Service Bus connecté';
-            } else {
-                statusDiv.className = 'pubsub-status-indicator disconnected';
-                statusIcon.textContent = '❌';
-                statusText.textContent = 'Service Bus déconnecté';
-            }
-        } catch (error) {
-            console.error('Failed to load PubSub status:', error);
-            const statusDiv = document.getElementById('pubsub-status');
-            statusDiv.className = 'pubsub-status-indicator disconnected';
-            statusDiv.querySelector('.status-icon').textContent = '❌';
-            statusDiv.querySelector('.status-text').textContent = 'Service Bus déconnecté';
-        }
-    }
-
-    // Poll PubSub status every 3 seconds
-    document.addEventListener('DOMContentLoaded', function() {
-        loadPubSubStatus();
-        setInterval(loadPubSubStatus, 3000);
-    });
-</script>
 </body>
 </html>

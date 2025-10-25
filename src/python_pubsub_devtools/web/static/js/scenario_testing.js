@@ -215,3 +215,37 @@ function switchResultTab(tabName) {
     event.target.classList.add('active');
     document.getElementById('result-tab-' + tabName).classList.add('active');
 }
+
+// Quick start scenario - direct replay on Mock Exchange
+async function quickStartScenario(filename) {
+    const mode = document.getElementById('quick-mode-select').value;
+    const interval = parseFloat(document.getElementById('quick-interval-select').value);
+
+    const payload = {
+        filename: filename,
+        mode: mode
+    };
+
+    if (mode === 'push') {
+        payload.interval_seconds = interval;
+    }
+
+    try {
+        // Call Mock Exchange API (port 5557)
+        const response = await fetch('http://localhost:5557/api/replay/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(`✅ Scénario "${filename.replace('.json', '')}" démarré sur Mock Exchange!\nMode: ${mode}\nAllez sur http://localhost:5557 onglet "Bougies" pour voir le graph`);
+        } else {
+            alert(`❌ Erreur: ${data.error}`);
+        }
+    } catch (error) {
+        alert(`❌ Erreur de connexion à Mock Exchange (port 5557): ${error.message}\nAssurez-vous que Mock Exchange est démarré.`);
+    }
+}

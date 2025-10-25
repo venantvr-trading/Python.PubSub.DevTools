@@ -937,40 +937,84 @@ body.dark-mode .receiver-endpoint {
     color: #b0b0b0;
 }
 
-/* PubSub Status Section */
-.pubsub-status-section {
-    margin-bottom: 20px;
+/* Scenarios Grid */
+.scenarios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
 }
 
-.pubsub-status-indicator {
-    padding: 15px 20px;
+.scenario-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
     border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.scenario-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.scenario-icon {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.scenario-name {
+    font-size: 1.2em;
     font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.scenario-desc {
+    font-size: 0.85em;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.scenario-price {
+    font-size: 0.9em;
+    opacity: 0.8;
+    font-style: italic;
+}
+
+.scenario-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    gap: 10px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-top: 15px;
 }
 
-.pubsub-status-indicator.connected {
-    background: #28a745;
-    color: white;
+.scenario-controls label {
+    font-weight: 600;
+    color: #495057;
 }
 
-.pubsub-status-indicator.disconnected {
-    background: #dc3545;
-    color: white;
+.scenario-controls select {
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: white;
 }
 
-.pubsub-status-indicator.checking {
-    background: #ffc107;
-    color: #333;
+body.dark-mode .scenario-controls {
+    background: #2a2a2a;
 }
 
-.pubsub-status-indicator .status-icon {
-    font-size: 1.3em;
+body.dark-mode .scenario-controls label {
+    color: #e0e0e0;
 }
 
-.pubsub-status-indicator .status-text {
-    font-size: 1.1em;
+body.dark-mode .scenario-controls select {
+    background: #1a1a1a;
+    border-color: #3a3a3a;
+    color: #e0e0e0;
 }
