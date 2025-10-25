@@ -127,15 +127,37 @@ class ScenarioBasedMockExchange:
 
             # Charger le fichier
             try:
-                with open(file_path, 'r') as f:
-                    data = json.load(f)
+                if filename.endswith('.csv'):
+                    # Charger CSV
+                    import csv
 
-                if 'candles' not in data:
-                    logger.error("Le fichier JSON ne contient pas de tableau 'candles'")
-                    self._add_log("error", "Format JSON invalide: tableau 'candles' manquant")
+                    self._candles = []
+                    with open(file_path, 'r') as f:
+                        reader = csv.DictReader(f)
+                        for row in reader:
+                            self._candles.append({
+                                'timestamp': int(row['timestamp']),
+                                'open': float(row['open']),
+                                'high': float(row['high']),
+                                'low': float(row['low']),
+                                'close': float(row['close']),
+                                'volume': float(row['volume'])
+                            })
+                elif filename.endswith('.json'):
+                    # Charger JSON
+                    with open(file_path, 'r') as f:
+                        data = json.load(f)
+
+                    if 'candles' not in data:
+                        logger.error("Le fichier JSON ne contient pas de tableau 'candles'")
+                        self._add_log("error", "Format JSON invalide: tableau 'candles' manquant")
+                        return False
+
+                    self._candles = data['candles']
+                else:
+                    logger.error(f"Format de fichier non supporté: {filename}")
+                    self._add_log("error", f"Format non supporté: utilisez .csv ou .json")
                     return False
-
-                self._candles = data['candles']
                 self._current_file = filename
                 self._replay_status = "running"
                 self._replay_mode = mode
@@ -202,18 +224,27 @@ class ScenarioBasedMockExchange:
                 'current_file': self._current_file,
                 'total_candles': len(self._candles),
                 'current_index': self._current_index,
-                'progress': round((self._current_index / len(self._candles) * 100), 2) if self._candles else 0
+                'progress': round((self._current_index / len(self._candles) * 100), 2) if self._candles else 0,
+                'pubsub_connected': self._pubsub_client is not None
             }
 
     def get_candles(self) -> List[Dict[str, Any]]:
         """
         Retourne les candles chargées.
 
+        En mode push, retourne uniquement les candles déjà publiées (jusqu'à current_index).
+        En mode pull, retourne toutes les candles.
+
         Returns:
             Liste des candles
         """
         with self._replay_state_lock:
-            return self._candles.copy()
+            if self._replay_mode == 'push' and self._replay_status == 'running':
+                # En mode push, ne retourner que les candles déjà publiées
+                return self._candles[:self._current_index].copy()
+            else:
+                # En mode pull ou si non actif, retourner toutes les candles
+                return self._candles.copy()
 
     def get_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
         """

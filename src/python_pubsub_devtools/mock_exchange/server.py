@@ -39,8 +39,7 @@ def create_app(config: Any) -> Flask:
     engine = ScenarioBasedMockExchange(
         replay_data_dir=config.replay_data_dir,
         pubsub_url=config.pubsub_url,
-        candle_topic=config.candle_topic,
-        get_receivers_callback=views.get_registered_receivers  # Conservé pour compatibilité
+        candle_topic=config.candle_topic
     )
     app.config['EXCHANGE_ENGINE'] = engine
 

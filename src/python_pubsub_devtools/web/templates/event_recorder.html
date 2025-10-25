@@ -56,10 +56,10 @@
             </div>
         </div>
 
-        <div class="players-section">
-            <h2>Registered Players</h2>
-            <div class="players-list" id="players-list">
-                <div class="player-empty">No players registered. Applications must register via POST /api/player/register</div>
+        <div class="pubsub-status-section">
+            <div class="pubsub-status-indicator" id="pubsub-status">
+                <span class="status-icon">⏳</span>
+                <span class="status-text">Vérification Service Bus...</span>
             </div>
         </div>
 
@@ -155,33 +155,38 @@
 
 <script src="{{ url_for('static', filename='js/event_recorder.js') }}"></script>
 <script>
-    // Load players list
-    async function loadPlayers() {
+    // Load PubSub connection status
+    async function loadPubSubStatus() {
         try {
-            const response = await fetch('/api/player/list');
+            const response = await fetch('/api/pubsub/status');
             const data = await response.json();
 
-            const playersList = document.getElementById('players-list');
+            const statusDiv = document.getElementById('pubsub-status');
+            const statusIcon = statusDiv.querySelector('.status-icon');
+            const statusText = statusDiv.querySelector('.status-text');
 
-            if (data.count === 0) {
-                playersList.innerHTML = '<div class="player-empty">No players registered. Applications must register via POST /api/player/register</div>';
+            if (data.connected) {
+                statusDiv.className = 'pubsub-status-indicator connected';
+                statusIcon.textContent = '✅';
+                statusText.textContent = 'Service Bus connecté';
             } else {
-                playersList.innerHTML = data.players.map(player => `
-                    <div class="player-item">
-                        <span class="player-name">${player.consumer_name}</span>
-                        <span class="player-endpoint">${player.player_endpoint}</span>
-                    </div>
-                `).join('');
+                statusDiv.className = 'pubsub-status-indicator disconnected';
+                statusIcon.textContent = '❌';
+                statusText.textContent = 'Service Bus déconnecté';
             }
         } catch (error) {
-            console.error('Failed to load players:', error);
+            console.error('Failed to load PubSub status:', error);
+            const statusDiv = document.getElementById('pubsub-status');
+            statusDiv.className = 'pubsub-status-indicator disconnected';
+            statusDiv.querySelector('.status-icon').textContent = '❌';
+            statusDiv.querySelector('.status-text').textContent = 'Service Bus déconnecté';
         }
     }
 
-    // Poll players list every 3 seconds
+    // Poll PubSub status every 3 seconds
     document.addEventListener('DOMContentLoaded', function() {
-        loadPlayers();
-        setInterval(loadPlayers, 3000);
+        loadPubSubStatus();
+        setInterval(loadPubSubStatus, 3000);
     });
 </script>
 </body>

@@ -937,78 +937,40 @@ body.dark-mode .receiver-endpoint {
     color: #b0b0b0;
 }
 
-/* Players Section */
-.players-section {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 20px;
+/* PubSub Status Section */
+.pubsub-status-section {
     margin-bottom: 20px;
 }
 
-.players-section h2 {
-    font-size: 1.3em;
-    margin-bottom: 15px;
+.pubsub-status-indicator {
+    padding: 15px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pubsub-status-indicator.connected {
+    background: #28a745;
+    color: white;
+}
+
+.pubsub-status-indicator.disconnected {
+    background: #dc3545;
+    color: white;
+}
+
+.pubsub-status-indicator.checking {
+    background: #ffc107;
     color: #333;
 }
 
-.player-empty {
-    color: #6c757d;
-    font-style: italic;
-    text-align: center;
-    padding: 10px;
+.pubsub-status-indicator .status-icon {
+    font-size: 1.3em;
 }
 
-.player-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.player-item:last-child {
-    margin-bottom: 0;
-}
-
-.player-name {
-    font-weight: 600;
-    color: #667eea;
-    min-width: 120px;
-}
-
-.player-endpoint {
-    color: #6c757d;
-    font-size: 0.9em;
-    word-break: break-all;
-}
-
-/* Dark Mode - Players */
-body.dark-mode .players-section {
-    background: #2d2d2d;
-    border-color: #3a3a3a;
-}
-
-body.dark-mode .players-section h2 {
-    color: #e0e0e0;
-}
-
-body.dark-mode .player-empty {
-    color: #b0b0b0;
-}
-
-body.dark-mode .player-item {
-    background: #1a1a1a;
-    border-color: #3a3a3a;
-}
-
-body.dark-mode .player-name {
-    color: #8fa3f5;
-}
-
-body.dark-mode .player-endpoint {
-    color: #b0b0b0;
+.pubsub-status-indicator .status-text {
+    font-size: 1.1em;
 }

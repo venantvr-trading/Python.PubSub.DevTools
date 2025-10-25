@@ -625,3 +625,8 @@ def register_routes(app: Flask) -> None:
         """Récupère le statut de l'enregistrement."""
         return jsonify(recording_manager.get_status())
 
+    @app.route('/api/pubsub/status')
+    def api_pubsub_status():
+        """Récupère le statut de connexion PubSub."""
+        connected = player_manager._pubsub_client is not None if player_manager else False
+        return jsonify({'connected': connected})

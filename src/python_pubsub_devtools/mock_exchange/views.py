@@ -7,7 +7,6 @@ de fichiers de replay de chandeliers.
 from __future__ import annotations
 
 import os
-import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List
@@ -190,7 +189,8 @@ def register_routes(app: Flask) -> None:
                 'filename': status['current_file']
             },
             'cursor': status['current_index'],
-            'total_candles': status['total_candles']
+            'total_candles': status['total_candles'],
+            'pubsub_connected': status.get('pubsub_connected', False)
         })
 
     @app.route('/api/replay/candles', methods=['GET'])

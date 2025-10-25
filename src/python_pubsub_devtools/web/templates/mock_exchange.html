@@ -22,10 +22,10 @@
 
     <div class="content">
 
-        <div class="players-section">
-            <h2>Registered Players</h2>
-            <div class="players-list" id="players-list">
-                <div class="player-empty">No players registered. Applications must register via POST /api/player/register</div>
+        <div class="pubsub-status-section">
+            <div class="pubsub-status-indicator checking" id="pubsub-status">
+                <span class="status-icon">⏳</span>
+                <span class="status-text">Vérification Service Bus...</span>
             </div>
         </div>
 
@@ -237,13 +237,17 @@
         loadReplayStatus();
         setInterval(loadReplayStatus, 2000);  // Poll every 2 seconds
 
+        // Initialize chart immediately
+        initCandlestickChart();
+
         // Initialize data polling for candles and logs tabs
+        loadCandles();
         setInterval(loadCandles, 2000);
         setInterval(loadLogs, 2000);
 
-        // Poll players list every 3 seconds
-        loadPlayers();
-        setInterval(loadPlayers, 3000);
+        // Poll PubSub status every 3 seconds
+        loadPubSubStatus();
+        setInterval(loadPubSubStatus, 3000);
     });
 
     // Toggle push mode options
@@ -264,30 +268,40 @@
         }
     }
 
-    // Load players list
-    async function loadPlayers() {
+    // Load PubSub connection status
+    async function loadPubSubStatus() {
         try {
-            const response = await fetch('/api/receiver/list');
+            const response = await fetch('/api/replay/status');
             const data = await response.json();
 
-            const playersList = document.getElementById('players-list');
+            const statusDiv = document.getElementById('pubsub-status');
+            const statusIcon = statusDiv.querySelector('.status-icon');
+            const statusText = statusDiv.querySelector('.status-text');
 
-            if (data.count === 0) {
-                playersList.innerHTML = '<div class="player-empty">No players registered. Applications must register via POST /api/player/register</div>';
+            // Check if engine has pubsub_connected field
+            const pubsubConnected = data.pubsub_connected !== undefined ? data.pubsub_connected : true;
+
+            if (pubsubConnected) {
+                statusDiv.className = 'pubsub-status-indicator connected';
+                statusIcon.textContent = '✅';
+                statusText.textContent = 'Service Bus connecté';
             } else {
-                playersList.innerHTML = data.receivers.map(receiver => `
-                    <div class="player-item">
-                        <span class="player-name">${receiver.consumer_name}</span>
-                        <span class="player-endpoint">${receiver.receiver_endpoint}</span>
-                    </div>
-                `).join('');
+                statusDiv.className = 'pubsub-status-indicator disconnected';
+                statusIcon.textContent = '❌';
+                statusText.textContent = 'Service Bus déconnecté - Mode Push indisponible';
             }
         } catch (error) {
-            console.error('Failed to load players:', error);
+            console.error('Failed to load PubSub status:', error);
+            const statusDiv = document.getElementById('pubsub-status');
+            statusDiv.className = 'pubsub-status-indicator disconnected';
+            statusDiv.querySelector('.status-icon').textContent = '❌';
+            statusDiv.querySelector('.status-text').textContent = 'Service Bus déconnecté';
         }
     }
 
     // Load replay status
+    let lastReplayFile = null;
+    let lastReplayActive = false;
     async function loadReplayStatus() {
         try {
             const response = await fetch('/api/replay/status');
@@ -298,6 +312,17 @@
             const statusDetails = document.getElementById('status-details');
             const startBtn = document.getElementById('start-btn');
             const stopBtn = document.getElementById('stop-btn');
+
+            // Reset chart if new replay file OR if replay just started
+            if (data.session.filename && (
+                data.session.filename !== lastReplayFile ||
+                (data.active && !lastReplayActive)
+            )) {
+                lastCandleCount = 0;
+                lastReplayFile = data.session.filename;
+            }
+
+            lastReplayActive = data.active;
 
             if (data.active) {
                 statusDot.className = 'status-dot running';
@@ -399,11 +424,20 @@
     // Candlestick chart instance
     let candlestickChart = null;
     let candlestickSeries = null;
+    let lastCandleCount = 0;
 
     // Initialize chart
     function initCandlestickChart() {
         const chartContainer = document.getElementById('candlestick-chart');
-        if (!chartContainer || candlestickChart) return;
+        if (!chartContainer) return;
+        if (candlestickChart) return;
+
+        // Check if container is visible
+        if (chartContainer.offsetParent === null) {
+            // Container not visible, retry later
+            setTimeout(initCandlestickChart, 100);
+            return;
+        }
 
         candlestickChart = LightweightCharts.createChart(chartContainer, {
             width: chartContainer.clientWidth,
@@ -488,8 +522,20 @@
                         close: candle.close,
                     }));
 
-                    candlestickSeries.setData(chartData);
-                    candlestickChart.timeScale().fitContent();
+                    // Use setData for initial load or full refresh, update for incremental
+                    if (data.candles.length !== lastCandleCount) {
+                        if (data.candles.length < lastCandleCount || lastCandleCount === 0) {
+                            // Full refresh if candle count decreased or first load
+                            candlestickSeries.setData(chartData);
+                            candlestickChart.timeScale().fitContent();
+                        } else {
+                            // Incremental update - add only new candles
+                            for (let i = lastCandleCount; i < data.candles.length; i++) {
+                                candlestickSeries.update(chartData[i]);
+                            }
+                        }
+                        lastCandleCount = data.candles.length;
+                    }
                 }
             }
         } catch (error) {
