@@ -117,23 +117,14 @@ event_flow:
 
 ## Architecture
 
-```
-┌─────────────────────┐       ┌─────────────────────┐       ┌──────────────────┐
-│   Developer's Code  │       │  CI/CD Pipeline     │       │   Web Browser    │
-│ (Agents & Events)   │       │ (e.g., GitHub Act)  │       │ (Developer)      │
-└──────────┬──────────┘       └──────────┬──────────┘       └────────┬─────────┘
-           │                            │                           │ GET /
-           ▼                            ▼                           ▼
-┌─────────────────────┐       ┌─────────────────────┐       ┌──────────────────┐
-│  pubsub-scanner     │──────▶│ POST /api/graph     │       │ EventFlowServer  │
-│ (CLI Tool)          │       │                     ├──────▶│ (Flask + Gunicorn) │
-└─────────────────────┘       └─────────────────────┘       └──────────────────┘
-                                                                    │ GET /graph/...
-                                                                    ▼
-                                                            ┌──────────────────┐
-                                                            │   Graphviz (dot) │
-                                                            │ (SVG Conversion) │
-                                                            └──────────────────┘
+```mermaid
+graph LR
+    DEV["Developer's Code<br/>(Agents and Events)"] --> SCAN["pubsub-scanner<br/>(CLI Tool)"]
+    CICD["CI/CD Pipeline<br/>(e.g., GitHub Actions)"] --> API["POST /api/graph"]
+    SCAN --> API
+    BROWSER["Web Browser<br/>(Developer)"] -- "GET /" --> SERVER["EventFlowServer<br/>(Flask + Gunicorn)"]
+    API --> SERVER
+    SERVER -- "GET /graph/..." --> GRAPHVIZ["Graphviz (dot)<br/>(SVG Conversion)"]
 ```
 
 ## Troubleshooting
@@ -165,3 +156,4 @@ brew install graphviz
 - **Event Recorder**: Record and replay event traffic for time-traveling debugging.
 - **Scenario Testing**: Define and run complex integration test scenarios.
 - **Mock Exchange**: Simulate exchange behavior for testing without real funds.
+
