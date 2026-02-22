@@ -387,28 +387,14 @@ event_recorder:
 
 ## Architecture
 
-```
-┌─────────────────────┐
-│   Your Trading Bot  │
-└──────────┬──────────┘
-           │ publishes events
-           ▼
-┌─────────────────────┐
-│   ServiceBus        │◄─── EventRecorder intercepts
-│   (event bus)       │     and records all events
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Recording Files    │
-│   (JSON on disk)    │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐     ┌──────────────────────┐
-│   EventReplayer     │────▶│ EventRecorderServer  │
-│   (replay engine)   │     │   (web dashboard)    │
-└─────────────────────┘     └──────────────────────┘
+```mermaid
+graph TD
+    BOT["Your Trading Bot"] -- "publishes events" --> BUS["ServiceBus (event bus)"]
+    REC["EventRecorder"] -- "intercepts and records all events" --> BUS
+    BUS --> FILES["Recording Files (JSON on disk)"]
+    FILES --> REPLAY["EventReplayer (replay engine)"]
+    FILES --> SERVER["EventRecorderServer (web dashboard)"]
+    REPLAY --> SERVER
 ```
 
 ## Best Practices
@@ -514,3 +500,4 @@ See `examples/event_recorder/` for complete examples:
 - `filtered_replay.py` - Event filtering
 - `performance_test.py` - High-speed replay
 - `web_integration.py` - Using the web API
+
