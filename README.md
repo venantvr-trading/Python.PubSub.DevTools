@@ -265,3 +265,7 @@ mypy python_pubsub_devtools
 ## License
 
 MIT License
+
+## Stack
+
+[![Stack](https://skillicons.dev/icons?i=py,flask,git&theme=dark)](https://skillicons.dev)
