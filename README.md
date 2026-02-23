@@ -268,4 +268,4 @@ MIT License
 
 ## Stack
 
-[![Stack](https://skillicons.dev/icons?i=py,flask,git&theme=dark)](https://skillicons.dev)
+[![Stack](https://skillicons.dev/icons?i=py,flask&theme=dark)](https://skillicons.dev)
